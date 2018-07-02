@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Utilities
 {
@@ -89,7 +87,7 @@ namespace Utilities
         {
             int index = table.Columns[column].Ordinal;
             OrderedEnumerableRowCollection<DataRow> result = table.AsEnumerable().OrderBy(dr => dr[index]);
-            for(int i = 0; i < columns.Length; i++) {
+            for (int i = 0; i < columns.Length; i++) {
                 index = table.Columns[columns[i]].Ordinal;
                 result = result.ThenBy(dr => dr[index]);
             }
@@ -104,7 +102,7 @@ namespace Utilities
         public static OrderedEnumerableRowCollection<DataRow> ThenBy(this OrderedEnumerableRowCollection<DataRow> rows, int column, params int[] columns)
         {
             OrderedEnumerableRowCollection<DataRow> result = rows.ThenBy(dr => dr[column]);
-            for(int i = 0; i < columns.Length; i++) {
+            for (int i = 0; i < columns.Length; i++) {
                 int index = columns[i];
                 result = result.ThenBy(dr => dr[index]);
             }
@@ -378,7 +376,7 @@ namespace Utilities
         {
             try {
                 var converter = DataRowConverter<T>.Create(dataTable);
-                foreach(T obj in converter.Convert(dataTable)) {
+                foreach (T obj in converter.Convert(dataTable)) {
                     list.Add(obj);
                 }
                 return true;
@@ -506,10 +504,9 @@ namespace Utilities
         /// <param name="printRowNumbers">Determines if row numbers are printed before each row.</param>
         /// <param name="columnsToPrint">Determines which columns are printed by index and their order. 
         /// Null means all columns are printed.</param>
-        /// <param name="sep">The separater between fields in each row.</param>
-        public static void Print(this DataTable table, bool printRowNumbers = false, char sep = ',', params int[] columnsToPrint)
+        public static void Print(this DataTable table, bool printRowNumbers = false, params int[] columnsToPrint)
         {
-            Print(table, -1, printRowNumbers, sep, columnsToPrint);
+            Print(table, -1, printRowNumbers, columnsToPrint);
         }
 
         /// <summary>
@@ -520,8 +517,7 @@ namespace Utilities
         /// <param name="printRowNumbers">Determines if row numbers are printed before each row.</param>
         /// <param name="columnsToPrint">Determines which columns are printed by index and their order. 
         /// Null means all columns are printed.</param>
-        /// <param name="sep">The separater between fields in each row.</param>
-        public static void Print(this DataTable table, int maxRows, bool printRowNumbers = false, char sep = ',', params int[] columnsToPrint)
+        public static void Print(this DataTable table, int maxRows, bool printRowNumbers = false, params int[] columnsToPrint)
         {
             if (table.Columns.Count == 0)
                 return;
@@ -529,7 +525,7 @@ namespace Utilities
             if (columnsToPrint.Length != 0) {
                 Console.Write(table.Columns[columnsToPrint[0]].ColumnName);
                 for (int col = 1; col < columnsToPrint.Length; col++) {
-                    Console.Write(sep);
+                    Console.Write(',');
                     Console.Write(table.Columns[columnsToPrint[col]].ColumnName);
                 }
                 Console.WriteLine();
@@ -538,7 +534,7 @@ namespace Utilities
                         Console.Write(row + " ");
                     Console.Write(table.Rows[row][columnsToPrint[0]]);
                     for (int col = 1; col < columnsToPrint.Length; col++) {
-                        Console.Write(sep);
+                        Console.Write(',');
                         Console.Write(table.Rows[row][columnsToPrint[col]]);
                     }
                     Console.WriteLine();
@@ -567,14 +563,7 @@ namespace Utilities
         /// <param name="printRowNumbers">Determines if row numbers should be printed before each row.</param>
         public static void Print<T>(this IEnumerable<T> list, bool printRowNumbers = false)
         {
-            int i = 1;
-            foreach (T item in list) {
-                if (printRowNumbers) {
-                    Console.Write(i + " ");
-                    i++;
-                }
-                Util.Print(item);
-            }
+            Print(list, Util.ToString, printRowNumbers);
         }
 
         /// <summary>
@@ -587,7 +576,14 @@ namespace Utilities
         public static void Print<T>(this IEnumerable<T> list, Func<T, string> tostringT, bool printRowNumbers = false)
         {
             int i = 1;
-            foreach (T item in list) {
+
+            if (list.Any()) {
+                if (printRowNumbers)
+                    Console.Write("1 ");
+                Console.WriteLine(tostringT(list.First()));
+                i++;
+            }
+            foreach (T item in list.Skip(1)) {
                 if (printRowNumbers) {
                     Console.Write(i + " ");
                     i++;
@@ -610,6 +606,16 @@ namespace Utilities
                 return DateTime.SpecifyKind(dateTimeOff.DateTime, DateTimeKind.Local);
             else
                 return dateTimeOff.DateTime;
+        }
+
+        /// <summary>
+        /// Converts the DateTimeOffset? to a DateTime?.
+        /// </summary>
+        /// <param name="dateTimeOff">The DateTimeOffset? to convert.</param>
+        /// <returns>The DateTime? value of the DateTimeOffset?.</returns>
+        public static DateTime? ToDateTime(this DateTimeOffset? dateTimeOff)
+        {
+            return dateTimeOff?.ToDateTime();
         }
     }
 }

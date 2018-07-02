@@ -4,9 +4,8 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Security.Principal;
 using System.Text;
-using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace Utilities
 {
@@ -132,7 +131,7 @@ namespace Utilities
             const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.SetProperty;
             PropertyInfo[] pinfos = typeof(T).GetProperties(flags);
             Func<object, object>[] converters = new Func<object, object>[pinfos.Length];
-            for(int i = 0; i < pinfos.Length; i++) {
+            for (int i = 0; i < pinfos.Length; i++) {
                 converters[i] = converterDict[typeof(string)](pinfos[i].PropertyType);
             }
             return (strs) => {
@@ -435,18 +434,7 @@ namespace Utilities
             return sb.ToString();
         }
 
-        /// <summary>
-        /// Returns the string representation of an enumerable collection.
-        /// </summary>
-        /// <typeparam name="T">The type of object stored in the enumerable collection.</typeparam>
-        /// <param name="list">The enumerable collection to obtain a string representation of.</param>
-        /// <param name="sep">The string to output between each element in list.</param>
-        /// <returns>The string representation of the enumerable collection.</returns>
-        public static string ToString<T>(IEnumerable<T> list, char sep = ',')
-        {
-            return ToString<T>(list, ToString<T>, sep);
-        }
-
+        private delegate string ToStringDelegate();
         /// <summary>
         /// A default ToString method.
         /// </summary>
@@ -455,57 +443,20 @@ namespace Utilities
         /// <returns>The string representation of a type.</returns>
         public static string ToString<T>(T obj)
         {
-            return obj.ToString();
-        }
-
-        /// <summary>
-        /// Returns the string representation of an enumerable collection.
-        /// </summary>
-        /// <typeparam name="T">The type of object stored in the enumerable collection.</typeparam>
-        /// <param name="list">The enumerable collection to obtain a string representation of.</param>
-        /// <param name="tostringT">A method that returns the ToString() representation for type T.</param>
-        /// <param name="sep">The string to output between each element in list.</param>
-        /// <returns>The string representation of the enumerable collection.</returns>
-        public static string ToString<T>(IEnumerable<T> list, Func<T, string> tostringT, char sep = ',')
-        {
-            StringBuilder result = new StringBuilder();
-            foreach (T item in list)
-                result.Append(sep).Append(tostringT(item));
-            return result.Remove(0, 1).ToString();
+            return ToString((object)obj);
         }
 
         /// <summary>
         /// A default ToString method.
         /// </summary>
+        /// <typeparam name="T">Tye Type of the object.</typeparam>
         /// <param name="obj">The object to obtain the string representation of.</param>
         /// <returns>The string representation of a type.</returns>
         public static string ToString(object obj)
         {
-            if (obj == null)
-                return "null";
-            Type ty = obj.GetType();
-            if (ty == typeof(string))
-                return '\"' + (obj as string) + '\"';
-            else if (ty == typeof(DataTable)) {
-                return '{' + ToString(obj as DataTable, -1) + '}';
-            }
-            else if (typeof(IEnumerable<object>).IsAssignableFrom(ty)) {
-                IEnumerable<object> objs = ((IEnumerable<object>)obj);
-                StringBuilder sb = new StringBuilder('[');
-                foreach (object o in objs)
-                    sb.Append(ToString(o)).Append(',');
-                return sb.Remove(sb.Length - 1, 1).Append(']').ToString();
-            }
-            else if (ty.IsClass) {
-                PropertyInfo[] props = ty.GetProperties(BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.Public);
-                if (props.Length > 0) {
-                    StringBuilder sb = new StringBuilder('{');
-                    for (int i = 0; i < props.Length; i++)
-                        sb.Append(',').Append(props[0].Name).Append('=').Append(ToString(props[i].GetValue(obj)));
-                    return sb.Append('}').Remove(0, 1).ToString();
-                }
-            }
-            return obj.ToString();
+            return (obj != null && ((ToStringDelegate)obj.ToString).Method.DeclaringType == obj.GetType())
+                ? obj.ToString()
+                : JsonConvert.SerializeObject(obj, Formatting.None);
         }
         #endregion //ToString
 
@@ -515,39 +466,10 @@ namespace Utilities
         /// <param name="obj">The object to print.</param>
         public static void Print(object obj)
         {
-            if (obj == null)
-                Console.Write("null");
-            else {
-                Type ty = obj.GetType();
-                if (ty == typeof(string))
-                    Console.Write(obj as string);
-                else if (ty == typeof(DataTable)) {
-                    Console.Write('{');
-                    Print((obj as DataTable));
-                    Console.Write('}');
-                }
-                else if (typeof(IEnumerable<object>).IsAssignableFrom(ty)) {
-                    IEnumerable<object> objs = ((IEnumerable<object>)obj);
-                    Console.Write('[');
-                    Print(objs);
-                    Console.Write(']');
-                }
-                else if (ty.IsClass) {
-                    PropertyInfo[] props = ty.GetProperties(BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.Public);
-                    if (props.Length > 0) {
-                        Console.Write('{');
-                        Console.Write(props[0].Name + "=" + ToString(props[0].GetValue(obj)));
-                        for (int i = 0; i < props.Length; i++) {
-                            Console.Write(",{0}={1}", props[0].Name, ToString(props[i].GetValue(obj)));
-                        }
-                        Console.Write('}');
-                    }
-                    else
-                        Console.Write(obj.ToString());
-                }
-                else
-                    Console.Write(obj.ToString());
-            }
+            string result = (obj != null && ((ToStringDelegate)obj.ToString).Method.DeclaringType == obj.GetType())
+                ? obj.ToString()
+                : JsonConvert.SerializeObject(obj, Formatting.None);
+            Console.Write(result);
         }
 
         /// <summary>
@@ -587,13 +509,9 @@ namespace Utilities
         public static DataTable DataTable<T>(DataTable table)
         {
             const BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance;
-            var objFieldNames = typeof(T).GetProperties(flags)
-                .Select(item => new {
-                    item.Name,
-                    Type = Nullable.GetUnderlyingType(item.PropertyType) ?? item.PropertyType
-                });
-            foreach (var nameTy in objFieldNames) {
-                table.Columns.Add(nameTy.Name, nameTy.Type);
+            PropertyInfo[] pinfos = typeof(T).GetProperties(flags);
+            foreach (var pinfo in pinfos) {
+                table.Columns.Add(pinfo.Name, Nullable.GetUnderlyingType(pinfo.PropertyType) ?? pinfo.PropertyType);
             }
             return table;
         }

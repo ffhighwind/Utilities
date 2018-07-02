@@ -14,11 +14,25 @@ namespace Utilities
     public static class IO
     {
         #region Any
+        /// <summary>
+        /// Reads a delimited file into a List of strings.
+        /// </summary>
+        /// <param name="path">The path of the delimited file.</param>
+        /// <param name="hasHeaders">Determines if the file has headers. 
+        /// If this is true then the columns are named based on the first line.</param>
+        /// <returns>A list of strings from the file, or null on error.</returns>
         public static List<string[]> Read(string path, bool hasHeaders = true)
         {
             return Foreach(path, hasHeaders).ToList();
         }
 
+        /// <summary>
+        /// Iterates each row in a file.
+        /// </summary>
+        /// <param name="path">The path of the delimited file.</param>
+        /// <param name="hasHeaders">Determines if the file has headers. 
+        /// If this is true then the columns are named based on the first line.</param>
+        /// <returns>The iterable rows in the file.</returns>
         public static IEnumerable<string[]> Foreach(string path, bool hasHeaders = true)
         {
             string ext = Path.GetExtension(path);
@@ -33,6 +47,17 @@ namespace Utilities
             return null;
         }
 
+        /// <summary>
+        /// Iterates each row in a file.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="path">The path of the delimited file.</param>
+        /// <param name="constructor">A function that constructs an object from an array of strings.</param>
+        /// <param name="hasHeaders">Determines if the file has headers. 
+        /// If this is true then the columns are named based on the first line.</param>
+        /// <param name="sheetname">The name of the worksheet to iterate if there are any.
+        /// If this is null then the first sheet will be iterated.</param>
+        /// <returns>The iterable rows in the file.</returns>
         public static IEnumerable<T> Foreach<T>(string path, Func<string[], T> constructor, bool hasHeaders = true, string sheetname = null)
         {
             string ext = Path.GetExtension(path);
@@ -52,8 +77,7 @@ namespace Utilities
         /// <summary>
         /// Iterates each row in a delimited file.
         /// </summary>
-        /// <param name="table">The datatable to modify.</param>
-        /// <param name="path">The path or filename of the delimited file.</param>
+        /// <param name="path">The path of the delimited file.</param>
         /// <param name="delim">The separator for the columns in the file.</param>
         /// <param name="hasHeaders">Determines if the file has headers. 
         /// If this is true then the columns are named based on the first line.</param>
@@ -92,7 +116,7 @@ namespace Utilities
         /// Iterates each row in delimited text.
         /// </summary>
         /// <typeparam name="T">The Type of object to return.</typeparam>
-        /// <param name="path">The path or filename of the delimited file.</param>
+        /// <param name="path">The path of the delimited file.</param>
         /// <param name="constructor">The constructor for the objects returned.</param>
         /// <param name="delim">The separator for the columns in the file.</param>
         /// <param name="hasHeaders">Determines if the file has headers. 
@@ -131,13 +155,13 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Reads a delimited file into a List of string arrays.
+        /// Reads a delimited file into a List of strings.
         /// </summary>
-        /// <param name="path">The path or filename of the delimited file.</param>
+        /// <param name="path">The path of the delimited file.</param>
         /// <param name="delim">The character separating each column of each line.</param>
         /// <param name="hasHeaders">Determines if the file has headers. 
         /// If this is true then the columns are named based on the first line.</param>
-        /// <returns>A list of string data from the file, or null on error.</returns>
+        /// <returns>A list of strings from the file, or null on error.</returns>
         public static List<string[]> ReadFile(string path, char delim = ',', bool hasHeaders = true)
         {
             List<string[]> list = new List<string[]>();
@@ -147,10 +171,10 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Reads a delimited file into a Collection of string arrays.
+        /// Reads a delimited file into a Collection of strings.
         /// </summary>
-        /// <param name="table">The Collection to modify.</param>
-        /// <param name="path">The path or filename of the delimited file.</param>
+        /// <param name="list">The List to modify.</param>
+        /// <param name="path">The path of the delimited file.</param>
         /// <param name="delim">The character separating each column of each line.</param>
         /// <param name="hasHeaders">Determines if the file has headers. 
         /// If this is true then the columns are named based on the first line.</param>
@@ -177,7 +201,7 @@ namespace Utilities
         /// Reads a delimited file into a DataTable.
         /// </summary>
         /// <param name="table">The datatable to modify.</param>
-        /// <param name="path">The path or filename of the delimited file.</param>
+        /// <param name="path">The path of the delimited file.</param>
         /// <param name="delim">The character separating each column of each line.</param>
         /// <param name="hasHeaders">Determines if the file has headers. 
         /// If this is true then the columns are named based on the first line.</param>
@@ -217,10 +241,10 @@ namespace Utilities
 
         #region CSV
         /// <summary>
-        /// Writes a Collection to a CSV file.
+        /// Writes a list to a CSV file.
         /// </summary>
         /// <param name="list">The list to export.</param>
-        /// <param name="path">The path or filename of the CSV file.</param>
+        /// <param name="path">The path of the CSV file.</param>
         /// <param name="printHeaders">Determines if the first rows includes headers.</param>
         public static bool WriteCsv<T>(this IEnumerable<T> list, string path, bool printHeaders) where T : IEnumerable<string>
         {
@@ -228,10 +252,10 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Writes a Collection to a CSV file.
+        /// Writes a list to a CSV file.
         /// </summary>
         /// <param name="list">The list to export.</param>
-        /// <param name="path">The path or filename of the CSV file.</param>
+        /// <param name="path">The path of the CSV file.</param>
         /// <param name="printHeaders">Determines if the first rows includes headers.</param>
         /// <param name="encoding">The encoding for the text.</param>
         public static bool WriteCsv<T>(this IEnumerable<T> list, string path, bool printHeaders, Encoding encoding) where T : IEnumerable<string>
@@ -258,7 +282,7 @@ namespace Utilities
                 return true;
             }
             catch (Exception ex) {
-                Console.Error.WriteLine("Error WriteCsv({0}): {1}", path, ex.Message);
+                Console.Error.WriteLine("Error WriteCsv({0}): {1}", path ?? "", ex.Message);
             }
             return false;
         }
@@ -267,7 +291,7 @@ namespace Utilities
         /// Writes a DataTable to a CSV file.
         /// </summary>
         /// <param name="table">The datatable to export.</param>
-        /// <param name="path">The path or filename of the CSV file.</param>
+        /// <param name="path">The path of the CSV file.</param>
         /// <param name="hasHeaders">Determines if the column names should be output.</param>
         /// <param name="encoding">The encoding for the text.</param>
         public static bool WriteCsv(this DataTable table, string path, bool hasHeaders = true)
@@ -278,8 +302,8 @@ namespace Utilities
         /// <summary>
         /// Writes a DataTable to a CSV file.
         /// </summary>
-        /// <param name="table">The datatable to export.</param>
-        /// <param name="path">The path or filename of the CSV file.</param>
+        /// <param name="table">The Datatable to export.</param>
+        /// <param name="path">The path of the CSV file.</param>
         /// <param name="hasHeaders">Determines if the column names should be output.</param>
         /// <param name="encoding">The encoding for the text.</param>
         public static bool WriteCsv(this DataTable table, string path, bool hasHeaders, Encoding encoding)
@@ -303,34 +327,35 @@ namespace Utilities
                 return true;
             }
             catch (Exception ex) {
-                Console.Error.WriteLine("Error WriteCsv({0}): {1}", path, ex.Message);
+                Console.Error.WriteLine("Error WriteCsv({0}): {1}", path ?? "", ex.Message);
             }
             return false;
         }
 
         /// <summary>
-        /// Reads a CSV file into a Collection of string arrays.
+        /// Reads a CSV file into a List of strings.
         /// </summary>
-        /// <param name="path">The path or filename of the CSV file.</param>
+        /// <param name="path">The path of the CSV file.</param>
         /// <param name="ignoreBlankLines">Determines if blank lines should be skipped.</param>
-        /// <returns>A list of string data from the CSV file.</returns>
+        /// <returns>A list of strings from the CSV file.</returns>
         public static List<string[]> ReadCsv(string path, bool hasHeaders = true, bool ignoreBlankLines = true)
         {
             try {
                 return CsvForeach(path, hasHeaders, ignoreBlankLines).ToList();
             }
-            catch(Exception ex) {
+            catch (Exception ex) {
                 Console.Error.WriteLine("Error ReadCsv({0}): {1}", path ?? "", ex.Message);
             }
             return null;
         }
 
         /// <summary>
-        /// Reads a CSV file into a Collection of string arrays.
+        /// Reads a CSV file into a collections of strings.
         /// </summary>
         /// <param name="list">The Collection to modify.</param>
-        /// <param name="path">The path or filename of the CSV file.</param>
+        /// <param name="path">The path of the CSV file.</param>
         /// <param name="ignoreBlankLines">Determines if blank lines should be skipped.</param>
+        /// <returns>True on success, or false otherwise.</returns>
         public static bool ReadCsv(this ICollection<string[]> list, string path, bool ignoreBlankLines = true)
         {
             try {
@@ -348,11 +373,12 @@ namespace Utilities
         /// <summary>
         /// Reads a CSV file into a DataTable.
         /// </summary>
-        /// <param name="table">The datatable to modify.</param>
-        /// <param name="path">The path or filename of the CSV file.</param>
+        /// <param name="table">The Datatable to modify.</param>
+        /// <param name="path">The path of the CSV file.</param>
         /// <param name="hasHeaders">Determines if the file has headers. 
         /// If this is true then the columns are named based on the first line.</param>
         /// <param name="ignoreBlankLines">Determines if blank lines should be skipped.</param>
+        /// <returns>True on success, or false otherwise.</returns>
         public static bool ReadCsv(this DataTable table, string path, bool hasHeaders = true, bool ignoreBlankLines = true)
         {
             try {
@@ -377,7 +403,7 @@ namespace Utilities
                 }
             }
             catch (Exception ex) {
-                Console.Error.WriteLine("Error ReadCsv({0}): {1}", path, ex.Message);
+                Console.Error.WriteLine("Error ReadCsv({0}): {1}", path ?? "", ex.Message);
                 return false;
             }
             table.Trim();
@@ -387,7 +413,7 @@ namespace Utilities
         /// <summary>
         /// Iterates each row in a CSV file.
         /// </summary>
-        /// <param name="path">The path or filename of the CSV file.</param>
+        /// <param name="path">The path of the CSV file.</param>
         /// <param name="hasHeaders">Determines if the file has headers. 
         /// If this is true then the first row will be ignored.</param>
         /// <param name="ignoreBlankLines">Determines if blank lines should be skipped.</param>
@@ -395,7 +421,7 @@ namespace Utilities
         public static IEnumerable<string[]> CsvForeach(string path, bool hasHeaders = true, bool ignoreBlankLines = true)
         {
             using (TextReader reader = Util.TextReader(new FileInfo(path))) {
-                foreach(string[] line in CsvForeach(reader)) {
+                foreach (string[] line in CsvForeach(reader)) {
                     yield return line;
                 }
             }
@@ -404,7 +430,7 @@ namespace Utilities
         /// <summary>
         /// Iterates each row in a CSV file.
         /// </summary>
-        /// <param name="path">The path or filename of the CSV file.</param>
+        /// <param name="path">The path of the CSV file.</param>
         /// <param name="hasHeaders">Determines if the file has headers. 
         /// If this is true then the first row will be ignored.</param>
         /// <param name="ignoreBlankLines">Determines if blank lines should be skipped.</param>
@@ -423,6 +449,16 @@ namespace Utilities
             }
         }
 
+        /// <summary>
+        /// Iterates each row in a CSV file.
+        /// </summary>
+        /// <typeparam name="T">The Type of objects to return.</typeparam>
+        /// <param name="path">The path of the CSV file.</param>
+        /// <param name="constructor">The constructor for the returned objects.</param>
+        /// <param name="hasHeaders">Determines if the file has headers. 
+        /// If this is true then the first row will be ignored.</param>
+        /// <param name="ignoreBlankLines">Determines if blank lines should be skipped.</param>
+        /// <returns>The iterable rows in the file.</returns>
         public static IEnumerable<T> CsvForeach<T>(string path, Func<string[], T> constructor, bool hasHeaders = true, bool ignoreBlankLines = true)
         {
             using (TextReader reader = Util.TextReader(new FileInfo(path))) {
@@ -432,9 +468,19 @@ namespace Utilities
             }
         }
 
+        /// <summary>
+        /// Iterates each row in a CSV file.
+        /// </summary>
+        /// <typeparam name="T">The Type of objects to return.</typeparam>
+        /// <param name="reader">The TextReader for the CSV file.</param>
+        /// <param name="constructor">The constructor for the returned objects.</param>
+        /// <param name="hasHeaders">Determines if the file has headers. 
+        /// If this is true then the first row will be ignored.</param>
+        /// <param name="ignoreBlankLines">Determines if blank lines should be skipped.</param>
+        /// <returns>The iterable rows in the file.</returns>
         public static IEnumerable<T> CsvForeach<T>(TextReader reader, Func<string[], T> constructor, bool hasHeaders = true, bool ignoreBlankLines = true)
         {
-            foreach(string[] strs in CsvForeach(reader, hasHeaders, ignoreBlankLines)) {
+            foreach (string[] strs in CsvForeach(reader, hasHeaders, ignoreBlankLines)) {
                 yield return constructor(strs);
             }
         }
@@ -444,8 +490,8 @@ namespace Utilities
         /// <summary>
         /// Iterates each row in an XLS file.
         /// </summary>
-        /// <param name="path">The path or filename of the XLS file.</param>
-        /// <param name="sheetname">The name of the sheet in the file to iterate. 
+        /// <param name="path">The path of the XLS file.</param>
+        /// <param name="sheetname">The name of the worksheet to iterate. 
         /// If this is null then the first sheet will be iterated.</param>
         /// <param name="hasHeaders">Determines if the file has headers. 
         /// If this is true then the first row will be ignored.</param>
@@ -479,24 +525,35 @@ namespace Utilities
             }
         }
 
+        /// <summary>
+        /// Iterates each row in an XLS file.
+        /// </summary>
+        ///  <typeparam name="T">The Type of objects to return.</typeparam>
+        /// <param name="path">The path of the XLS file.</param>
+        /// <param name="constructor">The constructor for the returned objects.</param>
+        /// <param name="sheetname">The name of the worksheet to iterate. 
+        /// If this is null then the first sheet will be iterated.</param>
+        /// <param name="hasHeaders">Determines if the file has headers. 
+        /// If this is true then the first row will be ignored.</param>
+        /// <returns>The iterable rows in the file.</returns>
         public static IEnumerable<T> XlsForeach<T>(string path, Func<string[], T> constructor, string sheetname = null, bool hasHeaders = true)
         {
-            foreach(string[] line in XlsForeach(path, sheetname, hasHeaders)) {
+            foreach (string[] line in XlsForeach(path, sheetname, hasHeaders)) {
                 yield return constructor(line);
             }
         }
 
         /// <summary>
-        /// Reads an XLS Excel file into a List of type T. 
+        /// Reads an XLS Excel file into a List.
         /// This assumes that the type T has public properties with identical names of the columns in the DataTable.
         /// </summary>
-        /// <typeparam name="T">The type of object to convert the datatable rows into.</typeparam>
+        /// <typeparam name="T">The type of object to convert the DataRows into.</typeparam>
         /// <param name="list">The list to append data to.</param>
-        /// <param name="path">The path or filename of the Excel file.</param>
+        /// <param name="path">The path of the Excel file.</param>
         /// <param name="hasHeaders">Determines if the file has headers. 
         /// If this is true then the columns are named based on the first line.</param>
-        /// <returns>The dataset with data from the file.</returns>
-            public static bool ReadXls<T>(this List<T> list, string path) where T : new()
+        /// <returns>The Dataset with data from the file.</returns>
+        public static bool ReadXls<T>(this List<T> list, string path) where T : new()
         {
             DataSet dataset = new DataSet();
             if (!dataset.ReadXls(path, true))
@@ -508,10 +565,10 @@ namespace Utilities
         /// <summary>
         /// Reads an XLS Excel file into a DataSet where each sheet is a DataTable.
         /// </summary>
-        /// <param name="path">The path or filename of the Excel file.</param>
+        /// <param name="path">The path of the Excel file.</param>
         /// <param name="hasHeaders">Determines if the file has headers. 
         /// If this is true then the columns are named based on the first line.</param>
-        /// <returns>The dataset with data from the file.</returns>
+        /// <returns>The Dataset with data from the file.</returns>
         public static DataSet ReadXls(string path, bool hasHeaders = true)
         {
             DataSet dataset = new DataSet();
@@ -524,10 +581,10 @@ namespace Utilities
         /// Reads an XLS Excel file into a DataSet where each sheet is a DataTable.
         /// </summary>
         /// <param name="dataset">The dataset to append data to.</param>
-        /// <param name="path">The path or filename of the Excel file.</param>
+        /// <param name="path">The path of the Excel file.</param>
         /// <param name="hasHeaders">Determines if the file has headers. 
         /// If this is true then the columns are named based on the first line.</param>
-        /// <param name="skipPredicate">Determines if a row should be skipped.</param>
+        /// <returns>True on success, or false otherwise.</returns>
         public static bool ReadXls(this DataSet dataset, string path, bool hasHeaders = true)
         {
             string sheetName = null;
@@ -589,7 +646,7 @@ namespace Utilities
         /// <summary>
         /// Iterates each row in an XLSX file.
         /// </summary>
-        /// <param name="path">The path or filename of the XLSX file.</param>
+        /// <param name="path">The path of the XLSX file.</param>
         /// <param name="sheetname">The name of the sheet in the file to iterate. 
         /// If this is null then the first sheet will be iterated.</param>
         /// <param name="hasHeaders">Determines if the file has headers. 
@@ -610,7 +667,7 @@ namespace Utilities
         /// <summary>
         /// Iterates each row in an XLSX file.
         /// </summary>
-        /// <param name="path">The path or filename of the XLSX file.</param>
+        /// <param name="path">The path of the XLSX file.</param>
         /// <param name="constructor">The constructor for the objects returned.</param>
         /// <param name="sheetname">The name of the sheet in the file to iterate. 
         /// If this is null then the first sheet will be iterated.</param>
@@ -778,7 +835,7 @@ namespace Utilities
         /// <summary>
         /// Determines if a file is available for reading/writing.
         /// </summary>
-        /// <param name="path">The path or filename of the file to check.</param>
+        /// <param name="path">The path of the file to check.</param>
         /// /// <param name="access">The file access to test.</param>
         /// <returns>True if the file is available with the given file access. False otherwise.</returns>
         public static bool IsAvailable(string path, FileAccess access = FileAccess.Read)
@@ -789,7 +846,7 @@ namespace Utilities
         /// <summary>
         /// Determines if a file is available for reading/writing.
         /// </summary>
-        /// <param name="path">The path or filename of the file to check.</param>
+        /// <param name="path">The path of the file to check.</param>
         /// /// <param name="access">The file access to test.</param>
         /// <returns>True if the file is available with the given file access. False otherwise.</returns>
         public static bool IsAvailable(FileInfo path, FileAccess access = FileAccess.Read)
@@ -894,14 +951,14 @@ namespace Utilities
         public static string GenerateFilename(string directoryname, string filename)
         {
             string outfile = directoryname + Path.DirectorySeparatorChar + filename;
-            if (System.IO.File.Exists(outfile)) {
+            if (File.Exists(outfile)) {
                 string pathNoExt = directoryname + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(filename);
                 string fileExt = Path.GetExtension(filename);
-                int index = 0;
+                int index = 1;
                 do {
-                    index++; //starts at 1
                     outfile = pathNoExt + " (" + index + ")" + fileExt;
-                } while (System.IO.File.Exists(outfile));
+                    index++;
+                } while (File.Exists(outfile));
             }
             return outfile;
         }

@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using OfficeOpenXml;
 using System.Text.RegularExpressions;
 
@@ -549,7 +547,7 @@ namespace Utilities.Excel
                         isTime = true;
                     else if (ch == '*' || ch == '\\')
                         i++; //skip next
-                    else if(ch == '"') {
+                    else if (ch == '"') {
                         i++;
                         while (i < numfmt.Length && numfmt[i] != '"')
                             i++;

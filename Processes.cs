@@ -5,8 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Utilities
 {
@@ -67,7 +65,7 @@ namespace Utilities
                 return null;
             }
         }
-        
+
         /// <summary>
         /// Forces the current process to restart as an Administrator.
         /// </summary>

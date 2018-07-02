@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -43,10 +44,11 @@ namespace Utilities
                 /*DataTable table5 = new DataTable();
                 table5.ReadXlsx("Book5.xlsx");
                 */
-                Log.Logger.Instance.DefaultStyle = Log.LogStyle.DateTimeMethodFileLine;
-                Log.Logger.Instance.Log("text");
+                //Log.Logger.Instance.DefaultStyle = Log.LogStyle.DateTimeMethodFileLine;
+                //Log.Logger.Instance.Log("text");
+
             }
-            catch(Exception ex) {
+            catch (Exception ex) {
                 System.Console.WriteLine("Error: " + ex.Message);
             }
         }

@@ -3,10 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using OfficeOpenXml;
-using OfficeOpenXml.Style;
 
 namespace Utilities.Excel
 {
@@ -259,7 +256,7 @@ namespace Utilities.Excel
         {
             for (int i = 0; i < doc.Workbook.Worksheets.Count; i++) {
                 ExcelWorksheet worksheet = doc.Workbook.Worksheets[i + (doc.Compatibility.IsWorksheets1Based ? 1 : 0)];
-                for(int col = 1; col <= worksheet.Dimension.Columns; col++) {
+                for (int col = 1; col <= worksheet.Dimension.Columns; col++) {
                     worksheet.Column(col).AutoFit();
                 }
                 //worksheet.Cells.AutoFitColumns(0);
@@ -282,8 +279,8 @@ namespace Utilities.Excel
         /// </summary>
         public void Add()
         {
-            for(int i = doc.Workbook.Worksheets.Count + 1; ;) {
-                if(doc.Workbook.Worksheets["Sheet" + i.ToString()] == null) {
+            for (int i = doc.Workbook.Worksheets.Count + 1; ;) {
+                if (doc.Workbook.Worksheets["Sheet" + i.ToString()] == null) {
                     Add("Sheet" + (doc.Workbook.Worksheets.Count + 1));
                     return;
                 }
@@ -448,7 +445,7 @@ namespace Utilities.Excel
         {
             if (!disposed) {
                 if (disposing) {
-                    if(doc != null) {
+                    if (doc != null) {
                         doc.Dispose();
                         doc = null;
                     }

@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Utilities
 {
@@ -47,7 +45,8 @@ namespace Utilities
             }
         }
 
-        public static DataRowEqualityComparer<T> Create(params int[] cols) {
+        public static DataRowEqualityComparer<T> Create(params int[] cols)
+        {
             if (cols.Length == 0)
                 return _default;
             return new DataRowEqualityComparerAll(cols);
@@ -64,7 +63,7 @@ namespace Utilities
             int IEqualityComparer<T>.GetHashCode(T obj)
             {
                 int hashcode = obj[cols[0]].GetHashCode();
-                for(int i = 1; i < cols.Length; i++) {
+                for (int i = 1; i < cols.Length; i++) {
                     hashcode ^= obj[cols[i]].GetHashCode();
                 }
                 return hashcode;

@@ -4,9 +4,7 @@ using System.Data;
 using System.Data.Odbc;
 using System.Data.SqlClient;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
-using System.Threading.Tasks;
 using Dapper;
 using FastMember;
 
@@ -22,13 +20,13 @@ namespace Utilities
         /// <param name="database">The initial database to connect to.</param>
         /// <param name="username">The username to log into the database. If null then integrated security is used.</param>
         /// <param name="password">The password to log into the server. If null the, integrated security is used.</param>
-        /// <param name="timeoutSecs">The maximum timeout in seconds for the connection.</param>
         /// <param name="testConnection">Determines if the connection should be tested before being returned.</param>
+        /// <param name="timeoutSecs">The maximum timeout in seconds for the connection.</param>
         /// <returns>The connection string builder or null if the connection failed.</returns>
-        public static SqlConnectionStringBuilder ConnString(string server, string database, string username, string password, int timeoutSecs = 30, bool testConnection = false)
+        public static SqlConnectionStringBuilder ConnString(string server, string database, string username, string password, bool testConnection = false, int timeoutSecs = 15)
         {
-            //var sb = new SqlConnectionStringBuilder("Integrated Security=SSPI;");
-            var sb = new SqlConnectionStringBuilder();
+            //SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder("Integrated Security=SSPI;");
+            SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder();
             sb.DataSource = server;
             sb.InitialCatalog = database;
             sb.ConnectTimeout = timeoutSecs;
@@ -60,12 +58,12 @@ namespace Utilities
         /// </summary>
         /// <param name="server">The server to connect to.</param>
         /// <param name="database">The initial database to connect to.</param>
-        /// <param name="timeoutSecs">The maximum timeout in seconds for the connection.</param>
         /// <param name="testConnection">Determines if the connection should be tested before being returned.</param>
+        /// <param name="timeoutSecs">The maximum timeout in seconds for the connection.</param>
         /// <returns>The connection string builder or null if the connection failed.</returns>
-        public static SqlConnectionStringBuilder ConnString(string server, string database, int timeoutSecs = 30, bool testConnection = false)
+        public static SqlConnectionStringBuilder ConnString(string server, string database, bool testConnection = false, int timeoutSecs = 15)
         {
-            return ConnString(server, database, null, null, timeoutSecs, testConnection);
+            return ConnString(server, database, null, null, testConnection, timeoutSecs);
         }
 
         /// <summary>
@@ -432,7 +430,7 @@ namespace Utilities
                 OdbcCommand cmd = new OdbcCommand("SELECT CASE WHEN EXISTS (SELECT * FROM information_schema.tables WHERE table_name = @tablename) THEN 1 ELSE 0 END");
                 cmd.Parameters.AddWithValue("@tablename", tablename);
 
-                exists = (int) cmd.ExecuteScalar() == 1;
+                exists = (int)cmd.ExecuteScalar() == 1;
             }
             catch {
                 try {
