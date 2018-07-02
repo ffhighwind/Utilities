@@ -324,7 +324,8 @@ namespace Utilities.Excel
         /// <returns></returns>
         public Worksheet this[string sheetname] {
             get {
-                return new Worksheet(doc.Workbook.Worksheets[sheetname]);
+                ExcelWorksheet worksheet = doc.Workbook.Worksheets[sheetname];
+                return worksheet == null ? null : new Worksheet(worksheet);
             }
         }
 
@@ -337,7 +338,8 @@ namespace Utilities.Excel
             get {
                 if (doc.Compatibility.IsWorksheets1Based)
                     sheetIndex += 1;
-                return new Worksheet(doc.Workbook.Worksheets[sheetIndex]);
+                ExcelWorksheet worksheet = doc.Workbook.Worksheets[sheetIndex];
+                return worksheet == null ? null : new Worksheet(doc.Workbook.Worksheets[sheetIndex]);
             }
         }
 

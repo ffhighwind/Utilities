@@ -583,8 +583,8 @@ namespace Utilities.Excel
                 string[] headers = new string[maxCol];
                 for (int col = 1; col < maxCol; col++) {
                     Type ty = ColumnType(col);
-                    string header = hasHeaders ? worksheet.Cells[1, col].Value.ToString() : "Sheet" + col.ToString();
-                    table.Columns.Add(header, ty);
+                    string header = hasHeaders ? worksheet.Cells[1, col].Value?.ToString() : "Column" + col;
+                    table.Columns.Add(header ?? new string(' ', col), ty);
                 }
             }
             else if (table.Columns.Count != Columns)
@@ -637,13 +637,14 @@ namespace Utilities.Excel
         /// <summary>
         /// Enumerates the Worksheet rows.
         /// </summary>
-        /// <param name="hasHeaders">Determines if the first row should be skipped.</param>
-        /// <returns>An enumerable list of strings representing the rows in the Worksheet.</returns>
-        public IEnumerable<string[]> AsEnumerable(bool hasHeaders = true)
+        /// <returns>A list of strings representing the rows in the Worksheet.</returns>
+        public IEnumerable<string[]> AsEnumerable()
         {
-            string[] vals = new string[Columns];
-            for (int row = hasHeaders ? 2 : 1; row <= Rows; row++) {
-                for (int col = 0; col < Columns; col++) {
+            int columns = Columns;
+            int rows = Rows;
+            for (int row = 1; row <= rows; row++) {
+                string[] vals = new string[columns];
+                for (int col = 0; col < columns; col++) {
                     vals[col] = worksheet.Cells[row, col + 1].Value?.ToString();
                 }
                 yield return vals;
@@ -658,30 +659,29 @@ namespace Utilities.Excel
         /// <returns>An enumerable list of objects representing the rows in the Worksheet.</returns>
         public IEnumerable<T> AsEnumerable<T>(bool hasHeaders = true) where T : new()
         {
-            PropertyInfo[] pis = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance);
+            Func<string[], T> converter;
+            string[] vals = new string[Columns];
+            if (hasHeaders) {
+                vals = new string[Columns];
+                for (int col = 0; col < vals.Length; col++) {
+                    vals[col] = Cell<string>(1, col + 1);
+                }
+                converter = Util.StringsConverter<T>(vals);
+            }
+            else
+                converter = Util.StringsConverter<T>();
+            bool[] isTimespan = new bool[Columns];
+            for (int i = 0; i < isTimespan.Length; i++) {
+                isTimespan[i] = ColumnType(i + 1) == typeof(TimeSpan);
+            }
             for (int row = hasHeaders ? 2 : 1; row <= Rows; row++) {
-                T tnew = new T();
                 for (int col = 1; col <= Columns; col++) {
                     //This is the real wrinkle to using reflection - Excel stores all numbers as double including int
                     ExcelRange cell = worksheet.Cells[row, col];
                     //If it is numeric it is a double since that is how excel stores all numbers
-                    PropertyInfo pi = pis[col];
-                    if (cell.Value == null) {
-                        pi.SetValue(tnew, null);
-                    }
-                    else if (pi.PropertyType == typeof(Int32)) {
-                        pi.SetValue(tnew, cell.GetValue<int>());
-                    }
-                    else if (pi.PropertyType == typeof(double)) {
-                        pi.SetValue(tnew, cell.GetValue<double>());
-                    }
-                    else if (pi.PropertyType == typeof(DateTime)) {
-                        pi.SetValue(tnew, cell.GetValue<DateTime>());
-                    }
-                    else
-                        pi.SetValue(tnew, cell.GetValue<string>());
+                    vals[col - 1] = isTimespan[col - 1] ? DateTime.FromOADate(cell.GetValue<double>()).ToString("h:mm:ss") : cell.GetValue<string>();
                 }
-                yield return tnew;
+                yield return converter(vals);
             }
         }
 

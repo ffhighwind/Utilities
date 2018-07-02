@@ -649,17 +649,40 @@ namespace Utilities
         /// <param name="path">The path of the XLSX file.</param>
         /// <param name="sheetname">The name of the sheet in the file to iterate. 
         /// If this is null then the first sheet will be iterated.</param>
-        /// <param name="hasHeaders">Determines if the file has headers. 
-        /// If this is true then the first row will be ignored.</param>
+        /// <param name="includeHeaders">Determines if the file has headers should be included.</param>
         /// <returns>The iterable rows in the file.</returns>
-        public static IEnumerable<string[]> XlsxForeach(string path, string sheetname = null, bool hasHeaders = true)
+        public static IEnumerable<string[]> XlsxForeach(string path, string sheetname = null, bool includeHeaders = true)
         {
             using (Excel.Spreadsheet ss = new Excel.Spreadsheet(path)) {
-                IEnumerable<string[]> rows = ss[sheetname].AsEnumerable();
-                if (hasHeaders)
+                Excel.Worksheet worksheet = sheetname == null ? ss[0] : ss[sheetname];
+                if (worksheet == null)
+                    throw new Exception(string.Format("Invalid Worksheet '{0}'", sheetname ?? "null"));
+                IEnumerable<string[]> rows = worksheet.AsEnumerable();
+                if (includeHeaders)
                     rows = rows.Skip(1);
                 foreach (string[] row in rows) {
                     yield return row;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Iterates each row in an XLSX file.
+        /// </summary>
+        /// <param name="path">The path of the XLSX file.</param>
+        /// <param name="sheetname">The name of the sheet in the file to iterate. 
+        /// If this is null then the first sheet will be iterated.</param>
+        /// <param name="hasHeaders">Determines if the file has headers. 
+        /// If this is true then the first row will be ignored.</param>
+        /// <returns>The iterable rows in the file.</returns>
+        public static IEnumerable<T> XlsxForeach<T>(string path, string sheetname = null, bool hasHeaders = true) where T : new()
+        {
+            using (Excel.Spreadsheet ss = new Excel.Spreadsheet(path)) {
+                Excel.Worksheet worksheet = sheetname == null ? ss[0] : ss[sheetname];
+                if (worksheet == null)
+                    throw new Exception(string.Format("Invalid Worksheet '{0}'", sheetname ?? "null"));
+                foreach (T obj in worksheet.AsEnumerable<T>(hasHeaders)) {
+                    yield return obj;
                 }
             }
         }
@@ -677,7 +700,10 @@ namespace Utilities
         public static IEnumerable<T> XlsxForeach<T>(string path, Func<string[], T> constructor, string sheetname = null, bool hasHeaders = true)
         {
             using (Excel.Spreadsheet ss = new Excel.Spreadsheet(path)) {
-                IEnumerable<string[]> rows = ss[sheetname].AsEnumerable();
+                Excel.Worksheet worksheet = sheetname == null ? ss[0] : ss[sheetname];
+                if (worksheet == null)
+                    throw new Exception(string.Format("Invalid Worksheet '{0}'", sheetname ?? "null"));
+                IEnumerable<string[]> rows = worksheet.AsEnumerable();
                 if (hasHeaders)
                     rows = rows.Skip(1);
                 foreach (string[] row in rows) {
@@ -692,12 +718,12 @@ namespace Utilities
         /// <param name="path">Name of file to be written.</param>
         /// <param name="sheetname">The name of the sheet in the file to read.
         /// If this is null then the first sheet will be iterated.</param>
-        /// <param name="hasHeaders">Determines if the columns should be written.</param>
+        /// <param name="includeHeaders">Determines if the columns should be included.</param>
         /// <returns>The list if successful, or null if something went wrong.</returns>
-        public static List<string[]> ReadXlsx(string path, string sheetname = null, bool hasHeaders = true)
+        public static List<string[]> ReadXlsx(string path, string sheetname = null, bool includeHeaders = true)
         {
             List<string[]> list = new List<string[]>();
-            return ReadXlsx(list, path, sheetname, hasHeaders) ? list : null;
+            return ReadXlsx(list, path, sheetname, includeHeaders) ? list : null;
         }
 
         /// <summary>
@@ -707,23 +733,20 @@ namespace Utilities
         /// <param name="path">Name of file to be written.</param>
         /// <param name="sheetname">The name of the sheet in the file to read.
         /// If this is null then the first sheet will be iterated.</param>
-        /// <param name="hasHeaders">Determines if the columns should be written.</param>
+        /// <param name="includeHeaders">Determines if the columns should be included.</param>
         /// <returns>True if successful, or false if something went wrong.</returns>
-        public static bool ReadXlsx(this ICollection<string[]> list, string path, string sheetname = null, bool hasHeaders = true)
+        public static bool ReadXlsx(this ICollection<string[]> list, string path, string sheetname = null, bool includeHeaders = true)
         {
             try {
-                using (Excel.Spreadsheet ss = new Excel.Spreadsheet(path)) {
-                    IEnumerable<string[]> rows = ss[sheetname].AsEnumerable();
-                    if (hasHeaders)
-                        rows = rows.Skip(1);
-                    foreach (string[] row in rows) {
-                        list.Add(row);
-                    }
+                IEnumerable<string[]> lines = XlsxForeach(path, sheetname, includeHeaders);
+                foreach(string[] line in lines) {
+                    list.Add(line);
                 }
                 return true;
             }
             catch (Exception ex) {
-                Console.Error.WriteLine("Error ReadXlsx({0}): {1}", path + ((sheetname == null) ? "" : "[" + sheetname + "]"), ex.Message);
+                string sheetStr = sheetname == null ? "" : "[" + sheetname + "]";
+                Console.Error.WriteLine("Error ReadXlsx({0}){1}: {2}", path, sheetStr, ex.Message);
             }
             return false;
         }
@@ -760,10 +783,8 @@ namespace Utilities
         {
             try {
                 using (Excel.Spreadsheet ss = new Excel.Spreadsheet(path)) {
-                    if (sheetname == null)
-                        ss[0].ToDataTable(dt, hasHeaders);
-                    else
-                        ss[sheetname].ToDataTable(dt, hasHeaders);
+                    Excel.Worksheet worksheet = sheetname == null ? ss[0] : ss[sheetname];
+                    worksheet.ToDataTable(dt, hasHeaders);
                 }
                 return true;
             }

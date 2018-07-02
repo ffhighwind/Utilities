@@ -142,6 +142,34 @@ namespace Utilities
                 return obj;
             };
         }
+
+        /// <summary>
+        /// Returns a function that converts an object from one Type to another.
+        /// </summary>
+        /// <param name="input">The Type of the input object.</param>
+        /// <param name="output">The Type of the output object.</param>
+        /// <returns>A function that converts objects from one Type to another.</returns>
+        public static Func<string[], T> StringsConverter<T>(string[] propertyNames) where T : new()
+        {
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.SetProperty;
+            PropertyInfo[] pinfos = new PropertyInfo[propertyNames.Length];
+            for(int i = 0; i < pinfos.Length; i++) {
+                pinfos[i] = typeof(T).GetProperty(propertyNames[i], flags);
+                if (pinfos[i] == null)
+                    throw new Exception("Invalid PropertyInfo '" + propertyNames[i] ?? "" + "'");
+            }
+            Func<object, object>[] converters = new Func<object, object>[pinfos.Length];
+            for (int i = 0; i < pinfos.Length; i++) {
+                converters[i] = converterDict[pinfos[i].PropertyType](typeof(string));
+            }
+            return (strs) => {
+                T obj = new T();
+                for (int i = 0; i < pinfos.Length; i++) {
+                    pinfos[i].SetValue(obj, converters[i](strs[i]));
+                }
+                return obj;
+            };
+        }
         #endregion //Converters
 
         #region Encoding/TextReader

@@ -13,6 +13,19 @@ test
 
 namespace Utilities
 {
+
+    public class X
+    {
+        public DateTime OrderDate { get; set; }
+        public string Region { get; set; }
+        public string Rep { get; set; }
+        public string Item { get; set; }
+        public int Units { get; set; }
+        public double UnitCost { get; set; }
+        public decimal Total { get; set; }
+        public string Time { get; set; }
+    }
+
     class Program
     {
         static void Main(string[] args)
@@ -47,6 +60,12 @@ namespace Utilities
                 //Log.Logger.Instance.DefaultStyle = Log.LogStyle.DateTimeMethodFileLine;
                 //Log.Logger.Instance.Log("text");
 
+                var x = IO.XlsxForeach<X>("Book3.xlsx");
+                var y = x.ToList();
+                y.WriteXlsx("tmp.xlsx");
+
+                //var x = IO.ReadXlsx("Book4 - Copy.xlsx");
+                // x.Print(true);
             }
             catch (Exception ex) {
                 System.Console.WriteLine("Error: " + ex.Message);
