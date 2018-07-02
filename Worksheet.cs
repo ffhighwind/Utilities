@@ -54,8 +54,10 @@ namespace Utilities.Excel
             foreach (Type ty in types) {
                 if (ty == typeof(DateTime))
                     FixDateColumn(col);
-                else if (ty == typeof(TimeSpan))
+                else if (ty == typeof(TimeSpan)) {
                     worksheet.Column(col).Style.Numberformat.Format = "h:mm:ss";
+                    worksheet.Cells[1, col, worksheet.Dimension.Rows, col].Style.Numberformat.Format = "h:mm:ss";
+                }
                 col++;
             }
         }

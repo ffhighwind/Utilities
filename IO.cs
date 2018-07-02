@@ -846,7 +846,7 @@ namespace Utilities
                 return true;
             }
             catch (Exception ex) {
-                Console.Error.WriteLine("Error WriteXlsx({0}): {2}{3}", path, ex.Message, ex.InnerException == null ? "" : "\n " + ex.InnerException);
+                Console.Error.WriteLine("Error WriteXlsx({0}): {1}{2}", path ?? "", ex.Message, ex.InnerException == null ? "" : "\n " + ex.InnerException);
             }
             return false;
         }

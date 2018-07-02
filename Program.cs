@@ -23,7 +23,7 @@ namespace Utilities
         public int Units { get; set; }
         public double UnitCost { get; set; }
         public decimal Total { get; set; }
-        public string Time { get; set; }
+        public TimeSpan Time { get; set; }
     }
 
     class Program
