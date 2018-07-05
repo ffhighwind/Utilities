@@ -87,10 +87,10 @@ namespace Utilities.Log
 
         public LogAction CustomStyle {
             get {
-                return LogStyleActions[(int)LogStyle.Custom];
+                return LogStyleActions[(int) LogStyle.Custom];
             }
             set {
-                LogStyleActions[(int)LogStyle.Custom] = value ?? customStyle;
+                LogStyleActions[(int) LogStyle.Custom] = value ?? customStyle;
             }
         }
 
@@ -130,7 +130,7 @@ namespace Utilities.Log
             [CallerFilePath] string filePath = "",
             [CallerLineNumber] int lineNumber = 0)
         {
-            Log(message, LogStyleActions[(int)DefaultStyle], methodName, filePath, lineNumber);
+            Log(message, LogStyleActions[(int) DefaultStyle], methodName, filePath, lineNumber);
         }
 
         public void Log(LogStyle style,
@@ -138,7 +138,7 @@ namespace Utilities.Log
             [CallerFilePath] string filePath = "",
             [CallerLineNumber] int lineNumber = 0)
         {
-            Log(null, LogStyleActions[(int)style], methodName, filePath, lineNumber);
+            Log(null, LogStyleActions[(int) style], methodName, filePath, lineNumber);
         }
 
         public void Log(string message,
@@ -147,7 +147,7 @@ namespace Utilities.Log
             [CallerFilePath] string filePath = "",
             [CallerLineNumber] int lineNumber = 0)
         {
-            Log(message, LogStyleActions[(int)style], methodName, filePath, lineNumber);
+            Log(message, LogStyleActions[(int) style], methodName, filePath, lineNumber);
         }
 
         public void Write(string message)
@@ -188,7 +188,7 @@ namespace Utilities.Log
 
         public void Flush()
         {
-            foreach(var writer in writers) {
+            foreach (var writer in writers) {
                 writer.Flush();
             }
         }

@@ -430,7 +430,7 @@ namespace Utilities
                 OdbcCommand cmd = new OdbcCommand("SELECT CASE WHEN EXISTS (SELECT * FROM information_schema.tables WHERE table_name = @tablename) THEN 1 ELSE 0 END");
                 cmd.Parameters.AddWithValue("@tablename", tablename);
 
-                exists = (int)cmd.ExecuteScalar() == 1;
+                exists = (int) cmd.ExecuteScalar() == 1;
             }
             catch {
                 try {

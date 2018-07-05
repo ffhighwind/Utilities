@@ -257,15 +257,51 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Creates a DataTable.
+        /// Converts  a DataTable.
         /// </summary>
         /// <param name="table">The DataTable to remove duplicates rows from.</param>
         /// <returns>The distinct sorted Datatable.</returns>
         public static DataTable ToDataTable(this IEnumerable<DataRow> rows)
         {
             DataTable table = new DataTable();
-            foreach (DataRow row in rows) {
-                table.Rows.Add(row.ItemArray);
+            return ToDataTable(rows, table);
+        }
+
+        /// <summary>
+        /// Creates a DataTable.
+        /// </summary>
+        /// <param name="table">The DataTable to remove duplicates rows from.</param>
+        /// <returns>The distinct sorted Datatable.</returns>
+        public static DataTable ToDataTable(this IEnumerable<DataRow> rows, DataTable table)
+        {
+            if (table.Columns.Count == 0) {
+                if (rows.Any()) {
+                    DataRow first = rows.First();
+                    for (int i = 0; i < first.ItemArray.Length; i++) {
+                        table.Columns.Add("Column" + (i + 1), first[i]?.GetType() ?? typeof(string));
+                    }
+                    int errorCount = 0;
+                    foreach (DataRow row in rows) {
+                        try {
+                            table.Rows.Add(row.ItemArray);
+                        }
+                        catch (Exception ex) {
+                            for (int i = 0; i < row.ItemArray.Length; i++) {
+                                if (row[i] != null && row[i].GetType() != table.Columns[i].DataType) {
+                                    table.Columns[i].DataType = row[i].GetType();
+                                }
+                            }
+                            errorCount++;
+                            if (errorCount > row.ItemArray.Length)
+                                throw ex;
+                        }
+                    }
+                }
+            }
+            else {
+                foreach (DataRow row in rows) {
+                    table.Rows.Add(row.ItemArray);
+                }
             }
             return table;
         }

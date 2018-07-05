@@ -196,7 +196,7 @@ namespace Utilities
                 int indexOfSep;
                 if (path.Length > 1 && (path[1] == Path.DirectorySeparatorChar || path[1] == Path.AltDirectorySeparatorChar)) {
                     indexOfSep = path.IndexOfAny(dirSeparators, 2);
-                    if(indexOfSep > 2)
+                    if (indexOfSep > 2)
                         indexOfSep = path.IndexOfAny(dirSeparators, indexOfSep + 1);
                 }
                 else

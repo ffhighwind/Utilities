@@ -84,7 +84,7 @@ namespace Utilities.Excel
                 //if (fi.Exists && fi.IsReadOnly)
                 //    doc = new ExcelPackage(new FileStream(fi.FullName, FileMode.OpenOrCreate, FileAccess.Read), password);
                 //else
-                if(doc == null)
+                if (doc == null)
                     doc = new ExcelPackage(fi, password);
                 if (doc != null && doc.Workbook.Worksheets.Count == 0)
                     Add();
@@ -144,7 +144,7 @@ namespace Utilities.Excel
         /// </summary>
         public void Clear()
         {
-            for (int i =  doc.Workbook.Worksheets.Count - 1; i >= 0; i--) {
+            for (int i = doc.Workbook.Worksheets.Count - 1; i >= 0; i--) {
                 doc.Workbook.Worksheets.Delete(i + (doc.Compatibility.IsWorksheets1Based ? 1 : 0));
             }
             Add();

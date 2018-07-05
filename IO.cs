@@ -870,7 +870,7 @@ namespace Utilities
                 fi.MoveTo(outpath);
                 return true;
             }
-            catch(Exception ex) {
+            catch (Exception ex) {
                 Console.Error.WriteLine("Error IO.Move({0}, {1}): {2}", inpath ?? "null", outpath ?? "null", ex.Message);
             }
             return false;
