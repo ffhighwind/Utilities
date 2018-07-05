@@ -63,9 +63,9 @@ namespace Utilities.Excel
         /// Opens or creates an Excel Spreadsheet.
         /// </summary>
         /// <param name="path">The path of the Excel Spreadsheet.</param>
-        public void Open(string path)
+        public bool Open(string path)
         {
-            Open(path, null);
+            return Open(path, null);
         }
 
         /// <summary>
@@ -73,20 +73,45 @@ namespace Utilities.Excel
         /// </summary>
         /// <param name="path">The path of the Excel Spreadsheet.</param>
         /// <param name="password">The password to the Excel Spreadsheet.</param>
-        public void Open(string path, string password)
+        public bool Open(string path, string password)
         {
-            doc = new ExcelPackage(new FileInfo(path), password);
-            if (doc.Workbook.Worksheets.Count == 0)
-                Add();
+            try {
+                FileInfo fi = new FileInfo(path);
+                if (doc != null && !doc.File.Equals(fi)) {
+                    doc.Dispose();
+                    doc = null;
+                }
+                //if (fi.Exists && fi.IsReadOnly)
+                //    doc = new ExcelPackage(new FileStream(fi.FullName, FileMode.OpenOrCreate, FileAccess.Read), password);
+                //else
+                if(doc == null)
+                    doc = new ExcelPackage(fi, password);
+                if (doc != null && doc.Workbook.Worksheets.Count == 0)
+                    Add();
+                return doc != null;
+            }
+            catch (Exception ex) {
+                string msg = (path != null && !path.EndsWith(".xlsx")) ? "wrong file extension." : ex.Message;
+                Console.Error.WriteLine("Error Excel.Spreadsheet.Open({0}): {1}", path, msg);
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Returns whether the Spreadsheet is currently open and usable.
+        /// </summary>
+        public bool IsOpen {
+            get { return doc != null; }
         }
 
         /// <summary>
         /// Reads a stream and constructs an Excel Spreadsheet from it.
         /// </summary>
         /// <param name="stream">The stream containing the Excel data.</param>
-        public void Open(Stream stream)
+        /// <returns>True on success. False on failure.</returns>
+        public bool Open(Stream stream)
         {
-            Open(stream, null);
+            return Open(stream, null);
         }
 
         /// <summary>
@@ -94,11 +119,24 @@ namespace Utilities.Excel
         /// </summary>
         /// <param name="stream">The stream containing the Excel data.</param>
         /// <param name="password">The password to the Excel Spreadsheet.</param>
-        public void Open(Stream stream, string password)
+        /// <returns>True on success. False on failure.</returns>
+        public bool Open(Stream stream, string password)
         {
-            doc.Load(stream, password);
-            if (doc.Workbook.Worksheets.Count == 0)
-                Add();
+            try {
+                if (doc != null) {
+                    doc.Dispose();
+                    doc = null;
+                }
+                if (doc == null)
+                    doc = new ExcelPackage(stream, password);
+                if (doc != null && doc.Workbook.Worksheets.Count == 0)
+                    Add();
+                return doc != null;
+            }
+            catch (Exception ex) {
+                Console.Error.WriteLine("Error Spreadsheet.Open(Stream): " + ex.Message);
+            }
+            return false;
         }
 
         /// <summary>
@@ -106,8 +144,8 @@ namespace Utilities.Excel
         /// </summary>
         public void Clear()
         {
-            for (int i = doc.Workbook.Worksheets.Count - 1; i >= 0; i--) {
-                doc.Workbook.Worksheets.Delete(i);
+            for (int i =  doc.Workbook.Worksheets.Count - 1; i >= 0; i--) {
+                doc.Workbook.Worksheets.Delete(i + (doc.Compatibility.IsWorksheets1Based ? 1 : 0));
             }
             Add();
         }
@@ -123,7 +161,7 @@ namespace Utilities.Excel
             Clear();
             for (int i = 0; i < dataset.Tables.Count; i++) {
                 DataTable table = dataset.Tables[i];
-                ExcelWorksheet ws = doc.Workbook.Worksheets.Add(useTableNames ? table.TableName : "Sheet" + (i + 1));
+                ExcelWorksheet ws = doc.Workbook.Worksheets.First();
                 ws.Cells.LoadFromDataTable(table, printHeaders);
             }
         }
@@ -137,7 +175,7 @@ namespace Utilities.Excel
         public void Load(DataTable table, bool printHeaders = true, bool useTableName = true)
         {
             Clear();
-            ExcelWorksheet ws = doc.Workbook.Worksheets.Last();
+            ExcelWorksheet ws = doc.Workbook.Worksheets.First();
             ws.Name = useTableName ? table.TableName : "Sheet1";
             new Worksheet(ws).Load(table, printHeaders);
         }
@@ -151,7 +189,7 @@ namespace Utilities.Excel
         public void Load(IDataReader reader, bool printHeaders = true, string sheetname = "Sheet1")
         {
             Clear();
-            ExcelWorksheet ws = doc.Workbook.Worksheets.Last();
+            ExcelWorksheet ws = doc.Workbook.Worksheets.First();
             ws.Name = sheetname;
             new Worksheet(ws).Load(reader, printHeaders);
         }
@@ -164,7 +202,7 @@ namespace Utilities.Excel
         public void Load(IEnumerable<object[]> list, string sheetname = "Sheet1")
         {
             Clear();
-            ExcelWorksheet ws = doc.Workbook.Worksheets.Last();
+            ExcelWorksheet ws = doc.Workbook.Worksheets.First();
             ws.Name = sheetname;
             new Worksheet(ws).Load(list);
         }
@@ -178,7 +216,7 @@ namespace Utilities.Excel
         public void Load<T>(IEnumerable<T> list, string sheetname = "Sheet1")
         {
             Clear();
-            ExcelWorksheet ws = doc.Workbook.Worksheets.Last();
+            ExcelWorksheet ws = doc.Workbook.Worksheets.First();
             ws.Name = sheetname;
             new Worksheet(ws).Load(list);
         }
@@ -191,7 +229,7 @@ namespace Utilities.Excel
         public void Load(string csvtext, string sheetname = "Sheet1")
         {
             Clear();
-            ExcelWorksheet ws = doc.Workbook.Worksheets.Last();
+            ExcelWorksheet ws = doc.Workbook.Worksheets.First();
             ws.Name = sheetname;
             new Worksheet(ws).Load(csvtext);
         }

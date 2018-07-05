@@ -468,6 +468,23 @@ namespace Utilities
         #endregion //Type
 
         #region String/StringBuilder
+        /// <summary>
+        /// Joins strings together with a separator betewen each of them.
+        /// </summary>
+        /// <param name="strings">The strings to join.</param>
+        /// <param name="sep">The separator to join the strings with.</param>
+        /// <returns>A combined string with separators between each input string.</returns>
+        public static string Join(this IEnumerable<string> strings, char sep)
+        {
+            return String.Join(sep.ToString(), strings);
+        }
+
+        /// <summary>
+        /// Joins strings together with a separator between each of them.
+        /// </summary>
+        /// <param name="strings">The strings to join.</param>
+        /// <param name="sep">The separator to join the strings with.</param>
+        /// <returns>A combined string with separators between each input string.</returns>
         public static string Join(this IEnumerable<string> strings, string sep = ",")
         {
             return String.Join(sep, strings);

@@ -282,7 +282,7 @@ namespace Utilities
                 return true;
             }
             catch (Exception ex) {
-                Console.Error.WriteLine("Error WriteCsv({0}): {1}", path ?? "", ex.Message);
+                Console.Error.WriteLine("Error WriteCsv({0}): {1}", path ?? "null", ex.Message);
             }
             return false;
         }
@@ -327,7 +327,7 @@ namespace Utilities
                 return true;
             }
             catch (Exception ex) {
-                Console.Error.WriteLine("Error WriteCsv({0}): {1}", path ?? "", ex.Message);
+                Console.Error.WriteLine("Error WriteCsv({0}): {1}", path ?? "null", ex.Message);
             }
             return false;
         }
@@ -344,7 +344,7 @@ namespace Utilities
                 return CsvForeach(path, hasHeaders, ignoreBlankLines).ToList();
             }
             catch (Exception ex) {
-                Console.Error.WriteLine("Error ReadCsv({0}): {1}", path ?? "", ex.Message);
+                Console.Error.WriteLine("Error ReadCsv({0}): {1}", path ?? "null", ex.Message);
             }
             return null;
         }
@@ -364,7 +364,7 @@ namespace Utilities
                 }
             }
             catch (Exception ex) {
-                Console.Error.WriteLine("Error ReadCsv({0}): {1}", path ?? "", ex.Message);
+                Console.Error.WriteLine("Error ReadCsv({0}): {1}", path ?? "null", ex.Message);
                 return false;
             }
             return true;
@@ -403,7 +403,7 @@ namespace Utilities
                 }
             }
             catch (Exception ex) {
-                Console.Error.WriteLine("Error ReadCsv({0}): {1}", path ?? "", ex.Message);
+                Console.Error.WriteLine("Error ReadCsv({0}): {1}", path ?? "null", ex.Message);
                 return false;
             }
             table.Trim();
@@ -421,7 +421,7 @@ namespace Utilities
         public static IEnumerable<string[]> CsvForeach(string path, bool hasHeaders = true, bool ignoreBlankLines = true)
         {
             using (TextReader reader = Util.TextReader(new FileInfo(path))) {
-                foreach (string[] line in CsvForeach(reader)) {
+                foreach (string[] line in CsvForeach(reader, hasHeaders)) {
                     yield return line;
                 }
             }
@@ -739,14 +739,14 @@ namespace Utilities
         {
             try {
                 IEnumerable<string[]> lines = XlsxForeach(path, sheetname, includeHeaders);
-                foreach(string[] line in lines) {
+                foreach (string[] line in lines) {
                     list.Add(line);
                 }
                 return true;
             }
             catch (Exception ex) {
                 string sheetStr = sheetname == null ? "" : "[" + sheetname + "]";
-                Console.Error.WriteLine("Error ReadXlsx({0}){1}: {2}", path, sheetStr, ex.Message);
+                Console.Error.WriteLine("Error ReadXlsx({0}){1}: {2}", path ?? "null", sheetStr, ex.Message);
             }
             return false;
         }
@@ -767,7 +767,7 @@ namespace Utilities
                 return true;
             }
             catch (Exception ex) {
-                Console.Error.WriteLine("Error ReadXlsx({0}): {1}", path, ex.Message);
+                Console.Error.WriteLine("Error ReadXlsx({0}): {1}", path ?? "null", ex.Message);
             }
             return false;
         }
@@ -783,13 +783,15 @@ namespace Utilities
         {
             try {
                 using (Excel.Spreadsheet ss = new Excel.Spreadsheet(path)) {
+                    if (!ss.IsOpen)
+                        return false;
                     Excel.Worksheet worksheet = sheetname == null ? ss[0] : ss[sheetname];
                     worksheet.ToDataTable(dt, hasHeaders);
                 }
                 return true;
             }
             catch (Exception ex) {
-                Console.Error.WriteLine("Error ReadXlsx({0}): {1}", path, ex.Message);
+                Console.Error.WriteLine("Error ReadXlsx({0}): {1}", path ?? "null", ex.Message);
             }
             return false;
         }
@@ -838,6 +840,8 @@ namespace Utilities
                 if (fi.Exists)
                     fi.Delete();
                 using (Excel.Spreadsheet ss = new Excel.Spreadsheet(path)) {
+                    if (!ss.IsOpen)
+                        return false;
                     action(ss);
                     ss.AutoFilter = true;
                     ss.AutoFit();
@@ -846,13 +850,32 @@ namespace Utilities
                 return true;
             }
             catch (Exception ex) {
-                Console.Error.WriteLine("Error WriteXlsx({0}): {1}{2}", path ?? "", ex.Message, ex.InnerException == null ? "" : "\n " + ex.InnerException);
+                Console.Error.WriteLine("Error WriteXlsx({0}): {1}{2}", path ?? "null", ex.Message, ex.InnerException == null ? "" : "\n " + ex.InnerException);
             }
             return false;
         }
         #endregion
 
         #region File/Directory/Path
+        public static bool Move(string inpath, string outpath, bool overwrite = true)
+        {
+            try {
+                FileInfo fi = new FileInfo(inpath);
+                if (!fi.Exists) {
+                    Console.Error.WriteLine("Error IO.Move({0}, {1}): File doesn't exist.", inpath ?? "null", outpath ?? "null");
+                    return false;
+                }
+                if (overwrite && new FileInfo(outpath).Exists)
+                    File.Delete(outpath);
+                fi.MoveTo(outpath);
+                return true;
+            }
+            catch(Exception ex) {
+                Console.Error.WriteLine("Error IO.Move({0}, {1}): {2}", inpath ?? "null", outpath ?? "null", ex.Message);
+            }
+            return false;
+        }
+
         /// <summary>
         /// Determines if a file is available for reading/writing.
         /// </summary>

@@ -129,12 +129,14 @@ namespace Utilities
             foreach (string path in paths) {
                 if (skipIfStartsWith.Contains(path[0]))
                     continue;
-                if (Directory.Exists(path)) {
-                    if (includeDirs)
-                        continue;
-                }
                 else if (File.Exists(path))
                     expanded.Add(path);
+                else if (Directory.Exists(path)) {
+                    if (includeDirs) {
+                        expanded.Add(path);
+                        continue;
+                    }
+                }
                 else
                     expanded.AddRange(ExpandPath(path, includeDirs, expandEnvVars));
             }
@@ -190,12 +192,16 @@ namespace Utilities
             if (path.Length == 0)
                 return new string[] { "" };
             if (path[0] == Path.DirectorySeparatorChar || path[0] == Path.AltDirectorySeparatorChar) {
-                int start = 1;
-                if (path.Length > 1 && (path[1] == Path.DirectorySeparatorChar || path[1] == Path.AltDirectorySeparatorChar))
-                    start = 2;
-                int indexOfSep = path.IndexOfAny(dirSeparators, start);
+                List<string> pathParts = new List<string>();
+                int indexOfSep;
+                if (path.Length > 1 && (path[1] == Path.DirectorySeparatorChar || path[1] == Path.AltDirectorySeparatorChar)) {
+                    indexOfSep = path.IndexOfAny(dirSeparators, 2);
+                    if(indexOfSep > 2)
+                        indexOfSep = path.IndexOfAny(dirSeparators, indexOfSep + 1);
+                }
+                else
+                    indexOfSep = path.IndexOfAny(dirSeparators, 1);
                 if (indexOfSep > 0) {
-                    List<string> pathParts = new List<string>();
                     pathParts.Add(path.Substring(0, indexOfSep));
                     pathParts.AddRange(path.Substring(indexOfSep + 1).Split(dirSeparators));
                     return pathParts.ToArray();
