@@ -158,10 +158,12 @@ namespace Utilities.Excel
         /// <param name="useTableNames">Determines if the DataTable names will be used for the sheet names.</param>
         public void Load(DataSet dataset, bool printHeaders = true, bool useTableNames = true)
         {
-            Clear();
+            for (int i = doc.Workbook.Worksheets.Count - 1; i >= 0; i--) {
+                doc.Workbook.Worksheets.Delete(i + (doc.Compatibility.IsWorksheets1Based ? 1 : 0));
+            }
             for (int i = 0; i < dataset.Tables.Count; i++) {
                 DataTable table = dataset.Tables[i];
-                ExcelWorksheet ws = doc.Workbook.Worksheets.First();
+                ExcelWorksheet ws = doc.Workbook.Worksheets.Add(table.TableName);
                 ws.Cells.LoadFromDataTable(table, printHeaders);
             }
         }
@@ -243,7 +245,9 @@ namespace Utilities.Excel
         public DataSet ToDataSet(DataSet dataset, bool hasHeaders = true)
         {
             for (int i = 0; i < doc.Workbook.Worksheets.Count; i++) {
-                dataset.Tables.Add(this[i].ToDataTable(hasHeaders));
+                DataTable table = this[i].ToDataTable(hasHeaders);
+                table.TableName = this[i].Name;
+                dataset.Tables.Add(table);
             }
             return dataset;
         }

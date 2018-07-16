@@ -799,26 +799,28 @@ namespace Utilities
         /// <summary>
         /// Writes a DataSet to a file.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="list"></param>
-        /// <param name="path"></param>
-        /// <param name="hasHeaders"></param>
-        /// <returns></returns>
-        public static bool WriteXlsx<T>(this IEnumerable<T> list, string path, bool hasHeaders = true)
+        /// <typeparam name="T">The type of object in the list.</typeparam>
+        /// <param name="list">The list of objects to write to the Excel file.</param>
+        /// <param name="path">Name of file to be written.</param>
+        /// <param name="hasHeaders">Determines if the columns should be written.</param>
+        /// <param name="autofilter">Determines if auto filtering will be enabled.</param>
+        /// <returns>True if successful, false if something went wrong.</returns>
+        public static bool WriteXlsx<T>(this IEnumerable<T> list, string path, bool hasHeaders = true, bool autofilter = true)
         {
-            return WriteXlsx((ss) => ss[0].Load(list), path, hasHeaders);
+            return WriteXlsx((ss) => ss[0].Load(list), path, hasHeaders, autofilter);
         }
 
         /// <summary>
         /// Writes a DataSet to a file.
         /// </summary>
-        /// <param name="dt">DataTable containing the data to be written to the Excel.</param>
+        /// <param name="dt">DataTable containing the data to be written to the Excel file.</param>
         /// <param name="path">Name of file to be written.</param>
         /// <param name="hasHeaders">Determines if the columns should be written.</param>
+        /// <param name="autofilter">Determines if auto filtering will be enabled.</param>
         /// <returns>True if successful, false if something went wrong.</returns>
-        public static bool WriteXlsx(this DataTable dt, string path, bool hasHeaders = true)
+        public static bool WriteXlsx(this DataTable dt, string path, bool hasHeaders = true, bool autofilter = true)
         {
-            return WriteXlsx((ss) => ss[0].Load(dt), path, hasHeaders);
+            return WriteXlsx((ss) => ss[0].Load(dt, hasHeaders), path, hasHeaders, autofilter);
         }
 
         /// <summary>
@@ -827,13 +829,14 @@ namespace Utilities
         /// <param name="ds">DataSet containing the data to be written to the Excel.</param>
         /// <param name="path">Name of file to be written.</param>
         /// <param name="hasHeaders">Determines if the columns should be written.</param>
+        /// <param name="autofilter">Determines if auto filtering will be enabled.</param>
         /// <returns>True if successful, false if something went wrong.</returns>
-        public static bool WriteXlsx(this DataSet ds, string path, bool hasHeaders = true)
+        public static bool WriteXlsx(this DataSet ds, string path, bool hasHeaders = true, bool autofilter = true)
         {
-            return WriteXlsx((ss) => ss.Load(ds), path, hasHeaders);
+            return WriteXlsx((ss) => ss.Load(ds), path, hasHeaders, autofilter);
         }
 
-        private static bool WriteXlsx(Action<Excel.Spreadsheet> action, string path, bool hasHeaders)
+        private static bool WriteXlsx(Action<Excel.Spreadsheet> action, string path, bool hasHeaders, bool autofilter)
         {
             try {
                 FileInfo fi = new FileInfo(path);
@@ -843,7 +846,8 @@ namespace Utilities
                     if (!ss.IsOpen)
                         return false;
                     action(ss);
-                    ss.AutoFilter = true;
+                    if(autofilter)
+                        ss.AutoFilter = true;
                     ss.AutoFit();
                     ss.Save();
                 }

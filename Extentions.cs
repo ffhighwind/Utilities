@@ -15,10 +15,13 @@ namespace Utilities
         /// </summary>
         /// <param name="table">The DataTable to remove duplicates from.</param>
         /// <returns>The rows with duplicates removed.</returns>
-        public static IEnumerable<DataRow> Distinct(this DataTable table)
+        public static DataTable Distinct(this DataTable table)
         {
-            DataTable result = new DataTable();
-            return table.AsEnumerable().Distinct(DataRowEqualityComparer<DataRow>.Default);
+            var rows = table.AsEnumerable().Distinct(DataRowEqualityComparer<DataRow>.Default).Select(dr => dr.ItemArray).ToList();
+            table.Clear();
+            foreach(object[] row in rows)
+                table.Rows.Add(row);
+            return table;
         }
 
         /// <summary>
@@ -179,9 +182,10 @@ namespace Utilities
                 if (table.Columns[col].DataType == typeof(string)) {
                     for (int row = 0; row < table.Rows.Count; row++) {
                         object o = table.Rows[row][col];
-                        if (o != System.DBNull.Value || ((o as string).Length != 0)) {
-                            return table;
+                        if (o == DBNull.Value || o == null && (o as string).Length == 0) {
+                            continue;
                         }
+                        return table;
                     }
                 }
                 else {
@@ -278,7 +282,8 @@ namespace Utilities
                 if (rows.Any()) {
                     DataRow first = rows.First();
                     for (int i = 0; i < first.ItemArray.Length; i++) {
-                        table.Columns.Add("Column" + (i + 1), first[i]?.GetType() ?? typeof(string));
+                        Type type = first[i].GetType();
+                        table.Columns.Add("Column" + (i + 1), type == typeof(DBNull) ? typeof(string) : type);
                     }
                     int errorCount = 0;
                     foreach (DataRow row in rows) {
@@ -287,7 +292,7 @@ namespace Utilities
                         }
                         catch (Exception ex) {
                             for (int i = 0; i < row.ItemArray.Length; i++) {
-                                if (row[i] != null && row[i].GetType() != table.Columns[i].DataType) {
+                                if (row[i] != DBNull.Value && row[i].GetType() != table.Columns[i].DataType) {
                                     table.Columns[i].DataType = row[i].GetType();
                                 }
                             }
@@ -669,6 +674,19 @@ namespace Utilities
         public static DateTime? ToDateTime(this DateTimeOffset? dateTimeOff)
         {
             return dateTimeOff?.ToDateTime();
+        }
+
+        /// <summary>
+        /// Iterates a list and performs an action for each element.
+        /// </summary>
+        /// <typeparam name="T">The Type of object in the list.</typeparam>
+        /// <param name="enumeration">The enumerable list.</param>
+        /// <param name="action">The action to perform.</param>
+        public static void ForEach<T>(this IEnumerable<T> enumeration, Action<T> action)
+        {
+            foreach (T item in enumeration) {
+                action(item);
+            }
         }
     }
 }
