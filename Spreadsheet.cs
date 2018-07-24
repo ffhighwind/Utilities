@@ -277,11 +277,8 @@ namespace Utilities.Excel
         /// </summary>
         public IEnumerable<Worksheet> Worksheets {
             get {
-                List<Worksheet> worksheets = new List<Worksheet>();
-                for (int i = 0; i < doc.Workbook.Worksheets.Count; i++) {
-                    worksheets.Add(this[i]);
-                }
-                return worksheets;
+                for (int i = 0; i < doc.Workbook.Worksheets.Count; i++)
+                    yield return this[i];
             }
         }
 

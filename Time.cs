@@ -35,14 +35,14 @@ namespace Utilities
 
         public static DateTime StartOfPreviousWorkWeek()
         {
-            DateTime now = DateTime.Now.AddDays(-7);
-            return now.AddDays((int) now.DayOfWeek + 1);
+            DateTime now = DateTime.Now;
+            return now.AddDays(-((int) now.DayOfWeek) + 1 - 7);
         }
 
         public static DateTime StartOfPreviousWorkWeek(out int week)
         {
-            DateTime now = DateTime.Now.AddDays(-7);
-            DateTime prevMonday = now.AddDays((int) now.DayOfWeek + 1);
+            DateTime now = DateTime.Now;
+            DateTime prevMonday = now.AddDays(-((int) now.DayOfWeek) + 1 - 7);
             int dayDiff = prevMonday.DayOfYear - new DateTime(prevMonday.Year, prevMonday.Month, 1).DayOfYear;
             week = 1 + (dayDiff / 7);
             return prevMonday;
