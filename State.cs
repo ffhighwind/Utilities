@@ -113,7 +113,7 @@ namespace Utilities
         public static readonly State FM = new State("Micronesia", "FM", "UTC+11");
         public static readonly State MN = new State("Minnesota", "MN", "CST");
         public static readonly State MS = new State("Mississippi", "MS", "CST");
-        public static readonly State MO = new State(" Missouri", "MO", "CST");
+        public static readonly State MO = new State("Missouri", "MO", "CST");
         public static readonly State MT = new State("Montana", "MT", "MST");
         public static readonly State NE = new State("Nebraska", "NE", "CST"); //Western part of the state: Mountain Standard Time (MST)
         public static readonly State NV = new State("Nevada", "NV", "PST"); //Jackpot and West Wendover: Mountain Standard Time (MST)

@@ -68,7 +68,7 @@ namespace Utilities.Log
             Add(writer);
         }
 
-        public void _Initialize()
+        private void _Initialize()
         {
             LogStyleActions = new LogAction[] {
                 _P.Log_MessageOnly,

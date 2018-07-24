@@ -122,11 +122,11 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Returns a function that converts an object from one Type to another.
+        /// Returns a function that converts a list of strings to class.
         /// </summary>
         /// <param name="input">The Type of the input object.</param>
         /// <param name="output">The Type of the output object.</param>
-        /// <returns>A function that converts objects from one Type to another.</returns>
+        /// <returns>A function that converts strings to a class.</returns>
         public static Func<string[], T> StringsConverter<T>() where T : new()
         {
             const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.SetProperty;
@@ -145,11 +145,11 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Returns a function that converts an object from one Type to another.
+        /// Returns a function that converts a list of strings to class.
         /// </summary>
         /// <param name="input">The Type of the input object.</param>
         /// <param name="output">The Type of the output object.</param>
-        /// <returns>A function that converts objects from one Type to another.</returns>
+        /// <returns>A function that converts strings to a class.</returns>
         public static Func<string[], T> StringsConverter<T>(string[] propertyNames) where T : new()
         {
             const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.SetProperty;
@@ -170,6 +170,58 @@ namespace Utilities
                 }
                 return obj;
             };
+        }
+
+        /// <summary>
+        /// Parses a string into a basic Type.
+        /// </summary>
+        /// <param name="str">The string to parse.</param>
+        /// <returns>The result of the string being parsed.</returns>
+        public static object Parse(string str)
+        {
+            if (str == null)
+                return null;
+            if (str.Length == 0)
+                return null;
+            string str2 = str.Trim();
+
+            char c = str2[0];
+            if (Char.IsDigit(c)) {
+                for (int i = 1; i < str.Length; i++) {
+                    c = str[i];
+                    if (Char.IsDigit(c))
+                        continue;
+                    if (c == '.') {
+                        if (TimeSpan.TryParse(str, out TimeSpan ts))
+                            return ts;
+                        if (Double.TryParse(str, out double d))
+                            return d;
+                    }
+                    if (c == '/' || c == '-' || c == ',') {
+                        if (DateTime.TryParse(str, out DateTime dt))
+                            return dt;
+                    }
+                    if (c == ':') {
+                        if (TimeSpan.TryParse(str, out TimeSpan ts))
+                            return ts;
+                    }
+                    return str;
+                }
+                if (Int32.TryParse(str, out int ival))
+                    return ival;
+            }
+            else if (DateTime.TryParse(str, out DateTime dt))
+                return dt;
+            else {
+                string lower = str2.ToLower();
+                if (str == "false")
+                    return false;
+                if (str == "true")
+                    return true;
+                if (str == "null")
+                    return null;
+            }
+            return str;
         }
         #endregion //Converters
 
@@ -316,7 +368,7 @@ namespace Utilities
             for (int n = 0; n < b.Length; n += 2)
                 if (b[n] == 0)
                     count++;
-            if (((double) count) / b.Length > threshold) {
+            if (((double)count) / b.Length > threshold) {
                 return Encoding.BigEndianUnicode;
             }
             count = 0;
@@ -324,7 +376,7 @@ namespace Utilities
                 if (b[n] == 0)
                     count++;
             }
-            if (((double) count) / b.Length > threshold) {
+            if (((double)count) / b.Length > threshold) {
                 return Encoding.Unicode; // (little-endian)
             }
 
@@ -472,7 +524,7 @@ namespace Utilities
         /// <returns>The string representation of a type.</returns>
         public static string ToString<T>(T obj)
         {
-            return ToString((object) obj);
+            return ToString((object)obj);
         }
 
         /// <summary>
@@ -483,7 +535,7 @@ namespace Utilities
         /// <returns>The string representation of a type.</returns>
         public static string ToString(object obj)
         {
-            return (obj != null && ((ToStringDelegate) obj.ToString).Method.DeclaringType == obj.GetType())
+            return (obj != null && ((ToStringDelegate)obj.ToString).Method.DeclaringType == obj.GetType())
                 ? obj.ToString()
                 : JsonConvert.SerializeObject(obj, Formatting.None);
         }
@@ -495,7 +547,7 @@ namespace Utilities
         /// <param name="obj">The object to print.</param>
         public static void Print(object obj)
         {
-            string result = (obj != null && ((ToStringDelegate) obj.ToString).Method.DeclaringType == obj.GetType())
+            string result = (obj != null && ((ToStringDelegate)obj.ToString).Method.DeclaringType == obj.GetType())
                 ? obj.ToString()
                 : JsonConvert.SerializeObject(obj, Formatting.None);
             Console.Write(result);
