@@ -54,7 +54,7 @@ namespace Utilities
         /// <returns>The sorted rows.</returns>
         public static DataTable Sort(this DataTable table)
         {
-            List<object[]> rows = table.AsEnumerable().OrderBy(dr => dr[0]).ToList();
+            List<object[]> rows = table.AsEnumerable().OrderBy(dr => dr[0]).Select(dr => dr.ItemArray).ToList();
             table.Clear();
             foreach (object[] row in rows)
                 table.Rows.Add(row);
@@ -68,7 +68,7 @@ namespace Utilities
         /// <returns>The sorted rows.</returns>
         public static DataTable SortDescending(this DataTable table)
         {
-            List<object[]> rows = table.AsEnumerable().OrderByDescending(dr => dr[0]).ToList();
+            List<object[]> rows = table.AsEnumerable().OrderByDescending(dr => dr[0]).Select(dr => dr.ItemArray).ToList();
             table.Clear();
             foreach (object[] row in rows)
                 table.Rows.Add(row);
@@ -86,7 +86,7 @@ namespace Utilities
             for (int i = 0; i < columns.Length; i++) {
                 result = result.ThenBy(dr => dr[columns[i]]);
             }
-            List<object[]> rows = result.ToList();
+            List<object[]> rows = result.Select(dr => dr.ItemArray).ToList();
             table.Clear();
             foreach (object[] row in rows)
                 table.Rows.Add(row);
@@ -106,7 +106,7 @@ namespace Utilities
                 index = table.Columns[columns[i]].Ordinal;
                 result = result.ThenBy(dr => dr[index]);
             }
-            List<object[]> rows = result.ToList();
+            List<object[]> rows = result.Select(dr => dr.ItemArray).ToList();
             table.Clear();
             foreach (object[] row in rows)
                 table.Rows.Add(row);
@@ -124,7 +124,7 @@ namespace Utilities
             for (int i = 0; i < columns.Length; i++) {
                 result = result.ThenByDescending(dr => dr[columns[i]]);
             }
-            List<object[]> rows = result.ToList();
+            List<object[]> rows = result.Select(dr => dr.ItemArray).ToList();
             table.Clear();
             foreach (object[] row in rows)
                 table.Rows.Add(row);
@@ -144,7 +144,7 @@ namespace Utilities
                 index = table.Columns[columns[i]].Ordinal;
                 result = result.ThenByDescending(dr => dr[index]);
             }
-            List<object[]> rows = result.ToList();
+            List<object[]> rows = result.Select(dr => dr.ItemArray).ToList();
             table.Clear();
             foreach (object[] row in rows)
                 table.Rows.Add(row);

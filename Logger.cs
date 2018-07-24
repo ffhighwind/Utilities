@@ -64,6 +64,12 @@ namespace Utilities.Log
 
         public Logger(TextWriter writer)
         {
+            _Initialize();
+            Add(writer);
+        }
+
+        private void _Initialize()
+        {
             LogStyleActions = new LogAction[] {
                 _P.Log_MessageOnly,
                 _P.Log_MethodFileLine,
@@ -71,7 +77,6 @@ namespace Utilities.Log
                 _P.Log_DateTimeMethodFileLine,
                 customStyle,
             };
-            Add(writer);
         }
 
         public static Logger Instance {

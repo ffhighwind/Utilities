@@ -90,7 +90,7 @@ namespace Utilities
         public static DateTime PreviousWeekday(DayOfWeek day)
         {
             DateTime today = DateTime.Today;
-            int daydiff = (int)day - (int)today.DayOfWeek
+            int daydiff = (int)day - (int)today.DayOfWeek;
             return today.AddDays(daydiff > 0 ? daydiff : daydiff - 7);
         }
 
@@ -98,7 +98,6 @@ namespace Utilities
         {
             DateTime today = DateTime.Today;
             int daydiff = today.DayOfWeek - day;
-            DateTime next = today.AddDays()
             return today.AddDays(-7 + (int)day).Date;
         }
 
