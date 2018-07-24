@@ -106,7 +106,7 @@ namespace Utilities
                     e = ex;
                 }
             }
-            PrintError(e, "Query", conn.DataSource + " " + conn.DataSource);
+            PrintError(e, "DB.Query", conn.DataSource + " " + conn.DataSource);
             return null;
         }
 
@@ -133,7 +133,7 @@ namespace Utilities
                     e = ex;
                 }
             }
-            PrintError(e, "Query", cmd.Connection.DataSource + " " + cmd.Connection.Database);
+            PrintError(e, "DB.Query", cmd.Connection.DataSource + " " + cmd.Connection.Database);
             return null;
         }
 
@@ -157,7 +157,7 @@ namespace Utilities
                     e = ex;
                 }
             }
-            PrintError(e, "Execute", conn.DataSource + '.' + conn.Database);
+            PrintError(e, "DB.Execute", conn.DataSource + '.' + conn.Database);
             conn.Close();
             return -1;
         }
@@ -185,9 +185,7 @@ namespace Utilities
         /// <returns>True if the upload was successful. False otherwise.</returns>
         public static bool BulkUpload<T>(SqlConnection conn, string tablename, IEnumerable<T> list, params string[] fields)
         {
-            var members = TypeAccessor.Create(typeof(T)).GetMembers();
-            return BulkUpload<T>(conn, tablename, list, 600, SqlBulkCopyOptions.FireTriggers
-                | SqlBulkCopyOptions.UseInternalTransaction | SqlBulkCopyOptions.TableLock, members.Select(member => member.Name).ToArray());
+            return BulkUpload<T>(conn, tablename, list, 600, fields);
         }
 
         /// <summary>
@@ -204,7 +202,7 @@ namespace Utilities
         {
             var members = TypeAccessor.Create(typeof(T)).GetMembers();
             return BulkUpload<T>(conn, tablename, list, timeoutSecs, SqlBulkCopyOptions.FireTriggers
-                | SqlBulkCopyOptions.UseInternalTransaction | SqlBulkCopyOptions.TableLock, members.Select(member => member.Name).ToArray());
+                | SqlBulkCopyOptions.UseInternalTransaction | SqlBulkCopyOptions.TableLock, fields.Length > 0 ? fields : members.Select(member => member.Name).ToArray());
         }
 
         /// <summary>
@@ -235,7 +233,7 @@ namespace Utilities
                 return true;
             }
             catch (Exception ex) {
-                PrintError(ex, list == null ? "" : list.Count().ToString());
+                PrintError(ex, "DB.BulkUpload", list == null ? "" : list.Count().ToString());
             }
             return false;
         }
@@ -264,7 +262,7 @@ namespace Utilities
                 }
             }
             catch (Exception ex) {
-                PrintError(ex, "BulkUpload", conn.DataSource + " " + conn.Database);
+                PrintError(ex, "DB.BulkUpload", conn.DataSource + " " + conn.Database);
             }
             return false;
         }
@@ -409,13 +407,13 @@ namespace Utilities
                 }
             }
             catch (Exception ex) {
-                PrintError(ex, "DeleteTable", conn.DataSource + "," + conn.Database + "," + tablename);
+                PrintError(ex, "DB.DeleteTable", conn.DataSource + "," + conn.Database + "," + tablename);
                 return false;
             }
             return true;
         }
 
-        public static void PrintError(Exception ex, string methodName = "", string arg = null)
+        private static void PrintError(Exception ex, string methodName = "", string arg = null)
         {
             string innerMsg = ex.InnerException == null ? "" : "\n  " + ex.InnerException.Message;
             string argStr = arg == null ? "" : "(" + arg + ")";

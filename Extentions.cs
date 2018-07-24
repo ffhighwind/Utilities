@@ -52,9 +52,13 @@ namespace Utilities
         /// </summary>
         /// <param name="table">The DataTable to sort.</param>
         /// <returns>The sorted rows.</returns>
-        public static OrderedEnumerableRowCollection<DataRow> Sort(this DataTable table)
+        public static DataTable Sort(this DataTable table)
         {
-            return table.AsEnumerable().OrderBy(dr => dr[0]);
+            List<object[]> rows = table.AsEnumerable().OrderBy(dr => dr[0]).ToList();
+            table.Clear();
+            foreach (object[] row in rows)
+                table.Rows.Add(row);
+            return table;
         }
 
         /// <summary>
@@ -62,9 +66,13 @@ namespace Utilities
         /// </summary>
         /// <param name="table">The DataTable to sort.</param>
         /// <returns>The sorted rows.</returns>
-        public static OrderedEnumerableRowCollection<DataRow> SortDescending(this DataTable table)
+        public static DataTable SortDescending(this DataTable table)
         {
-            return table.AsEnumerable().OrderByDescending(dr => dr[0]);
+            List<object[]> rows = table.AsEnumerable().OrderByDescending(dr => dr[0]).ToList();
+            table.Clear();
+            foreach (object[] row in rows)
+                table.Rows.Add(row);
+            return table;
         }
 
         /// <summary>
@@ -72,13 +80,17 @@ namespace Utilities
         /// </summary>
         /// <param name="table">The DataTable to sort.</param>
         /// <returns>The sorted rows.</returns>
-        public static OrderedEnumerableRowCollection<DataRow> OrderBy(this DataTable table, int column, params int[] columns)
+        public static DataTable Sort(this DataTable table, int column, params int[] columns)
         {
             var result = table.AsEnumerable().OrderBy(dr => dr[column]);
             for (int i = 0; i < columns.Length; i++) {
                 result = result.ThenBy(dr => dr[columns[i]]);
             }
-            return result;
+            List<object[]> rows = result.ToList();
+            table.Clear();
+            foreach (object[] row in rows)
+                table.Rows.Add(row);
+            return table;
         }
 
         /// <summary>
@@ -86,7 +98,7 @@ namespace Utilities
         /// </summary>
         /// <param name="table">The DataTable to sort.</param>
         /// <returns>The sorted rows.</returns>
-        public static OrderedEnumerableRowCollection<DataRow> OrderBy(this DataTable table, string column, params string[] columns)
+        public static DataTable Sort(this DataTable table, string column, params string[] columns)
         {
             int index = table.Columns[column].Ordinal;
             OrderedEnumerableRowCollection<DataRow> result = table.AsEnumerable().OrderBy(dr => dr[index]);
@@ -94,22 +106,11 @@ namespace Utilities
                 index = table.Columns[columns[i]].Ordinal;
                 result = result.ThenBy(dr => dr[index]);
             }
-            return result;
-        }
-
-        /// <summary>
-        /// Sorts a list of DataRows.
-        /// </summary>
-        /// <param name="rows">The rows to sort.</param>
-        /// <returns>The sorted rows.</returns>
-        public static OrderedEnumerableRowCollection<DataRow> ThenBy(this OrderedEnumerableRowCollection<DataRow> rows, int column, params int[] columns)
-        {
-            OrderedEnumerableRowCollection<DataRow> result = rows.ThenBy(dr => dr[column]);
-            for (int i = 0; i < columns.Length; i++) {
-                int index = columns[i];
-                result = result.ThenBy(dr => dr[index]);
-            }
-            return result;
+            List<object[]> rows = result.ToList();
+            table.Clear();
+            foreach (object[] row in rows)
+                table.Rows.Add(row);
+            return table;
         }
 
         /// <summary>
@@ -117,13 +118,17 @@ namespace Utilities
         /// </summary>
         /// <param name="table">The DataTable to sort.</param>
         /// <returns>The sorted rows.</returns>
-        public static OrderedEnumerableRowCollection<DataRow> OrderByDescending(this DataTable table, int column, params int[] columns)
+        public static DataTable SortDescending(this DataTable table, int column, params int[] columns)
         {
             var result = table.AsEnumerable().OrderByDescending(dr => dr[column]);
             for (int i = 0; i < columns.Length; i++) {
                 result = result.ThenByDescending(dr => dr[columns[i]]);
             }
-            return result;
+            List<object[]> rows = result.ToList();
+            table.Clear();
+            foreach (object[] row in rows)
+                table.Rows.Add(row);
+            return table;
         }
 
         /// <summary>
@@ -131,7 +136,7 @@ namespace Utilities
         /// </summary>
         /// <param name="table">The DataTable to sort.</param>
         /// <returns>The sorted rows.</returns>
-        public static OrderedEnumerableRowCollection<DataRow> OrderByDescending(this DataTable table, string column, params string[] columns)
+        public static DataTable SortDescending(this DataTable table, string column, params string[] columns)
         {
             int index = table.Columns[column].Ordinal;
             OrderedEnumerableRowCollection<DataRow> result = table.AsEnumerable().OrderByDescending(dr => dr[index]);
@@ -139,22 +144,11 @@ namespace Utilities
                 index = table.Columns[columns[i]].Ordinal;
                 result = result.ThenByDescending(dr => dr[index]);
             }
-            return result;
-        }
-
-        /// <summary>
-        /// Sorts a list of DataRows.
-        /// </summary>
-        /// <param name="rows">The rows to sort.</param>
-        /// <returns>The sorted rows.</returns>
-        public static OrderedEnumerableRowCollection<DataRow> ThenByDescending(this OrderedEnumerableRowCollection<DataRow> rows, int column, params int[] columns)
-        {
-            OrderedEnumerableRowCollection<DataRow> result = rows.ThenByDescending(dr => dr[column]);
-            for (int i = 0; i < columns.Length; i++) {
-                int index = columns[i];
-                result = result.ThenByDescending(dr => dr[index]);
-            }
-            return result;
+            List<object[]> rows = result.ToList();
+            table.Clear();
+            foreach (object[] row in rows)
+                table.Rows.Add(row);
+            return table;
         }
         #endregion //Sort/Distinct
 
@@ -260,8 +254,9 @@ namespace Utilities
             return dataTable;
         }
 
+        /*
         /// <summary>
-        /// Converts  a DataTable.
+        /// Converts a list of DataRows to a DataTable.
         /// </summary>
         /// <param name="table">The DataTable to remove duplicates rows from.</param>
         /// <returns>The distinct sorted Datatable.</returns>
@@ -272,7 +267,7 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Creates a DataTable.
+        /// Converts a list of DataRows to a DataTable.
         /// </summary>
         /// <param name="table">The DataTable to remove duplicates rows from.</param>
         /// <returns>The distinct sorted Datatable.</returns>
@@ -340,6 +335,7 @@ namespace Utilities
             }
             return list;
         }
+        */
 
 
         /// <summary>
