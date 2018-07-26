@@ -623,7 +623,7 @@ namespace Utilities.Excel
                 }
                 table.Rows.Add(newRow);
             }
-            return table;
+            return table.Trim();
         }
 
         /// <summary>
@@ -717,7 +717,7 @@ namespace Utilities.Excel
             int rows = worksheet.Dimension.Rows;
             int cols = worksheet.Dimension.Columns;
             for (int row = 1; row <= rows; row++) {
-                for (int col = 1; col < cols; col++) {
+                for (int col = 1; col <= cols; col++) {
                     object obj = worksheet.Cells[row, col].Value;
                     if (obj is string) {
                         worksheet.Cells[row, col].Value = Parse(worksheet.Cells[row, col]);
@@ -736,9 +736,11 @@ namespace Utilities.Excel
         private static object Parse(ExcelRange cell)
         {
             string str = cell.Value as string;
-            if (string.IsNullOrEmpty(str))
+            if (str == null)
                 return null;
             string str2 = str.Trim();
+            if (str2.Length == 0)
+                return str;
 
             char c = str2[0];
             if (Char.IsDigit(c)) {
@@ -746,11 +748,11 @@ namespace Utilities.Excel
                 if (last == '%') {
                     if (Decimal.TryParse(str.Substring(0, str.Length - 1), out decimal d)) {
                         cell.Style.Numberformat.Format = "0.00%";
-                        return d;
+                        return d / 100m;
                     }
                     return str;
                 }
-                if(currencySymbols.Contains(last)) {
+                if (currencySymbols.Contains(last)) {
                     if (Decimal.TryParse(str.Substring(0, str.Length - 1), out decimal d)) {
                         cell.Style.Numberformat.Format = "0.00" + last;
                         return d;
@@ -761,7 +763,7 @@ namespace Utilities.Excel
                     c = str[i];
                     if (Char.IsDigit(c))
                         continue;
-                    if (c == '.') {
+                    else if (c == '.') {
                         if (TimeSpan.TryParse(str, out TimeSpan ts)) {
                             cell.Style.Numberformat.Format = "h:mm:ss";
                             return ts;
@@ -771,13 +773,13 @@ namespace Utilities.Excel
                             return d;
                         }
                     }
-                    if (c == '/' || c == '-' || c == ',') {
+                    else if (c == '/' || c == '-' || c == ',') {
                         if (DateTime.TryParse(str, out DateTime dt)) {
                             cell.Style.Numberformat.Format = "M-d-yyyy H:mm:ss AM/PM";
                             return dt;
                         }
                     }
-                    if (c == ':') {
+                    else if (c == ':') {
                         if (TimeSpan.TryParse(str, out TimeSpan ts)) {
                             cell.Style.Numberformat.Format = "h:mm:ss";
                             return ts;
@@ -802,11 +804,11 @@ namespace Utilities.Excel
             }
             else {
                 string upper = str2.ToUpper();
-                if (str == "FALSE") 
+                if (str == "FALSE")
                     return false;
-                if (str == "TRUE")
+                else if (str == "TRUE")
                     return true;
-                if (str == "NULL")
+                else if (str == "NULL")
                     return null;
             }
             return str;

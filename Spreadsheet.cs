@@ -163,8 +163,13 @@ namespace Utilities.Excel
             }
             for (int i = 0; i < dataset.Tables.Count; i++) {
                 DataTable table = dataset.Tables[i];
-                ExcelWorksheet ws = doc.Workbook.Worksheets.Add(table.TableName);
-                ws.Cells.LoadFromDataTable(table, printHeaders);
+                if (useTableNames)
+                    Add(table.TableName);
+                else
+                    Add();
+                Worksheet ws = this[table.TableName];
+                if (table.Rows.Count > 0 || printHeaders)
+                    ws.Load(table, printHeaders);
             }
         }
 
@@ -289,6 +294,12 @@ namespace Utilities.Excel
                     worksheet.Cells[worksheet.Dimension.Address].AutoFilter = value;
                 }
             }
+        }
+
+        public void AutoFormat()
+        {
+            for (int i = 0; i < doc.Workbook.Worksheets.Count; i++)
+                this[i].AutoFormat();
         }
 
         public void AutoFit()

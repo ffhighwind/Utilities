@@ -179,46 +179,44 @@ namespace Utilities
         /// <returns>The result of the string being parsed.</returns>
         public static object Parse(string str)
         {
-            if (str == null)
-                return null;
-            if (str.Length == 0)
+            if (str == null || str.Length == 0)
                 return null;
             string str2 = str.Trim();
 
             char c = str2[0];
             if (Char.IsDigit(c)) {
-                for (int i = 1; i < str.Length; i++) {
-                    c = str[i];
+                for (int i = 1; i < str2.Length; i++) {
+                    c = str2[i];
                     if (Char.IsDigit(c))
                         continue;
-                    if (c == '.') {
-                        if (TimeSpan.TryParse(str, out TimeSpan ts))
+                    else if (c == '.') {
+                        if (TimeSpan.TryParse(str2, out TimeSpan ts))
                             return ts;
-                        if (Double.TryParse(str, out double d))
+                        if (Double.TryParse(str2, out double d))
                             return d;
                     }
-                    if (c == '/' || c == '-' || c == ',') {
-                        if (DateTime.TryParse(str, out DateTime dt))
+                    else if (c == '/' || c == '-' || c == ',') {
+                        if (DateTime.TryParse(str2, out DateTime dt))
                             return dt;
                     }
-                    if (c == ':') {
-                        if (TimeSpan.TryParse(str, out TimeSpan ts))
+                    else if (c == ':') {
+                        if (TimeSpan.TryParse(str2, out TimeSpan ts))
                             return ts;
                     }
                     return str;
                 }
-                if (Int32.TryParse(str, out int ival))
+                if (Int32.TryParse(str2, out int ival))
                     return ival;
             }
-            else if (DateTime.TryParse(str, out DateTime dt))
+            else if (DateTime.TryParse(str2, out DateTime dt))
                 return dt;
             else {
                 string lower = str2.ToLower();
-                if (str == "false")
+                if (str2 == "false")
                     return false;
-                if (str == "true")
+                else if (str2 == "true")
                     return true;
-                if (str == "null")
+                else if (str2 == "null")
                     return null;
             }
             return str;
