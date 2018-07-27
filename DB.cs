@@ -106,7 +106,7 @@ namespace Utilities
                     e = ex;
                 }
             }
-            PrintError(e, "DB.Query", conn.DataSource + " " + conn.DataSource);
+            PrintError(e, "DB.Query", conn.DataSource + " " + conn.Database);
             return null;
         }
 
