@@ -349,7 +349,8 @@ namespace Utilities.Excel
         {
             //worksheet.Cells.AutoFitColumns(0);
             for (int col = 1; col <= worksheet.Dimension.Columns; col++) {
-                worksheet.Column(col).AutoFit();
+                var column = worksheet.Column(col);
+                column.AutoFit();
             }
         }
 
@@ -743,7 +744,7 @@ namespace Utilities.Excel
                 return str;
 
             char c = str2[0];
-            if (Char.IsDigit(c)) {
+            if (Char.IsDigit(c) || c == '-') {
                 char last = str.Last();
                 if (last == '%') {
                     if (Decimal.TryParse(str.Substring(0, str.Length - 1), out decimal d)) {
@@ -775,7 +776,7 @@ namespace Utilities.Excel
                     }
                     else if (c == '/' || c == '-' || c == ',') {
                         if (DateTime.TryParse(str, out DateTime dt)) {
-                            cell.Style.Numberformat.Format = "M-d-yyyy H:mm:ss AM/PM";
+                            cell.Style.Numberformat.Format = "M/d/yyyy H:mm:ss AM/PM";
                             return dt;
                         }
                     }

@@ -163,11 +163,7 @@ namespace Utilities.Excel
             }
             for (int i = 0; i < dataset.Tables.Count; i++) {
                 DataTable table = dataset.Tables[i];
-                if (useTableNames)
-                    Add(table.TableName);
-                else
-                    Add();
-                Worksheet ws = this[table.TableName];
+                Worksheet ws = useTableNames ? Add(table.TableName) : Add();
                 if (table.Rows.Count > 0 || printHeaders)
                     ws.Load(table, printHeaders);
             }
@@ -318,7 +314,7 @@ namespace Utilities.Excel
                 for (int i = 0; i < doc.Workbook.Worksheets.Count; i++) {
                     ExcelWorksheet worksheet = doc.Workbook.Worksheets[i + (doc.Compatibility.IsWorksheets1Based ? 1 : 0)];
                     for (int col = 1; col <= worksheet.Dimension.Columns; col++) {
-                        worksheet.Column(i).BestFit = value;
+                        worksheet.Column(col).BestFit = value;
                     }
                 }
             }
@@ -327,12 +323,11 @@ namespace Utilities.Excel
         /// <summary>
         /// Adds a new Worksheet to the Excel Spreadsheet.
         /// </summary>
-        public void Add()
+        public Worksheet Add()
         {
             for (int i = doc.Workbook.Worksheets.Count + 1; ;) {
                 if (doc.Workbook.Worksheets["Sheet" + i.ToString()] == null) {
-                    Add("Sheet" + (doc.Workbook.Worksheets.Count + 1));
-                    return;
+                    return Add("Sheet" + (doc.Workbook.Worksheets.Count + 1));
                 }
             }
         }
@@ -341,10 +336,11 @@ namespace Utilities.Excel
         /// Adds a new Worksheet to the Excel Spreadsheet.
         /// </summary>
         /// <param name="sheetname">The name of the Worksheet to add.</param>
-        public void Add(string sheetname)
+        public Worksheet Add(string sheetname)
         {
             var ws = doc.Workbook.Worksheets.Add(sheetname);
             ws.Cells["A1"].Value = "";
+            return new Worksheet(ws);
         }
 
         /// <summary>

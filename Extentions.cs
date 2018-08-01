@@ -236,7 +236,10 @@ namespace Utilities
 
             foreach (PropertyInfo info in properties) {
                 if (!dataTable.Columns.Contains(info.Name)) {
-                    dataTable.Columns.Add(new DataColumn(info.Name, Nullable.GetUnderlyingType(info.PropertyType) ?? info.PropertyType));
+                    Type ty = Nullable.GetUnderlyingType(info.PropertyType) ?? info.PropertyType;
+                    if (ty == typeof(char))
+                        ty = typeof(string);
+                    dataTable.Columns.Add(new DataColumn(info.Name, ty));
                 }
             }
             foreach (T entity in list) {

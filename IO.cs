@@ -851,9 +851,9 @@ namespace Utilities
                     action(ss);
                     if(autofilter)
                         ss.AutoFilter = true;
-                    ss.AutoFit();
                     if(autoformat)
                         ss.AutoFormat();
+                    ss.AutoFit();
                     ss.Save();
                 }
                 return true;
