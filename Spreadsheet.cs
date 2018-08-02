@@ -302,10 +302,11 @@ namespace Utilities.Excel
         {
             for (int i = 0; i < doc.Workbook.Worksheets.Count; i++) {
                 ExcelWorksheet worksheet = doc.Workbook.Worksheets[i + (doc.Compatibility.IsWorksheets1Based ? 1 : 0)];
+                worksheet.Cells.AutoFitColumns(0);
+                /*
                 for (int col = 1; col <= worksheet.Dimension.Columns; col++) {
                     worksheet.Column(col).AutoFit();
-                }
-                //worksheet.Cells.AutoFitColumns(0);
+                } */
             }
         }
 

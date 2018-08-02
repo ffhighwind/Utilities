@@ -92,15 +92,15 @@ namespace Utilities
         /// <param name="conn">The database connection to execute the command on.</param>
         /// <param name="cmd">The command to execute.</param>
         /// <param name="param">The column mappings for Dapper.</param>
-        /// <param name="timeoutSecs">The maximum timeout in seconds for the command.</param>
+        /// <param name="timeout">The command timeout in seconds.</param>
         /// <param name="maxRetries">The maximum number of attempts to retry the command on failure.</param>
         /// <returns>The results from the query, or null on error.</returns>
-        public static IEnumerable<T> Query<T>(SqlConnection conn, string cmd, object param = null, int maxRetries = 5)
+        public static IEnumerable<T> Query<T>(SqlConnection conn, string cmd, object param = null, int? timeout = null, int maxRetries = 5)
         {
             Exception e = null;
             for (int i = 0; i < maxRetries; i++) {
                 try {
-                    return conn.Query<T>(cmd, param);
+                    return conn.Query<T>(cmd, param, null, true, timeout);
                 }
                 catch (Exception ex) {
                     e = ex;
@@ -141,15 +141,16 @@ namespace Utilities
         /// Executes an SQL command.
         /// </summary>
         /// <param name="cmd">The command to execute.</param>
+        /// <param name="timeout">The command timeout in seconds.</param>
         /// <param name="maxRetries">The maximum number of attempts to retry the command on failure.</param>
         /// <returns>The number of rows affected, or -1 on error.</returns>
-        public static int Execute(SqlConnection conn, string cmd, object param = null, int maxRetries = 5)
+        public static int Execute(SqlConnection conn, string cmd, object param = null, int? timeout = null, int maxRetries = 5)
         {
             Exception e = null;
             for (int i = 0; i < maxRetries; i++) {
                 try {
                     conn.Open();
-                    int count = conn.Execute(cmd, param);
+                    int count = conn.Execute(cmd, param, null, timeout);
                     conn.Close();
                     return count;
                 }
@@ -167,9 +168,10 @@ namespace Utilities
         /// </summary>
         /// <param name="cmd">The command to execute.</param>
         /// <param name="param">The parameters to pass to the command.</param>
+        /// <param name="timeout">The command timeout in seconds.</param>
         /// <param name="maxRetries">The maximum number of attempts to retry the command on failure.</param>
         /// <returns>The number of rows affected, or -1 on error.</returns>
-        public static int Execute(SqlCommand cmd, object param = null, int maxRetries = 5)
+        public static int Execute(SqlCommand cmd, object param = null, int? timeout = null, int maxRetries = 5)
         {
             return Execute(cmd.Connection, cmd.CommandText, param, maxRetries);
         }

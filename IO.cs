@@ -854,6 +854,7 @@ namespace Utilities
                     if(autoformat)
                         ss.AutoFormat();
                     ss.AutoFit();
+                    ss.BestFit = true;
                     ss.Save();
                 }
                 return true;

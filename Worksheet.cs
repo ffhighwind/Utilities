@@ -52,9 +52,9 @@ namespace Utilities.Excel
         {
             int col = 1;
             foreach (Type ty in types) {
-                if (ty == typeof(DateTime))
+                if (ty == typeof(DateTime) || ty == typeof(DateTime?))
                     FixDateColumn(col);
-                else if (ty == typeof(TimeSpan)) {
+                else if (ty == typeof(TimeSpan) || ty == typeof(TimeSpan?)) {
                     worksheet.Column(col).Style.Numberformat.Format = "h:mm:ss";
                     worksheet.Cells[1, col, worksheet.Dimension.Rows, col].Style.Numberformat.Format = "h:mm:ss";
                 }
@@ -331,6 +331,20 @@ namespace Utilities.Excel
         public void RemoveColumn(int index)
         {
             worksheet.DeleteColumn(index);
+        }
+
+        /// <summary>
+        /// Removes a column from the Worksheet.
+        /// </summary>
+        /// <param name="name">The name of the column to remove.</param>
+        public void RemoveColumn(string name)
+        {
+            for(int col = 1; col <= worksheet.Dimension.Columns; col++) {
+                if(worksheet.Cells[1, col].Value.ToString() == name) {
+                    worksheet.DeleteColumn(worksheet.Index);
+                    return;
+                }
+            }
         }
 
         /// <summary>
