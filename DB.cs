@@ -101,7 +101,7 @@ namespace Utilities
             Exception e = null;
             for (int i = 0; i < maxRetries; i++) {
                 try {
-                    return conn.Query<T>(cmd, param, null, true, timeout);
+                    return conn.Query<T>(cmd, param, null, true, timeoutSecs);
                 }
                 catch (Exception ex) {
                     e = ex;
@@ -117,24 +117,22 @@ namespace Utilities
         /// <param name="cmd">The command to execute.</param>
         /// <param name="maxRetries">The number of attempts to retry the command.</param>
         /// <returns>The results from the query, or null on error.</returns>
-        public static DataTable Query(SqlCommand cmd, int maxRetries = 5)
+        public static DataTable Query(SqlConnection conn, string cmd, object param = null, int? timeoutSecs = null, int maxRetries = 5)
         {
             Exception e = null;
             for (int i = 0; i < maxRetries; i++) {
                 try {
-                    DataTable table = new DataTable();
-                    cmd.Connection.Open();
-                    using (SqlDataReader reader = cmd.ExecuteReader()) {
+                    using (IDataReader reader = conn.ExecuteReader(cmd, param, null, timeoutSecs)) {
+                        DataTable table = new DataTable();
                         table.Load(reader);
+                        return table;
                     }
-                    cmd.Connection.Close();
-                    return table;
                 }
                 catch (Exception ex) {
                     e = ex;
                 }
             }
-            PrintError(e, "DB.Query", cmd.Connection);
+            PrintError(e, "DB.Query", conn);
             return null;
         }
 
@@ -147,6 +145,7 @@ namespace Utilities
         /// <returns>The number of rows affected, or -1 on error.</returns>
         public static int Execute(SqlConnection conn, string cmd, object param = null, int? timeout = null, int maxRetries = 5)
         {
+            Exception e = null;
             for (int i = 0; i < maxRetries; i++) {
                 try {
                     conn.Open();
@@ -154,9 +153,10 @@ namespace Utilities
                     return count;
                 }
                 catch (Exception ex) {
-                    PrintError(ex, "DB.Execute", conn);
+                    e = ex;
                 }
             }
+            PrintError(e, "DB.Execute", conn);
             return -1;
         }
 

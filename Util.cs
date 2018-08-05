@@ -233,8 +233,7 @@ namespace Utilities
         /// <source>https://stackoverflow.com/questions/1025332/determine-a-strings-encoding-in-c-sharp </source>
         public static string GetEncodedText(string path)
         {
-            Encoding encoding;
-            return GetEncodedText(path, out encoding);
+            return GetEncodedText(path, out Encoding encoding);
         }
 
         /// <summary>
@@ -295,8 +294,7 @@ namespace Utilities
             //////////// If the code reaches here, no BOM/signature was found, so now
             //////////// we need to 'taste' the file to see if can manually discover
             //////////// the encoding. A high taster value is desired for UTF-8
-            Encoding encoding;
-            GetEncodedText(path, out encoding, maxBytes);
+            GetEncodedText(path, out Encoding encoding, maxBytes);
             return encoding;
         }
 
