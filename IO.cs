@@ -553,7 +553,7 @@ namespace Utilities
         /// <param name="hasHeaders">Determines if the file has headers. 
         /// If this is true then the columns are named based on the first line.</param>
         /// <returns>The Dataset with data from the file.</returns>
-        public static bool ReadXls<T>(this List<T> list, string path) where T : new()
+        public static bool ReadXls<T>(this List<T> list, string path) where T : class, new()
         {
             DataSet dataset = new DataSet();
             if (!dataset.ReadXls(path, true))

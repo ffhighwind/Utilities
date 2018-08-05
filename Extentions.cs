@@ -234,7 +234,7 @@ namespace Utilities
         /// <param name="dataTable">The DataTable to modify.</param>
         /// <param name="list">The list to read data from.</param>
         /// <returns>The modified DataTable.</returns>
-        public static DataTable ToDataTable<T>(this IEnumerable<T> list, DataTable dataTable)
+        public static DataTable ToDataTable<T>(this IEnumerable<T> list, DataTable dataTable) where T : class
         {
             Type type = typeof(T);
             PropertyInfo[] properties = type.GetProperties();
@@ -344,7 +344,7 @@ namespace Utilities
         /// <typeparam name="T">The Type of elements in the list.</typeparam>
         /// <param name="list">The list of elements to convert to a DataTable.</param>
         /// <returns>The DataTable containing the data from the list.</returns>
-        public static DataTable ToDataTable<T>(this IEnumerable<T> list)
+        public static DataTable ToDataTable<T>(this IEnumerable<T> list) where T : class
         {
             DataTable dt = new DataTable();
             return list.ToDataTable(dt);
@@ -394,7 +394,7 @@ namespace Utilities
         /// <typeparam name="T">The Type to convert the datatable to.</typeparam>
         /// <param name="dataTable">The DataTable to convert to a List.</param>
         /// <returns>A list with values from the DataTable.</returns>
-        public static List<T> ToList<T>(this DataTable dataTable) where T : new()
+        public static List<T> ToList<T>(this DataTable dataTable) where T : class, new()
         {
             List<T> list = new List<T>();
             if (!dataTable.ToList<T>(list))
@@ -409,7 +409,7 @@ namespace Utilities
         /// <typeparam name="T">The Type to convert the DataRows into.</typeparam>
         /// <param name="dataTable">The DataTable to convert to a Collection.</param>
         /// <param name="list">True if successful, or false otherwise.</param>
-        public static bool ToList<T>(this DataTable dataTable, ICollection<T> list) where T : new()
+        public static bool ToList<T>(this DataTable dataTable, ICollection<T> list) where T : class, new()
         {
             try {
                 var converter = DataRowConverter<T>.Create(dataTable);

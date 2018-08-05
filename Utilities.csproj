@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{236D1929-AADA-47EC-9450-D353852C7153}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Utilities</RootNamespace>
     <AssemblyName>Utilities</AssemblyName>
@@ -35,11 +35,11 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Class1.cs" />
     <Compile Include="DataRowConverter.cs" />
     <Compile Include="DataRowEqualityComparer.cs" />
     <Compile Include="DB.cs" />
     <Compile Include="Extentions.cs" />
+    <Compile Include="GenericDataReader.cs" />
     <Compile Include="IO.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Processes.cs" />

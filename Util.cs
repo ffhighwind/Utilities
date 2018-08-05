@@ -420,7 +420,7 @@ namespace Utilities
         /// <param name="ty">The Type to get properties of.</param>
         /// <param name="flags">Filters on the properties to obtain.</param>
         /// <returns>The properties of the Type.</returns>
-        public static PropertyInfo[] GetProperties(Type ty, BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance)
+        public static PropertyInfo[] GetProperties(Type ty, BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly)
         {
             return ty.GetProperties(flags);
         }
@@ -431,13 +431,9 @@ namespace Utilities
         /// <param name="ty">The Type to get property names of.</param>
         /// <param name="flags">Filters on the properties to obtain.</param>
         /// <returns>The names of the properties of the Type.</returns>
-        public static List<string> GetPropertyNames(Type ty, BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance)
+        public static List<string> GetPropertyNames(Type ty, BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly)
         {
-            List<string> propertyNames = new List<string>();
-            foreach (PropertyInfo pi in ty.GetProperties(flags)) {
-                propertyNames.Add(pi.Name);
-            }
-            return propertyNames;
+            return ty.GetProperties(flags).Select(prop => prop.Name).ToList();
         }
 
         /// <summary>
@@ -446,13 +442,9 @@ namespace Utilities
         /// <param name="obj">The object to get property values of.</param>
         /// <param name="flags">Filters on the properties to obtain.</param>
         /// <returns>The names of the properties of the object.</returns>
-        public static List<object> GetPropertyValues(object obj, BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance)
+        public static List<object> GetPropertyValues(object obj, BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly)
         {
-            List<object> values = new List<object>();
-            foreach (PropertyInfo pi in obj.GetType().GetProperties(flags)) {
-                values.Add(pi.GetValue(obj));
-            }
-            return values;
+            return obj.GetType().GetProperties(flags).Select(prop => prop.GetValue(obj)).ToList();
         }
 
         /// <summary>
@@ -461,13 +453,9 @@ namespace Utilities
         /// <param name="ty">The Type to get property Types of.</param>
         /// <param name="flags">Filters on the properties to obtain.</param>
         /// <returns>The Types of the properties of the Type.</returns>
-        public static List<Type> GetPropertyTypes(Type ty, BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance)
+        public static List<Type> GetPropertyTypes(Type ty, BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly)
         {
-            List<Type> types = new List<Type>();
-            foreach (PropertyInfo pi in ty.GetProperties(flags)) {
-                types.Add(pi.PropertyType);
-            }
-            return types;
+            return ty.GetProperties(flags).Select(prop => prop.PropertyType).ToList();
         }
         #endregion //Properties
 

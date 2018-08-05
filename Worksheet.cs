@@ -15,6 +15,8 @@ namespace Utilities.Excel
     {
         private const int MAX_DATEONLY_ROWS_COUNT = 15;
         private ExcelWorksheet worksheet;
+        private const string currencySymbols = "$£¥€¢";
+        //private const string currencySymbols = "$¥₤€£฿₿₵¢₡₫₲₱₽₮₩₸₳ℳ₹؋₼﷼₪₭₴";
 
         /// <summary>
         /// Constructs an Excel Worksheet from an ExcelWorksheet.
@@ -498,23 +500,23 @@ namespace Utilities.Excel
         48  ##0.0E+0
         49  @
         */
-        private static readonly Regex currencyRegex = new Regex(@"^\p{Sc}|[^*]\p{Sc}");
 
         /// <summary>
         /// Gets the Type of data stored in the column.
         /// </summary>
         /// <param name="columnIndex">The column index.</param>
         /// <returns>The Type of the data at the given column.</returns>
+        /// <see cref="https://support.office.com/en-us/article/number-format-codes-5026bbd6-04bc-48cd-bf33-80f18b4eae68"/>
         public Type ColumnType(int columnIndex)
         {
             ExcelColumn col = Column(columnIndex);
 
-            string numfmt = col.Style.Numberformat?.Format;
-            if (numfmt == null)
+            if (col.Style.Numberformat == null)
                 return typeof(string);
-            if (numfmt == null) {
-                if (!col.Style.Numberformat.BuildIn)
-                    return typeof(string);
+            string numfmt = col.Style.Numberformat.Format;
+            if (string.IsNullOrEmpty(numfmt)) {
+                //if (!col.Style.Numberformat.BuildIn)
+                //    return typeof(string);
                 int numfmtID = col.Style.Numberformat.NumFmtID;
                 if (numfmtID == 0 || numfmtID == 49)
                     return typeof(string);
@@ -528,22 +530,22 @@ namespace Utilities.Excel
                     return typeof(double);
             }
             else {
-                char ch = numfmt[numfmt.Length - 1];
+                char ch;
                 bool isNum = false;
                 bool isTime = false;
+                bool isDouble = false;
                 bool isDecimal = false;
-                bool isDate = false;
                 for (int i = 0; i < numfmt.Length; i++) {
                     ch = numfmt[i];
-                    if (ch == '.')
-                        isDecimal = true;
-                    else if (ch == '0' || ch == '#' || ch == '?')
+                    if (ch == '0' || ch == '#' || ch == '?')
                         isNum = true;
                     else if (ch == 'd' || ch == 'M')
-                        isDate = true;
+                        return typeof(DateTime);
+                    else if (ch == '.')
+                        isDouble = true;
                     else if (ch == 'y') {
                         if (i < numfmt.Length - 1 && numfmt[i + 1] == 'y')
-                            isDate = true;
+                            return typeof(DateTime);
                     }
                     else if (ch == 'h' || ch == 'H' || ch == 's' || ch == 'm')
                         isTime = true;
@@ -554,16 +556,21 @@ namespace Utilities.Excel
                         while (i < numfmt.Length && numfmt[i] != '"')
                             i++;
                     }
+                    else if (ch == '[') {
+                        i++;
+                        while (i < numfmt.Length && numfmt[i] != ']')
+                            i++;
+                    }
+                    else if (ch == '%' || currencySymbols.Contains(ch))
+                        isDecimal = true;
                     //else if (ch == '@')
                     //    return typeof(string);
                 }
-                if (isDate)
-                    return typeof(DateTime);
-                else if (isTime)
+                if (isTime)
                     return typeof(TimeSpan);
-                else if (currencyRegex.IsMatch(numfmt))
-                    return typeof(decimal);
                 else if (isDecimal)
+                    return typeof(decimal);
+                else if (isDouble)
                     return typeof(double);
                 else if (isNum)
                     return typeof(int);
@@ -574,7 +581,7 @@ namespace Utilities.Excel
         /// <summary>
         /// Converts the Worksheet to a DataTable.
         /// </summary>
-        /// <param name="table"></param>
+        /// <param name="table">The table to fill with data from the worksheet.</param>
         /// <param name="hasHeaders">Determines if the Worksheet has headers.</param>
         /// <returns>The modified DataTable.</returns>
         public DataTable ToDataTable(DataTable table, bool hasHeaders = true)
@@ -597,24 +604,21 @@ namespace Utilities.Excel
                 for (int col = 1; col < maxCol; col++) {
                     Type colType = table.Columns[col - 1].DataType;
                     if (worksheet.Cells[row, col].Value == null)
-                        newRow[col - 1] = DBNull.Value;
-                    else if (colType == typeof(string)) {
+                        continue;// newRow[col - 1] = DBNull.Value;
+                    else if (colType == typeof(string))
                         newRow[col - 1] = worksheet.Cells[row, col].Value.ToString();
-                    }
                     else {
                         try {
-                            if (colType.IsIntegral()) {
-                                newRow[col - 1] = long.Parse(worksheet.Cells[row, col].Value.ToString());
-                            }
-                            else if (colType.IsFloatingPoint()) {
-                                newRow[col - 1] = decimal.Parse(worksheet.Cells[row, col].Value.ToString());
-                            }
-                            else if (colType == typeof(DateTime) || colType == typeof(DateTimeOffset)) {
+                            if (worksheet.Cells[row, col].Value == null)
+                                continue;
+                            else if (colType.IsIntegral())
+                                newRow[col - 1] = worksheet.Cells[row, col].GetValue<long>();
+                            else if (colType.IsFloatingPoint())
+                                newRow[col - 1] = worksheet.Cells[row, col].GetValue<decimal>();
+                            else if (colType == typeof(DateTime) || colType == typeof(DateTimeOffset))
                                 newRow[col - 1] = worksheet.Cells[row, col].GetValue<DateTime>();
-                            }
-                            else if (colType == typeof(TimeSpan)) {
+                            else if (colType == typeof(TimeSpan))
                                 newRow[col - 1] = worksheet.Cells[row, col].GetValue<TimeSpan>();
-                            }
                             else
                                 newRow[col - 1] = worksheet.Cells[row, col].Value;
                         }
@@ -726,8 +730,6 @@ namespace Utilities.Excel
             }
         }
 
-        private const string currencySymbols = "$¥₤€£฿₿₵¢₡₫₲₱₽₮₩₸₳ℳ₹؋₼﷼₪₭₴";
-
         /// <summary>
         /// Parses a string into a basic Type.
         /// </summary>
@@ -750,7 +752,7 @@ namespace Utilities.Excel
                     }
                     return str;
                 }
-                if(currencySymbols.Contains(last)) {
+                if (currencySymbols.Contains(last)) {
                     if (Decimal.TryParse(str.Substring(0, str.Length - 1), out decimal d)) {
                         cell.Style.Numberformat.Format = "0.00" + last;
                         return d;
@@ -802,7 +804,7 @@ namespace Utilities.Excel
             }
             else {
                 string upper = str2.ToUpper();
-                if (str == "FALSE") 
+                if (str == "FALSE")
                     return false;
                 if (str == "TRUE")
                     return true;
