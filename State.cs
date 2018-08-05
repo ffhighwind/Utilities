@@ -82,6 +82,13 @@ namespace Utilities
         public double MSTDiff { get; private set; }
         public string Timezone { get; private set; }
 
+        public static State GetState(string abbrev)
+        {
+            if (states.TryGetValue(abbrev, out State state))
+                return state;
+            return null;
+        }
+
         //https://simple.wikipedia.org/wiki/List_of_U.S._states_by_time_zone
         public static readonly State Unknown = new State("Unknown", " ", " ");
         public static readonly State AL = new State("Alabama", "AL", "CST");
@@ -102,7 +109,7 @@ namespace Utilities
         public static readonly State IL = new State("Illinois", "IL", "CST");
         public static readonly State IN = new State("Indiana", "IN", "EST"); //Northwest and southwest corners: Central Standard Time (CST)
         public static readonly State IA = new State("Iowa", "IA", "CST");
-        public static readonly State KS = new State("Kansas", "KS", "MST"); //Greeley, Hamilton, Sherman and Wallace counties: Mountain Standard Time (MST)
+        public static readonly State KS = new State("Kansas", "KS", "CST"); //Greeley, Hamilton, Sherman and Wallace counties: Mountain Standard Time (MST)
         public static readonly State KY = new State("Kentucky", "KY", "CST"); //Eastern half of the state: Eastern Standard Time (EST)
         public static readonly State LA = new State("Louisiana", "LA", "CST");
         public static readonly State ME = new State("Maine", "ME", "EST");
@@ -157,5 +164,81 @@ namespace Utilities
         public static readonly State QC = new State("Quebec", "QC", ""); //small parts do not observe daylight savings
         public static readonly State SK = new State("Saskatchewan", "SK", "UTC-6");
         public static readonly State YT = new State("Yukon", "YT", "PST");
+
+        private static readonly Dictionary<string, State> states = new Dictionary<string, State>() {
+            { "AL", AL },
+            { "AK", AK },
+            { "AS", AS },
+            { "AZ", AZ }, //The Navajo Nation uses Daylight Saving Time (DST), the rest of the state does not
+            { "AR", AR },
+            { "CA", CA },
+            { "CO", CO },
+            { "CT", CT },
+            { "DE", DE },
+            { "DC", DC },
+            { "FL", FL }, //West of the Apalachicola River: Central Standard Time (CST)
+            { "GA", GA },
+            { "GU", GU },
+            { "HI", HI }, //Hawaii does not use Daylight Saving Time (DST)
+            { "ID", ID }, //North of the Salmon River: Pacific Standard Time (PST)
+            { "IL", IL },
+            { "IN", IN }, //Northwest and southwest corners: Central Standard Time (CST)
+            { "IA", IA },
+            { "KS", KS }, //Greeley, Hamilton, Sherman and Wallace counties: Mountain Standard Time (MST)
+            { "KY", KY }, //Eastern half of the state: Eastern Standard Time (EST)
+            { "LA", LA },
+            { "ME", ME },
+            { "MD", MD },
+            { "MH", MH },
+            { "MA", MA },
+            { "MI", MI }, //Counties that share a border with Wisconsin: Central Standard Time (CST)
+            { "FM", FM },
+            { "MN", MN },
+            { "MS", MS },
+            { "MO", MO },
+            { "MT", MT },
+            { "NE", NE }, //Western part of the state: Mountain Standard Time (MST)
+            { "NV", NV }, //Jackpot and West Wendover: Mountain Standard Time (MST)
+            { "NH", NH },
+            { "NJ", NJ },
+            { "NM", NM },
+            { "NY", NY },
+            { "NC", NC },
+            { "ND", ND }, //Southwestern part of the state: Mountain Standard Time (MST)
+            { "MP", MP },
+            { "OH", OH },
+            { "OK", OK },
+            { "OR", OR }, //Part of Malheur County: Mountain Standard Time (MST)
+            { "PW", PW },
+            { "PA", PA },
+            { "PR", PR },
+            { "RI", RI },
+            { "SC", SC },
+            { "SD", SD }, //Western half of the state: Mountain Standard Time (MST)
+            { "TN", TN }, //East Tennessee, except Marion County: Eastern Standard Time (EST)
+            { "TX", TX }, //El Paso and Hudspeth counties and part of Culberson County: Mountain Standard Time (MST)
+            { "UT", UT },
+            { "VT", VT },
+            { "VA", VA },
+            { "VI", VI },
+            { "WA", WA },
+            { "WV", WV },
+            { "WI", WI },
+            { "WY", WY },
+            //Canada
+            { "AB", AB },
+            { "BC", BC }, //Parts are under MST and some don't experience daylight savings
+            { "MB", MB },
+            { "NB", NB },
+            { "NL", NL },
+            { "NS", NS },
+            { "NT", NT },
+            { "NU", NU },
+            { "ON", ON }, //western third is CST
+            { "PE", PE },
+            { "QC", QC }, //small parts do not observe daylight savings
+            { "SK", SK },
+            { "YT", YT },
+        };
     }
 }

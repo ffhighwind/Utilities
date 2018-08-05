@@ -152,7 +152,7 @@ namespace Utilities
         /// <param name="includeDirs">Determines if directories matching the search pattern</param>
         /// <param name="expandEnvVars">Determines if environment variables should be expanded (%var)%.</param>
         /// <returns>The paths of file system entries that match the search pattern.</returns>
-        public static IEnumerable<string> ExpandPath(string path, bool includeDirs = true, bool expandEnvVars = true)
+        public static List<string> ExpandPath(string path, bool includeDirs = true, bool expandEnvVars = true)
         {
             string envExpanded = expandEnvVars ? Environment.ExpandEnvironmentVariables(path) : path;
             //skip initial slashes in case it's a network drive.

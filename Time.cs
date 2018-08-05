@@ -29,13 +29,13 @@ namespace Utilities
         public static DateTime StartOfPreviousWorkWeek()
         {
             DateTime now = DateTime.Now.AddDays(-7);
-            return now.AddDays((int)now.DayOfWeek + 1);
+            return now.AddDays((int) now.DayOfWeek + 1);
         }
 
         public static DateTime StartOfPreviousWorkWeek(out int week)
         {
             DateTime weekago = DateTime.Now.AddDays(-7);
-            DateTime prevMonday = weekago.AddDays((int)weekago.DayOfWeek + 1);
+            DateTime prevMonday = weekago.AddDays((int) weekago.DayOfWeek + 1);
             int dayDiff = prevMonday.DayOfYear - new DateTime(prevMonday.Year, prevMonday.Month, 1).DayOfYear;
             week = 1 + (dayDiff / 7);
             return prevMonday;
@@ -45,7 +45,7 @@ namespace Utilities
         {
             DateTime date = new DateTime(year, month, 1);
             if (date.DayOfWeek != DayOfWeek.Monday) {
-                int firstMonday = (-(int)(date.DayOfWeek)) + 2;
+                int firstMonday = (-(int) (date.DayOfWeek)) + 2;
                 if (firstMonday < 1)
                     firstMonday += 7;
                 date = new DateTime(year, month, firstMonday + (week - 1) * 7);
@@ -90,7 +90,7 @@ namespace Utilities
         public static DateTime PreviousWeekday(DayOfWeek day)
         {
             DateTime today = DateTime.Today;
-            int daydiff = (int)day - (int)today.DayOfWeek;
+            int daydiff = (int) day - (int) today.DayOfWeek;
             return today.AddDays(daydiff > 0 ? daydiff : daydiff - 7);
         }
 
@@ -98,29 +98,7 @@ namespace Utilities
         {
             DateTime today = DateTime.Today;
             int daydiff = today.DayOfWeek - day;
-            return today.AddDays(-7 + (int)day).Date;
-        }
-
-        /// <summary>
-        /// Counts the number of weekdays between the two DateTimes
-        /// </summary>
-        /// <param name="start">Start date range</param>
-        /// <param name="end">End date range</param>
-        /// <param name="excludeHolidays">Option to include or exclude holidays to calculate for workable days</param>
-        /// <returns></returns>
-        public static int CountWeekdays(DateTime start, DateTime end, bool excludeHolidays = false)
-        {
-            int result = -1;
-
-            int ndays = 1 + Convert.ToInt32((end - start).TotalDays);
-            int nsaturdays = (ndays + Convert.ToInt32(start.DayOfWeek)) / 7;
-
-            result = (ndays - 2 * nsaturdays
-                   - (start.DayOfWeek == DayOfWeek.Sunday ? 1 : 0)
-                   + (end.DayOfWeek == DayOfWeek.Saturday ? 1 : 0)
-                   );
-
-            return result;
+            return today.AddDays(-7 + (int) day).Date;
         }
 
         /// <summary>
@@ -135,7 +113,6 @@ namespace Utilities
                 yield return day;
         }
 
-        /// <summary>
         /// Get an IEnumerable of all datetime holidays between the start and end
         /// </summary>
         /// <param name="start">Start date range</param>
@@ -159,7 +136,6 @@ namespace Utilities
         {
             DateTime startdate = new DateTime(year, month, 1);
             DateTime enddate = new DateTime(year, month, 1).AddMonths(1).AddDays(-1);
-
             return WorkDaysBetween(startdate, enddate).Count();
         }
 
@@ -171,8 +147,7 @@ namespace Utilities
         /// <returns></returns>
         public static IEnumerable<DateTime> WorkDaysBetween(DateTime start, DateTime end)
         {
-            return DaysBetween(start, end)
-                .Where(date => IsWorkDay(date));
+            return DaysBetween(start, end).Where(date => IsWorkDay(date));
         }
 
         /// <summary>
@@ -183,8 +158,8 @@ namespace Utilities
         public static bool IsWorkDay(DateTime date)
         {
             return date.DayOfWeek != DayOfWeek.Saturday
-                            && date.DayOfWeek != DayOfWeek.Sunday
-                            && !date.IsHoliday();
+                && date.DayOfWeek != DayOfWeek.Sunday
+                && !date.IsHoliday();
         }
 
         /// <summary>
@@ -195,7 +170,6 @@ namespace Utilities
         {
             DateTime start = new DateTime(DateTime.Now.Year, 1, 1);
             DateTime end = new DateTime(DateTime.Now.Year + 1, 1, 1).AddDays(-1);
-
             return DaysBetween(start, end);
         }
 
@@ -241,7 +215,7 @@ namespace Utilities
                     return dow == DayOfWeek.Monday && date.AddDays(7).Month == 6;
                 case 7:
                     // Independence Day
-                    return (date.Day == 3 && dow == DayOfWeek.Friday) 
+                    return (date.Day == 3 && dow == DayOfWeek.Friday)
                         || (date.Day == 4 && dow != DayOfWeek.Saturday && dow != DayOfWeek.Sunday)
                         || (date.Day == 5 && dow == DayOfWeek.Monday);
                 case 9:

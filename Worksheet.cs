@@ -54,9 +54,9 @@ namespace Utilities.Excel
         {
             int col = 1;
             foreach (Type ty in types) {
-                if (ty == typeof(DateTime))
+                if (ty == typeof(DateTime) || ty == typeof(DateTime?))
                     FixDateColumn(col);
-                else if (ty == typeof(TimeSpan)) {
+                else if (ty == typeof(TimeSpan) || ty == typeof(TimeSpan?)) {
                     worksheet.Column(col).Style.Numberformat.Format = "h:mm:ss";
                     worksheet.Cells[1, col, worksheet.Dimension.Rows, col].Style.Numberformat.Format = "h:mm:ss";
                 }
@@ -336,6 +336,20 @@ namespace Utilities.Excel
         }
 
         /// <summary>
+        /// Removes a column from the Worksheet.
+        /// </summary>
+        /// <param name="name">The name of the column to remove.</param>
+        public void RemoveColumn(string name)
+        {
+            for(int col = 1; col <= worksheet.Dimension.Columns; col++) {
+                if(worksheet.Cells[1, col].Value.ToString() == name) {
+                    worksheet.DeleteColumn(worksheet.Index);
+                    return;
+                }
+            }
+        }
+
+        /// <summary>
         /// Removes a row from the Worksheet.
         /// </summary>
         /// <param name="index">The index of the row to remove.</param>
@@ -351,7 +365,8 @@ namespace Utilities.Excel
         {
             //worksheet.Cells.AutoFitColumns(0);
             for (int col = 1; col <= worksheet.Dimension.Columns; col++) {
-                worksheet.Column(col).AutoFit();
+                var column = worksheet.Column(col);
+                column.AutoFit();
             }
         }
 
@@ -627,7 +642,7 @@ namespace Utilities.Excel
                 }
                 table.Rows.Add(newRow);
             }
-            return table;
+            return table.Trim();
         }
 
         /// <summary>
@@ -721,7 +736,7 @@ namespace Utilities.Excel
             int rows = worksheet.Dimension.Rows;
             int cols = worksheet.Dimension.Columns;
             for (int row = 1; row <= rows; row++) {
-                for (int col = 1; col < cols; col++) {
+                for (int col = 1; col <= cols; col++) {
                     object obj = worksheet.Cells[row, col].Value;
                     if (obj is string) {
                         worksheet.Cells[row, col].Value = Parse(worksheet.Cells[row, col]);
@@ -738,17 +753,19 @@ namespace Utilities.Excel
         private static object Parse(ExcelRange cell)
         {
             string str = cell.Value as string;
-            if (string.IsNullOrEmpty(str))
+            if (str == null)
                 return null;
             string str2 = str.Trim();
+            if (str2.Length == 0)
+                return str;
 
             char c = str2[0];
-            if (Char.IsDigit(c)) {
+            if (Char.IsDigit(c) || c == '-') {
                 char last = str.Last();
                 if (last == '%') {
                     if (Decimal.TryParse(str.Substring(0, str.Length - 1), out decimal d)) {
                         cell.Style.Numberformat.Format = "0.00%";
-                        return d;
+                        return d / 100m;
                     }
                     return str;
                 }
@@ -763,7 +780,7 @@ namespace Utilities.Excel
                     c = str[i];
                     if (Char.IsDigit(c))
                         continue;
-                    if (c == '.') {
+                    else if (c == '.') {
                         if (TimeSpan.TryParse(str, out TimeSpan ts)) {
                             cell.Style.Numberformat.Format = "h:mm:ss";
                             return ts;
@@ -773,13 +790,13 @@ namespace Utilities.Excel
                             return d;
                         }
                     }
-                    if (c == '/' || c == '-' || c == ',') {
+                    else if (c == '/' || c == '-' || c == ',') {
                         if (DateTime.TryParse(str, out DateTime dt)) {
-                            cell.Style.Numberformat.Format = "M-d-yyyy H:mm:ss AM/PM";
+                            cell.Style.Numberformat.Format = "M/d/yyyy H:mm:ss AM/PM";
                             return dt;
                         }
                     }
-                    if (c == ':') {
+                    else if (c == ':') {
                         if (TimeSpan.TryParse(str, out TimeSpan ts)) {
                             cell.Style.Numberformat.Format = "h:mm:ss";
                             return ts;
@@ -806,9 +823,9 @@ namespace Utilities.Excel
                 string upper = str2.ToUpper();
                 if (str == "FALSE")
                     return false;
-                if (str == "TRUE")
+                else if (str == "TRUE")
                     return true;
-                if (str == "NULL")
+                else if (str == "NULL")
                     return null;
             }
             return str;

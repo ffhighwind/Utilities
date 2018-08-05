@@ -17,10 +17,10 @@ namespace Utilities
         /// <returns>The rows with duplicates removed.</returns>
         public static DataTable Distinct(this DataTable table)
         {
-            var rows = table.AsEnumerable().Distinct(DataRowEqualityComparer<DataRow>.Default).Select(dr => dr.ItemArray).ToList();
+            var result = table.AsEnumerable().Distinct(DataRowEqualityComparer<DataRow>.Default).Select(row => row.ItemArray).ToList();
             table.Clear();
-            foreach(object[] row in rows)
-                table.Rows.Add(row);
+            foreach (object[] objs in result)
+                table.Rows.Add(objs);
             return table;
         }
 
@@ -29,11 +29,11 @@ namespace Utilities
         /// </summary>
         /// <param name="table">The DataTable to remove duplicates from.</param>
         /// <param name="columns">The columns to select on.</param>
-        /// <returns>The rows with duplicates removed.</returns>
-        public static IEnumerable<DataRow> Distinct(this DataTable table, params string[] columns)
+        /// <returns>The datatable with duplicates removed.</returns>
+        public static DataTable Distinct(this DataTable table, params string[] columns)
         {
             int[] columnIndexes = table.Columns.Cast<DataColumn>().AsEnumerable().Where(col => columns.Contains(col.ColumnName)).Select(col => col.Ordinal).ToArray();
-            return table.AsEnumerable().Distinct(DataRowEqualityComparer<DataRow>.Create(columnIndexes));
+            return Distinct(table, columnIndexes);
         }
 
         /// <summary>
@@ -41,10 +41,15 @@ namespace Utilities
         /// </summary>
         /// <param name="table">The DataTable to remove duplicates from.</param>
         /// <param name="columns">The columns to select on.</param>
-        /// <returns>The rows with duplicates removed.</returns>
-        public static IEnumerable<DataRow> Distinct(this DataTable table, params int[] columns)
+        /// <returns>The datatable with duplicates removed.</returns>
+        public static DataTable Distinct(this DataTable table, params int[] columns)
         {
-            return table.AsEnumerable().Distinct(DataRowEqualityComparer<DataRow>.Create(columns));
+            var result = table.AsEnumerable().Distinct(DataRowEqualityComparer<DataRow>.Create(columns)).Select(row => row.ItemArray).ToList();
+            table.Clear();
+            foreach (object[] objs in result) {
+                table.Rows.Add(objs);
+            }
+            return table;
         }
 
         /// <summary>
@@ -54,11 +59,7 @@ namespace Utilities
         /// <returns>The sorted rows.</returns>
         public static DataTable Sort(this DataTable table)
         {
-            List<object[]> rows = table.AsEnumerable().OrderBy(dr => dr[0]).Select(dr => dr.ItemArray).ToList();
-            table.Clear();
-            foreach (object[] row in rows)
-                table.Rows.Add(row);
-            return table;
+            return Sort(table, 0);
         }
 
         /// <summary>
@@ -68,11 +69,7 @@ namespace Utilities
         /// <returns>The sorted rows.</returns>
         public static DataTable SortDescending(this DataTable table)
         {
-            List<object[]> rows = table.AsEnumerable().OrderByDescending(dr => dr[0]).Select(dr => dr.ItemArray).ToList();
-            table.Clear();
-            foreach (object[] row in rows)
-                table.Rows.Add(row);
-            return table;
+            return SortDescending(table, 0);
         }
 
         /// <summary>
@@ -82,14 +79,14 @@ namespace Utilities
         /// <returns>The sorted rows.</returns>
         public static DataTable Sort(this DataTable table, int column, params int[] columns)
         {
-            var result = table.AsEnumerable().OrderBy(dr => dr[column]);
+            var rows = table.AsEnumerable().OrderBy(dr => dr[column]).ToList();
             for (int i = 0; i < columns.Length; i++) {
-                result = result.ThenBy(dr => dr[columns[i]]);
+                rows = rows.OrderBy(dr => dr[columns[i]]).ToList();
             }
-            List<object[]> rows = result.Select(dr => dr.ItemArray).ToList();
+            IEnumerable<object[]> result = rows.Select(row => row.ItemArray).ToList();
             table.Clear();
-            foreach (object[] row in rows)
-                table.Rows.Add(row);
+            foreach (object[] objs in result)
+                table.Rows.Add(objs);
             return table;
         }
 
@@ -101,15 +98,15 @@ namespace Utilities
         public static DataTable Sort(this DataTable table, string column, params string[] columns)
         {
             int index = table.Columns[column].Ordinal;
-            OrderedEnumerableRowCollection<DataRow> result = table.AsEnumerable().OrderBy(dr => dr[index]);
+            var rows = table.AsEnumerable().OrderBy(dr => dr[index]).ToList();
             for (int i = 0; i < columns.Length; i++) {
                 index = table.Columns[columns[i]].Ordinal;
-                result = result.ThenBy(dr => dr[index]);
+                rows = rows.OrderBy(dr => dr[index]).ToList();
             }
-            List<object[]> rows = result.Select(dr => dr.ItemArray).ToList();
+            IEnumerable<object[]> result = rows.Select(row => row.ItemArray).ToList();
             table.Clear();
-            foreach (object[] row in rows)
-                table.Rows.Add(row);
+            foreach (object[] objs in result)
+                table.Rows.Add(objs);
             return table;
         }
 
@@ -120,14 +117,13 @@ namespace Utilities
         /// <returns>The sorted rows.</returns>
         public static DataTable SortDescending(this DataTable table, int column, params int[] columns)
         {
-            var result = table.AsEnumerable().OrderByDescending(dr => dr[column]);
+            var result = table.AsEnumerable().OrderByDescending(dr => dr[column]).ToList();
             for (int i = 0; i < columns.Length; i++) {
-                result = result.ThenByDescending(dr => dr[columns[i]]);
+                result = result.OrderByDescending(dr => dr[columns[i]]).ToList();
             }
-            List<object[]> rows = result.Select(dr => dr.ItemArray).ToList();
             table.Clear();
-            foreach (object[] row in rows)
-                table.Rows.Add(row);
+            foreach (DataRow row in result)
+                table.Rows.Add(row.ItemArray);
             return table;
         }
 
@@ -139,15 +135,14 @@ namespace Utilities
         public static DataTable SortDescending(this DataTable table, string column, params string[] columns)
         {
             int index = table.Columns[column].Ordinal;
-            OrderedEnumerableRowCollection<DataRow> result = table.AsEnumerable().OrderByDescending(dr => dr[index]);
+            var result = table.AsEnumerable().OrderByDescending(dr => dr[index]).ToList();
             for (int i = 0; i < columns.Length; i++) {
                 index = table.Columns[columns[i]].Ordinal;
-                result = result.ThenByDescending(dr => dr[index]);
+                result = result.OrderByDescending(dr => dr[index]).ToList();
             }
-            List<object[]> rows = result.Select(dr => dr.ItemArray).ToList();
             table.Clear();
-            foreach (object[] row in rows)
-                table.Rows.Add(row);
+            foreach (DataRow row in result)
+                table.Rows.Add(row.ItemArray);
             return table;
         }
         #endregion //Sort/Distinct
@@ -241,7 +236,10 @@ namespace Utilities
 
             foreach (PropertyInfo info in properties) {
                 if (!dataTable.Columns.Contains(info.Name)) {
-                    dataTable.Columns.Add(new DataColumn(info.Name, Nullable.GetUnderlyingType(info.PropertyType) ?? info.PropertyType));
+                    Type ty = Nullable.GetUnderlyingType(info.PropertyType) ?? info.PropertyType;
+                    if (ty == typeof(char))
+                        ty = typeof(string);
+                    dataTable.Columns.Add(new DataColumn(info.Name, ty));
                 }
             }
             foreach (T entity in list) {

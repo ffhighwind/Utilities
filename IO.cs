@@ -803,11 +803,12 @@ namespace Utilities
         /// <param name="list">The list of objects to write to the Excel file.</param>
         /// <param name="path">Name of file to be written.</param>
         /// <param name="hasHeaders">Determines if the columns should be written.</param>
-        /// <param name="autofilter">Determines if auto filtering will be enabled.</param>
+        /// <param name="autofilter">Determines if auto-filtering will be enabled.</param>
+        /// <param name="autoformat">Determines if auto-formatting will be enabled.</param>
         /// <returns>True if successful, false if something went wrong.</returns>
-        public static bool WriteXlsx<T>(this IEnumerable<T> list, string path, bool hasHeaders = true, bool autofilter = true)
+        public static bool WriteXlsx<T>(this IEnumerable<T> list, string path, bool hasHeaders = true, bool autofilter = true, bool autoformat = true)
         {
-            return WriteXlsx((ss) => ss[0].Load(list), path, hasHeaders, autofilter);
+            return WriteXlsx((ss) => ss[0].Load(list), path, hasHeaders, autofilter, autoformat);
         }
 
         /// <summary>
@@ -816,11 +817,12 @@ namespace Utilities
         /// <param name="dt">DataTable containing the data to be written to the Excel file.</param>
         /// <param name="path">Name of file to be written.</param>
         /// <param name="hasHeaders">Determines if the columns should be written.</param>
-        /// <param name="autofilter">Determines if auto filtering will be enabled.</param>
+        /// <param name="autofilter">Determines if auto-filtering will be enabled.</param>
+        /// <param name="autoformat">Determines if auto-formatting will be enabled.</param>
         /// <returns>True if successful, false if something went wrong.</returns>
-        public static bool WriteXlsx(this DataTable dt, string path, bool hasHeaders = true, bool autofilter = true)
+        public static bool WriteXlsx(this DataTable dt, string path, bool hasHeaders = true, bool autofilter = true, bool autoformat = true)
         {
-            return WriteXlsx((ss) => ss[0].Load(dt, hasHeaders), path, hasHeaders, autofilter);
+            return WriteXlsx((ss) => ss[0].Load(dt, hasHeaders), path, hasHeaders, autofilter, autoformat);
         }
 
         /// <summary>
@@ -829,14 +831,15 @@ namespace Utilities
         /// <param name="ds">DataSet containing the data to be written to the Excel.</param>
         /// <param name="path">Name of file to be written.</param>
         /// <param name="hasHeaders">Determines if the columns should be written.</param>
-        /// <param name="autofilter">Determines if auto filtering will be enabled.</param>
+        /// <param name="autofilter">Determines if auto-filtering will be enabled.</param>
+        /// <param name="autoformat">Determines if auto-formatting will be enabled.</param>
         /// <returns>True if successful, false if something went wrong.</returns>
-        public static bool WriteXlsx(this DataSet ds, string path, bool hasHeaders = true, bool autofilter = true)
+        public static bool WriteXlsx(this DataSet ds, string path, bool hasHeaders = true, bool autofilter = true, bool autoformat = true)
         {
-            return WriteXlsx((ss) => ss.Load(ds), path, hasHeaders, autofilter);
+            return WriteXlsx((ss) => ss.Load(ds), path, hasHeaders, autofilter, autoformat);
         }
 
-        private static bool WriteXlsx(Action<Excel.Spreadsheet> action, string path, bool hasHeaders, bool autofilter)
+        private static bool WriteXlsx(Action<Excel.Spreadsheet> action, string path, bool hasHeaders, bool autofilter, bool autoformat)
         {
             try {
                 FileInfo fi = new FileInfo(path);
@@ -848,7 +851,10 @@ namespace Utilities
                     action(ss);
                     if(autofilter)
                         ss.AutoFilter = true;
+                    if(autoformat)
+                        ss.AutoFormat();
                     ss.AutoFit();
+                    ss.BestFit = true;
                     ss.Save();
                 }
                 return true;
@@ -884,7 +890,7 @@ namespace Utilities
         /// Determines if a file is available for reading/writing.
         /// </summary>
         /// <param name="path">The path of the file to check.</param>
-        /// /// <param name="access">The file access to test.</param>
+        /// <param name="access">The file access to test.</param>
         /// <returns>True if the file is available with the given file access. False otherwise.</returns>
         public static bool IsAvailable(string path, FileAccess access = FileAccess.Read)
         {
@@ -895,7 +901,7 @@ namespace Utilities
         /// Determines if a file is available for reading/writing.
         /// </summary>
         /// <param name="path">The path of the file to check.</param>
-        /// /// <param name="access">The file access to test.</param>
+        /// <param name="access">The file access to test.</param>
         /// <returns>True if the file is available with the given file access. False otherwise.</returns>
         public static bool IsAvailable(FileInfo path, FileAccess access = FileAccess.Read)
         {
