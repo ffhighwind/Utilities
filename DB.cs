@@ -1,19 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Odbc;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using Dapper;
-using FastMember;
 
 
 namespace Utilities
 {
     public static class DB
     {
+        private const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance;
+        private const SqlBulkCopyOptions bulkCopyOptions = SqlBulkCopyOptions.FireTriggers | SqlBulkCopyOptions.UseInternalTransaction | SqlBulkCopyOptions.TableLock;
+        private static readonly SqlBulkCopyColumnMapping[] emptyColumnMappings = Array.Empty<SqlBulkCopyColumnMapping>();
+
         /// <summary>
         /// Creates a connection string based on the server/database.
         /// </summary>
@@ -43,7 +45,6 @@ namespace Utilities
                 try {
                     using (SqlConnection conn = new SqlConnection(connStr)) {
                         conn.Open();
-                        conn.Close();
                     }
                 }
                 catch (Exception ex) {
@@ -148,9 +149,7 @@ namespace Utilities
             Exception e = null;
             for (int i = 0; i < maxRetries; i++) {
                 try {
-                    conn.Open();
-                    int count = conn.Execute(cmd, param, null, timeout);
-                    return count;
+                    return conn.Execute(cmd, param, null, timeout);
                 }
                 catch (Exception ex) {
                     e = ex;
@@ -171,8 +170,7 @@ namespace Utilities
         /// <returns>True if the upload was successful. False otherwise.</returns>
         public static bool BulkUpload<T>(SqlConnection conn, string tablename, IEnumerable<T> list, params string[] columns) where T : class
         {
-            return BulkUpload<T>(conn, tablename, list, 600, SqlBulkCopyOptions.FireTriggers
-                | SqlBulkCopyOptions.UseInternalTransaction | SqlBulkCopyOptions.TableLock, columns);
+            return BulkUpload<T>(conn, tablename, list, 600, CreateMappings(columns));
         }
 
         /// <summary>
@@ -187,8 +185,7 @@ namespace Utilities
         /// <returns>True if the upload was successful. False otherwise.</returns>
         public static bool BulkUpload<T>(SqlConnection conn, string tablename, IEnumerable<T> list, int timeoutSecs, params string[] columns) where T : class
         {
-            return BulkUpload<T>(conn, tablename, list, timeoutSecs, SqlBulkCopyOptions.FireTriggers
-                | SqlBulkCopyOptions.UseInternalTransaction | SqlBulkCopyOptions.TableLock, columns);
+            return BulkUpload<T>(conn, tablename, list, timeoutSecs, CreateMappings(columns));
         }
 
         /// <summary>
@@ -199,51 +196,20 @@ namespace Utilities
         /// <param name="tablename">The name of the database table to upload data to.</param>
         /// <param name="list">The List to upload.</param>
         /// <param name="timeoutSecs">The maximum timeout in seconds for the command.</param>
-        /// <param name="options">The bulk upload options.</param>
-        /// <param name="columns">The columns names. If no columns are given then all columns are mapped automatically by name using reflection.</param>
-        /// <returns>True if the upload was successful. False otherwise.</returns>
-        public static bool BulkUpload<T>(SqlConnection conn, string tablename, IEnumerable<T> list, int timeoutSecs, SqlBulkCopyOptions options =
-            SqlBulkCopyOptions.FireTriggers | SqlBulkCopyOptions.UseInternalTransaction | SqlBulkCopyOptions.TableLock, params string[] columns) where T : class
-        {
-            SqlBulkCopyColumnMapping[] mappings;
-            if (columns.Length == 0)
-                columns = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance).Select(prop => prop.Name).ToArray();
-            mappings = new SqlBulkCopyColumnMapping[columns.Length];
-            for (int i = 0; i < columns.Length; i++)
-                mappings[i] = new SqlBulkCopyColumnMapping(columns[i], columns[i]);
-            return BulkUpload<T>(conn, tablename, list, timeoutSecs, options, mappings);
-        }
-
-        /// <summary>
-        /// Uploads a collection to a database.
-        /// </summary>
-        /// <typeparam name="T">The type of object in the collection.</typeparam>
-        /// <param name="conn">The database connection.</param>
-        /// <param name="tablename">The name of the database table to upload data to.</param>
-        /// <param name="list">The List to upload.</param>
-        /// <param name="timeoutSecs">The maximum timeout in seconds for the command.</param>
-        /// <param name="options">The bulk upload options.</param>
         /// <param name="mappings">The column mappings.</param>
         /// <returns>True if the upload was successful. False otherwise.</returns>
-        public static bool BulkUpload<T>(SqlConnection conn, string tablename, IEnumerable<T> list, int timeoutSecs = 600, SqlBulkCopyOptions options =
-            SqlBulkCopyOptions.FireTriggers | SqlBulkCopyOptions.UseInternalTransaction | SqlBulkCopyOptions.TableLock, params SqlBulkCopyColumnMapping[] mappings) where T : class
+        public static bool BulkUpload<T>(SqlConnection conn, string tablename, IEnumerable<T> list, int timeoutSecs = 600, params SqlBulkCopyColumnMapping[] mappings) where T : class
         {
             try {
                 using (GenericDataReader<T> reader = new GenericDataReader<T>(list))
-                using (SqlBulkCopy bulkCpy = new SqlBulkCopy(conn, options, null)) {
+                using (SqlBulkCopy bulkCpy = new SqlBulkCopy(conn, bulkCopyOptions, null)) {
                     bulkCpy.DestinationTableName = tablename;
                     bulkCpy.BulkCopyTimeout = timeoutSecs;
-                    if (mappings.Length == 0) {
-                        foreach (PropertyInfo pinfo in typeof(T).GetProperties(BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance)) {
-                            bulkCpy.ColumnMappings.Add(new SqlBulkCopyColumnMapping(pinfo.Name, pinfo.Name));
-                        }
+                    if (mappings.Length == 0)
+                        mappings = CreateMappings<T>();
+                    foreach (SqlBulkCopyColumnMapping mapping in mappings) {
+                        bulkCpy.ColumnMappings.Add(mapping);
                     }
-                    else {
-                        foreach (SqlBulkCopyColumnMapping mapping in mappings) {
-                            bulkCpy.ColumnMappings.Add(mapping);
-                        }
-                    }
-                    conn.Open();
                     bulkCpy.WriteToServer(reader);
                 }
                 return true;
@@ -252,6 +218,51 @@ namespace Utilities
                 PrintError(ex, "DB.BulkUpload", conn, tablename + " " + list.Count().ToString() + " " + typeof(T).Name);
             }
             return false;
+        }
+
+        private static SqlBulkCopyColumnMapping[] CreateMappings(params string[] columns)
+        {
+            if (columns.Length == 0)
+                return emptyColumnMappings;
+
+            SqlBulkCopyColumnMapping[] mappings = new SqlBulkCopyColumnMapping[columns.Length];
+            for (int i = 0; i < columns.Length; i++) {
+                mappings[i] = new SqlBulkCopyColumnMapping(columns[i], columns[i]);
+            }
+            return mappings;
+        }
+
+        private static SqlBulkCopyColumnMapping[] CreateMappings<T>(params string[] columns)
+        {
+            SqlBulkCopyColumnMapping[] mappings;
+            if (columns.Length == 0)
+                mappings = CreateMappings<T>();
+            else {
+                mappings = new SqlBulkCopyColumnMapping[columns.Length];
+                for (int i = 0; i < columns.Length; i++) {
+                    mappings[i] = new SqlBulkCopyColumnMapping(columns[i], columns[i]);
+                }
+            }
+            return mappings;
+        }
+
+        private static SqlBulkCopyColumnMapping[] CreateMappings<T>()
+        {
+            PropertyInfo[] pinfos = typeof(T).GetProperties(bindingFlags);
+            SqlBulkCopyColumnMapping[] mappings = new SqlBulkCopyColumnMapping[pinfos.Length];
+            for (int i = 0; i < pinfos.Length; i++) {
+                mappings[i] = new SqlBulkCopyColumnMapping(pinfos[i].Name, pinfos[i].Name);
+            }
+            return mappings;
+        }
+
+        private static SqlBulkCopyColumnMapping[] CreateMappings(DataTable table)
+        {
+            SqlBulkCopyColumnMapping[] mappings = new SqlBulkCopyColumnMapping[table.Columns.Count];
+            for (int i = 0; i < table.Columns.Count; i++) {
+                mappings[i] = new SqlBulkCopyColumnMapping(table.Columns[i].ColumnName, table.Columns[i].ColumnName);
+            }
+            return mappings;
         }
 
         /// <summary>
@@ -263,29 +274,153 @@ namespace Utilities
         /// <param name="options">The bulk copy options. If you do not wish to lock the database table then you will need to change this.</param>
         /// <param name="mappings">The column mappings. If no mappings are given then all columns are mapped.</param>
         /// <returns>True if the upload was successful, false otherwise.</returns>
-        public static bool BulkUpload(SqlConnection conn, DataTable table, int timeoutSecs = 600, SqlBulkCopyOptions options =
-            SqlBulkCopyOptions.FireTriggers | SqlBulkCopyOptions.UseInternalTransaction | SqlBulkCopyOptions.TableLock, params SqlBulkCopyColumnMapping[] mappings)
+        public static bool BulkUpload(SqlConnection conn, DataTable table, int timeoutSecs = 600, params SqlBulkCopyColumnMapping[] mappings)
         {
             try {
-                if (mappings.Length == 0) {
-                    mappings = new SqlBulkCopyColumnMapping[table.Columns.Count];
-                    for (int i = 0; i < mappings.Length; i++) {
-                        mappings[i] = new SqlBulkCopyColumnMapping(table.Columns[i].ColumnName, table.Columns[i].ColumnName);
-                    }
-                }
-                using (SqlBulkCopy bulkCpy = new SqlBulkCopy(conn, options, null)) {
+                using (SqlBulkCopy bulkCpy = new SqlBulkCopy(conn, bulkCopyOptions, null)) {
                     bulkCpy.DestinationTableName = table.TableName;
                     bulkCpy.BulkCopyTimeout = timeoutSecs;
+                    if (mappings.Length == 0)
+                        mappings = CreateMappings(table);
                     foreach (SqlBulkCopyColumnMapping mapping in mappings) {
                         bulkCpy.ColumnMappings.Add(mapping);
                     }
-                    conn.Open();
                     bulkCpy.WriteToServer(table);
                     return true;
                 }
             }
             catch (Exception ex) {
                 PrintError(ex, "DB.BulkUpload", conn, table.TableName);
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Inserts and optionally updates rows in a database.
+        /// </summary>
+        /// <typeparam name="T">The Type of object to upload.</typeparam>
+        /// <param name="conn">The database connection.</param>
+        /// <param name="tablename">The name of the database table to upload data to.</param>
+        /// <param name="list">The List to upload.</param>
+        /// <param name="timeoutSecs">The maximum timeout in seconds for the command.</param>
+        /// <param name="mappings">The column mappings.</param>
+        /// <param name="update">Determines if duplicate rows should be updated.</param>
+        /// <returns>True if the upload was successful. False otherwise.</returns>
+        public static bool BulkUpsert<T>(SqlConnection conn, string tablename, IEnumerable<T> list, int timeoutSecs = 600, bool update = true, params SqlBulkCopyColumnMapping[] mappings) where T : class
+        {
+            if (!list.Any())
+                return true;
+            if (mappings.Length == 0)
+                mappings = CreateMappings<T>();
+            using (GenericDataReader<T> reader = new GenericDataReader<T>(list)) {
+                return BulkUpsert(conn, tablename, (bc) => bc.WriteToServer(reader), timeoutSecs, update, mappings);
+            }
+        }
+
+        /// <summary>
+        /// Inserts and optionally updates rows in a database.
+        /// </summary>
+        /// <param name="conn">The database connection.</param>
+        /// <param name="table">The DataTable to upload.</param>
+        /// <param name="timeoutSecs">The maximum timeout in seconds for the command.</param>
+        /// <param name="mappings">The column mappings.</param>
+        /// <param name="update">Determines if duplicate rows should be updated.</param>
+        /// <returns>True if the upload was successful. False otherwise.</returns>
+        public static bool BulkUpsert(SqlConnection conn, DataTable table, int timeoutSecs = 600, bool update = true, params SqlBulkCopyColumnMapping[] mappings)
+        {
+            if (table.Rows.Count == 0)
+                return true;
+            if (mappings.Length == 0)
+                mappings = CreateMappings(table);
+            return BulkUpsert(conn, table.TableName, (bc) => bc.WriteToServer(table), timeoutSecs, update, mappings);
+        }
+
+        /// <summary>
+        /// Inserts and optionally updates rows in a database.
+        /// </summary>
+        /// <param name="conn">The database connection.</param>
+        /// <param name="tablename"></param>
+        /// <param name="writeAction">A function for bulk uploading to the temporary table.</param>
+        /// <param name="timeoutSecs">The maximum timeout in seconds for the command.</param>
+        /// <param name="update">Determines if duplicate rows should be updated.</param>
+        /// <param name="mappings">The column mappings.</param>
+        /// <returns>True if the upload was successful. False otherwise.</returns>
+        private static bool BulkUpsert(SqlConnection conn, string tablename, Action<SqlBulkCopy> writeAction, int timeoutSecs, bool update, SqlBulkCopyColumnMapping[] mappings)
+        {
+            try {
+                using (SqlTransaction trans = conn.BeginTransaction())
+                using (SqlCommand cmd = conn.CreateCommand()) {
+                    cmd.Parameters.AddWithValue("@tablename", tablename);
+                    cmd.CommandText = @"SELECT * INTO @tablename FROM #ATempTable WHERE 1 = 0";
+                    cmd.ExecuteNonQuery();
+
+                    using (SqlBulkCopy bulkCpy = new SqlBulkCopy(conn, SqlBulkCopyOptions.Default, trans)) {
+                        bulkCpy.DestinationTableName = "#ATempTable";
+                        bulkCpy.BulkCopyTimeout = timeoutSecs;
+                        foreach (SqlBulkCopyColumnMapping mapping in mappings) {
+                            bulkCpy.ColumnMappings.Add(mapping);
+                        }
+                        writeAction(bulkCpy);
+                    }
+                    SqlBulkCopyColumnMapping[] bulkMappings = new SqlBulkCopyColumnMapping[mappings.Length];
+                    for(int i = 0; i < bulkMappings.Length; i++) {
+                        bulkMappings[i] = new SqlBulkCopyColumnMapping(mappings[i].DestinationColumn, mappings[i].DestinationColumn);
+                    }
+                    if (!MergeTables(conn, tablename, "#ATempTable", update, bulkMappings))
+                        return false;
+                    cmd.Parameters.Clear();
+                    cmd.CommandText = "DROP TABLE #ATempTable";
+                    cmd.ExecuteNonQuery();
+                }
+                return true;
+            }
+            catch (Exception ex) {
+                PrintError(ex, "DB.BulkUpsert", conn, tablename);
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Merges two tables together using the column mappings.
+        /// </summary>
+        /// <param name="conn">The database connection.</param>
+        /// <param name="source">The source table.</param>
+        /// <param name="target">The destination table.</param>
+        /// <param name="update">Determines if duplicate rows should be updated.</param>
+        /// <param name="mappings">The column mappings between the tables.</param>
+        /// <returns>True if the tables were merged. False otherwise.</returns>
+        public static bool MergeTables(SqlConnection conn, string source, string target, bool update, SqlBulkCopyColumnMapping[] mappings)
+        {
+            try {
+                using (SqlCommand cmd = conn.CreateCommand()) {
+                    cmd.Parameters.AddWithValue("@SourceT", source);
+                    cmd.Parameters.AddWithValue("@TargetT", target);
+                    StringBuilder onStringBuilder = new StringBuilder("MERGE INTO @TargetT AS Target\nUSING @SourceT AS Source\n\tON");
+                    StringBuilder updateStringBuilder = new StringBuilder("WHEN MATCHED THEN UPDATE SET\n\t");
+                    StringBuilder insertStringBuilder = new StringBuilder("WHEN NOT MATCHED THEN\tINSERT (");
+                    StringBuilder valuesStringBuilder = new StringBuilder("\tVALUES (");
+                    for (int i = 0; i < mappings.Length; i++) {
+                        string targetP = "@target" + (i + 1).ToString();
+                        string sourceP = "@source" + (i + 1).ToString();
+                        cmd.Parameters.AddWithValue(targetP, mappings[i].DestinationColumn);
+                        cmd.Parameters.AddWithValue(sourceP, mappings[i].SourceColumn);
+                        onStringBuilder.Append(" Target.[").Append(targetP).Append("] = Source.[").Append(sourceP).Append("]\n\tAND");
+                        updateStringBuilder.Append(" Target.[").Append(targetP).Append("] = Source.[").Append(sourceP).Append("],\n\t");
+                        insertStringBuilder.Append(targetP).Append(", ");
+                        valuesStringBuilder.Append(" Source.[").Append(sourceP).Append("], ");
+                    }
+                    onStringBuilder.Remove(updateStringBuilder.Length - 4, 4);
+                    updateStringBuilder.Remove(updateStringBuilder.Length - 3, 3);
+                    insertStringBuilder.Remove(updateStringBuilder.Length - 2, 2).Append(")\n");
+                    valuesStringBuilder.Remove(updateStringBuilder.Length - 2, 2).Append(")");
+                    if (update)
+                        onStringBuilder.Append(updateStringBuilder);
+                    cmd.CommandText = onStringBuilder.Append(insertStringBuilder).Append(valuesStringBuilder).ToString();
+                    return cmd.ExecuteNonQuery() >= 0;
+                }
+            }
+            catch (Exception ex) {
+                PrintError(ex, "DB.MergeTables", conn, "source: " + source ?? "null" + ", target: " + target ?? "null");
             }
             return false;
         }
@@ -335,9 +470,11 @@ namespace Utilities
         public static bool RecreateTable(SqlConnection conn, string tablename)
         {
             try {
-                if (TableExists(conn, tablename)) {
-                    DataTable table = TableSchema(conn, tablename);
-                    return table != null && DropTable(conn, tablename) && CreateTable(conn, table);
+                using (DataTable table = TableSchema(conn, tablename)) {
+                    if (table != null) {
+                        return conn.Execute("DROP TABLE [@tablename]", new { tablename = tablename }) > 0
+                            && conn.Execute(CreateTableString(table)) > 0;
+                    }
                 }
             }
             catch (Exception ex) {
@@ -482,8 +619,7 @@ namespace Utilities
         public static bool DropTable(SqlConnection conn, string tablename)
         {
             try {
-                conn.Open();
-                conn.Execute("DROP TABLE [@dbname].dbo.[@tablename]", new { tablename = tablename, dbname = conn.Database });
+                conn.Execute("DROP TABLE [@tablename]", new { tablename = tablename });
             }
             catch (Exception ex) {
                 PrintError(ex, "DB.DropTable", conn, tablename);

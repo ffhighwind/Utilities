@@ -1,14 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Utilities
 {
-    /// <summary>
-    /// Time class by Wes Rollings.
-    /// </summary>
     public static class Time
     {
         public static bool IsBetween(this DateTime time, DateTime start, DateTime end)
@@ -203,13 +197,13 @@ namespace Utilities
                     // MLK Jr Day
                     return weekOfMonth == 3 && dow == DayOfWeek.Monday;
                 // case 2:
-                    //// President’s Day (3rd Monday in February)
-                    //if (date.Month == 2 && isMonday && nthWeekDay == 3) return true;
+                //// President’s Day (3rd Monday in February)
+                //if (date.Month == 2 && isMonday && nthWeekDay == 3) return true;
                 // case 4:
-                    //// Veteran’s Day (November 11, or preceding Friday/following Monday if weekend))
-                    //if ((date.Month == 11 && date.Day == 10 && isFriday) ||
-                    //    (date.Month == 11 && date.Day == 11 && !isWeekend) ||
-                    //    (date.Month == 11 && date.Day == 12 && isMonday)) return true;
+                //// Veteran’s Day (November 11, or preceding Friday/following Monday if weekend))
+                //if ((date.Month == 11 && date.Day == 10 && isFriday) ||
+                //    (date.Month == 11 && date.Day == 11 && !isWeekend) ||
+                //    (date.Month == 11 && date.Day == 12 && isMonday)) return true;
                 case 5:
                     // Memorial Day 
                     return dow == DayOfWeek.Monday && date.AddDays(7).Month == 6;
@@ -221,9 +215,9 @@ namespace Utilities
                 case 9:
                     // Labor Day
                     return dow == DayOfWeek.Monday && weekOfMonth == 1; //Labor Day
-                // case 10:
-                    //// Columbus Day (2nd Monday in October)
-                    //if (date.Month == 10 && isMonday && nthWeekDay == 2) return true;
+                                                                        // case 10:
+                                                                        //// Columbus Day (2nd Monday in October)
+                                                                        //if (date.Month == 10 && isMonday && nthWeekDay == 2) return true;
                 case 11:
                     //Thanksgiving + day after Thanksgiving
                     return weekOfMonth == 4 && (dow == DayOfWeek.Thursday || dow == DayOfWeek.Friday);

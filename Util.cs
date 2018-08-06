@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 
 namespace Utilities
@@ -364,7 +363,7 @@ namespace Utilities
             for (int n = 0; n < b.Length; n += 2)
                 if (b[n] == 0)
                     count++;
-            if (((double)count) / b.Length > threshold) {
+            if (((double) count) / b.Length > threshold) {
                 return Encoding.BigEndianUnicode;
             }
             count = 0;
@@ -372,7 +371,7 @@ namespace Utilities
                 if (b[n] == 0)
                     count++;
             }
-            if (((double)count) / b.Length > threshold) {
+            if (((double) count) / b.Length > threshold) {
                 return Encoding.Unicode; // (little-endian)
             }
 
@@ -508,7 +507,7 @@ namespace Utilities
         /// <returns>The string representation of a type.</returns>
         public static string ToString<T>(T obj)
         {
-            return ToString((object)obj);
+            return ToString((object) obj);
         }
 
         /// <summary>
@@ -519,7 +518,7 @@ namespace Utilities
         /// <returns>The string representation of a type.</returns>
         public static string ToString(object obj)
         {
-            return (obj != null && ((ToStringDelegate)obj.ToString).Method.DeclaringType == obj.GetType())
+            return (obj != null && ((ToStringDelegate) obj.ToString).Method.DeclaringType == obj.GetType())
                 ? obj.ToString()
                 : JsonConvert.SerializeObject(obj, Formatting.None);
         }
@@ -531,7 +530,7 @@ namespace Utilities
         /// <param name="obj">The object to print.</param>
         public static void Print(object obj)
         {
-            string result = (obj != null && ((ToStringDelegate)obj.ToString).Method.DeclaringType == obj.GetType())
+            string result = (obj != null && ((ToStringDelegate) obj.ToString).Method.DeclaringType == obj.GetType())
                 ? obj.ToString()
                 : JsonConvert.SerializeObject(obj, Formatting.None);
             Console.Write(result);

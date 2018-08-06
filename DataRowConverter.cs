@@ -10,7 +10,7 @@ namespace Utilities
     {
         protected Func<object, object>[] converters;
         protected PropertyInfo[] pinfos;
-        protected static readonly BindingFlags flags = BindingFlags.Public | BindingFlags.SetProperty | BindingFlags.GetProperty | BindingFlags.Instance;
+        protected const BindingFlags flags = BindingFlags.Public | BindingFlags.SetProperty | BindingFlags.GetProperty | BindingFlags.Instance;
 
         private DataRowConverter() { }
 

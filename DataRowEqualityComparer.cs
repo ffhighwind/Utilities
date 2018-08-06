@@ -7,17 +7,15 @@ namespace Utilities
 {
     public class DataRowEqualityComparer<T> : IEqualityComparer<T> where T : DataRow
     {
-        private static DataRowEqualityComparer<T> _default = new DataRowEqualityComparer<T>();
-
-        public static DataRowEqualityComparer<T> Default { get { return _default; } }
+        public static DataRowEqualityComparer<T> Default { get; } = new DataRowEqualityComparer<T>();
 
         public static DataRowEqualityComparer<T> Create(DataTable table, params string[] columnNames)
         {
             if (columnNames.Length == 0)
-                return _default;
+                return Default;
             int[] colIndexes = table.Columns.Cast<DataColumn>().AsEnumerable().Where(col => columnNames.Contains(col.ColumnName)).Select(col => col.Ordinal).ToArray();
             if (colIndexes.Length == table.Columns.Count)
-                return _default;
+                return Default;
             return new DataRowEqualityComparerAll(colIndexes);
         }
 
