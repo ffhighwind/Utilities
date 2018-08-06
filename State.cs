@@ -8,7 +8,6 @@ namespace Utilities
 {
     public class State
     {
-
         private static bool isdst = DateTime.Now.IsDaylightSavingTime();
 
         public static bool IsDaylightSavings { get { return isdst; } }
@@ -75,7 +74,6 @@ namespace Utilities
             }
             return timezone;
         }
-
 
         public string Fullname { get; private set; }
         public string Name { get; private set; }

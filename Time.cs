@@ -1,14 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Utilities
 {
-    /// <summary>
-    /// Time class by Wes Rollings.
-    /// </summary>
     public static class Time
     {
         public static bool IsBetween(this DateTime time, DateTime start, DateTime end)
@@ -150,11 +144,11 @@ namespace Utilities
             return DaysBetween(start, end).Where(date => IsWorkDay(date));
         }
 
-        /// Checks if DateTime is considered a holiday
+        /// <summary>
+        /// Checks if DateTime is considered a workday. A workday is a weekday that isn't a holiday.
         /// </summary>
-        /// <param name="date"></param>
-        /// <returns></returns>
-
+        /// <param name="date">The day to determine if it's a weekday.</param>
+        /// <returns>True if the date is a weekday. False otherwise.</returns>
         public static bool IsWorkDay(DateTime date)
         {
             return date.DayOfWeek != DayOfWeek.Saturday
@@ -165,7 +159,7 @@ namespace Utilities
         /// <summary>
         /// Returns DateTime Collection of all days this year
         /// </summary>
-        /// <returns></returns>
+        /// <returns>A list of days in this year.</returns>
         public static IEnumerable<DateTime> DaysThisYear()
         {
             DateTime start = new DateTime(DateTime.Now.Year, 1, 1);
@@ -174,11 +168,11 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Determines if this date is a PTO Holiday:
-        /// New Years, MLK Jr, Washington's Bday, Memorial Day, Independence Day, Labor Day, Columbus Day, Veterans Day, Thanksgiving, Christmas
+        /// Determines if this date is a paid holiday:
+        /// These include: New Years, MLK Jr, Washington's Bday, Memorial Day, Independence Day, Labor Day, Columbus Day, Veterans Day, Thanksgiving, Christmas
         /// </summary>
         /// <param name="date">The date.</param>
-        /// <returns>True if this date is a PTO Holiday</returns>
+        /// <returns>True if this date is a paid holiday.</returns>
         public static bool IsHoliday(this DateTime date)
         {
             int weekOfMonth = (date.Day - 1) / 7 + 1;
@@ -219,7 +213,11 @@ namespace Utilities
                         || (date.Day == 4 && dow != DayOfWeek.Saturday && dow != DayOfWeek.Sunday)
                         || (date.Day == 5 && dow == DayOfWeek.Monday);
                 case 9:
-                    return dow == DayOfWeek.Monday && weekOfMonth == 1;
+                    // Labor Day
+                    return dow == DayOfWeek.Monday && weekOfMonth == 1; //Labor Day
+                                                                        // case 10:
+                                                                        //// Columbus Day (2nd Monday in October)
+                                                                        //if (date.Month == 10 && isMonday && nthWeekDay == 2) return true;
                 case 11:
                     //Thanksgiving + day after Thanksgiving
                     return weekOfMonth == 4 && (dow == DayOfWeek.Thursday || dow == DayOfWeek.Friday);

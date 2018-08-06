@@ -14,7 +14,13 @@ namespace Utilities.Excel
     public class Worksheet
     {
         private const int MAX_DATEONLY_ROWS_COUNT = 15;
-        private ExcelWorksheet worksheet;
+        private const string currencySymbols = "$£¥€¢";
+        //private const string currencySymbols = "$¥₤€£฿₿₵¢₡₫₲₱₽₮₩₸₳ℳ₹؋₼﷼₪₭₴";
+
+        /// <summary>
+        /// The EPPlus implementation of the Worksheet (ExcelWorksheet).
+        /// </summary>
+        public ExcelWorksheet Data { get; private set; }
 
         /// <summary>
         /// Constructs an Excel Worksheet from an ExcelWorksheet.
@@ -22,7 +28,7 @@ namespace Utilities.Excel
         /// <param name="worksheet">The EPPlus ExcelWorksheet to represent.</param>
         public Worksheet(ExcelWorksheet worksheet)
         {
-            this.worksheet = worksheet;
+            this.Data = worksheet;
         }
 
         /// <summary>
@@ -33,7 +39,7 @@ namespace Utilities.Excel
         /// <param name="printHeaders">Determines if the property names of the type should be written to the first row.</param>
         public void Load<T>(IEnumerable<T> list, bool printHeaders = true)
         {
-            worksheet.Cells.LoadFromCollection<T>(list, printHeaders);
+            Data.Cells.LoadFromCollection<T>(list, printHeaders);
             FixColumnTypes(Util.GetPropertyTypes(typeof(T)));
         }
 
@@ -44,7 +50,7 @@ namespace Utilities.Excel
         /// <param name="printHeaders">Determines if the table's DataColumn names should be written to the first row.</param>
         public void Load(DataTable table, bool printHeaders = true)
         {
-            worksheet.Cells.LoadFromDataTable(table, printHeaders);
+            Data.Cells.LoadFromDataTable(table, printHeaders);
             FixColumnTypes(table.Columns.Cast<DataColumn>().AsEnumerable().Select(col => col.DataType));
         }
 
@@ -55,8 +61,8 @@ namespace Utilities.Excel
                 if (ty == typeof(DateTime) || ty == typeof(DateTime?))
                     FixDateColumn(col);
                 else if (ty == typeof(TimeSpan) || ty == typeof(TimeSpan?)) {
-                    worksheet.Column(col).Style.Numberformat.Format = "h:mm:ss";
-                    worksheet.Cells[1, col, worksheet.Dimension.Rows, col].Style.Numberformat.Format = "h:mm:ss";
+                    Data.Column(col).Style.Numberformat.Format = "h:mm:ss";
+                    Data.Cells[1, col, Data.Dimension.Rows, col].Style.Numberformat.Format = "h:mm:ss";
                 }
                 col++;
             }
@@ -64,13 +70,13 @@ namespace Utilities.Excel
 
         private void FixDateColumn(int columnIndex)
         {
-            ExcelColumn column = worksheet.Column(columnIndex);
-            int rowCheck = Math.Min(worksheet.Dimension.Rows, MAX_DATEONLY_ROWS_COUNT);
-            for (int row = worksheet.Dimension.Rows > 1 ? 2 : 1; row < rowCheck; row++) {
-                DateTime datetime = worksheet.Cells[row, columnIndex].GetValue<DateTime>();
+            ExcelColumn column = Data.Column(columnIndex);
+            int rowCheck = Math.Min(Data.Dimension.Rows, MAX_DATEONLY_ROWS_COUNT);
+            for (int row = Data.Dimension.Rows > 1 ? 2 : 1; row < rowCheck; row++) {
+                DateTime datetime = Data.Cells[row, columnIndex].GetValue<DateTime>();
                 if (datetime.TimeOfDay != TimeSpan.Zero) {
                     column.Style.Numberformat.Format = "M/d/yyyy h:mm:ss AM/PM";
-                    worksheet.Cells[1, columnIndex, worksheet.Dimension.Rows + 1, columnIndex].Style.Numberformat.Format = "M/d/yyyy h:mm:ss AM/PM";
+                    Data.Cells[1, columnIndex, Data.Dimension.Rows + 1, columnIndex].Style.Numberformat.Format = "M/d/yyyy h:mm:ss AM/PM";
                     //column.Style.Numberformat.Format = "m/d/yyyy h:mm:ss AM/PM";
                     return;
                 }
@@ -86,7 +92,7 @@ namespace Utilities.Excel
         /// <param name="printHeaders">Determines if the first line contains headers.</param>
         public void Load(IDataReader reader, bool printHeaders = true)
         {
-            worksheet.Cells.LoadFromDataReader(reader, printHeaders);
+            Data.Cells.LoadFromDataReader(reader, printHeaders);
             List<Type> types = new List<Type>();
             for (int i = 0; i < reader.FieldCount; i++) {
                 types.Add(reader.GetFieldType(i));
@@ -100,7 +106,7 @@ namespace Utilities.Excel
         /// <param name="list">The enumerable list to load from.</param>
         public void Load(IEnumerable<object[]> list)
         {
-            worksheet.Cells.LoadFromArrays(list);
+            Data.Cells.LoadFromArrays(list);
             if (!list.Any())
                 return;
             List<Type> types = new List<Type>();
@@ -116,7 +122,7 @@ namespace Utilities.Excel
         /// <param name="csvtext">The comma-separated text to load from.</param>
         public void Load(string csvtext)
         {
-            worksheet.Cells.LoadFromText(csvtext);
+            Data.Cells.LoadFromText(csvtext);
         }
 
         /// <summary>
@@ -124,8 +130,8 @@ namespace Utilities.Excel
         /// </summary>
         public void Delete()
         {
-            worksheet.Workbook.Worksheets.Delete(worksheet);
-            worksheet = null;
+            Data.Workbook.Worksheets.Delete(Data);
+            Data = null;
         }
 
         /// <summary>
@@ -133,7 +139,7 @@ namespace Utilities.Excel
         /// </summary>
         public void Clear()
         {
-            worksheet.Cells.Clear();
+            Data.Cells.Clear();
         }
 
         /// <summary>
@@ -144,7 +150,7 @@ namespace Utilities.Excel
         /// <returns>The cell at the given row and column.</returns>
         public ExcelRange this[int row, int col] {
             get {
-                return worksheet.Cells[row, col];
+                return Data.Cells[row, col];
             }
         }
 
@@ -155,7 +161,7 @@ namespace Utilities.Excel
         /// <returns>The cell or cells at the given address or address range.</returns>
         public ExcelRange this[string address] {
             get {
-                return worksheet.Cells[address];
+                return Data.Cells[address];
             }
         }
 
@@ -169,7 +175,7 @@ namespace Utilities.Excel
         /// <returns>The cells at the given address range.</returns>
         public ExcelRange this[int rowA, int colA, int rowB, int colB] {
             get {
-                return worksheet.Cells[rowA, colA, rowB, colB];
+                return Data.Cells[rowA, colA, rowB, colB];
             }
         }
 
@@ -181,7 +187,7 @@ namespace Utilities.Excel
         /// <returns>The value at the given address.</returns>
         public T Cell<T>(string address)
         {
-            return worksheet.Cells[address].GetValue<T>();
+            return Data.Cells[address].GetValue<T>();
         }
 
         /// <summary>
@@ -191,7 +197,7 @@ namespace Utilities.Excel
         /// <returns>The value at the given address.</returns>
         public object Cell(string address)
         {
-            return worksheet.Cells[address].Value;
+            return Data.Cells[address].Value;
         }
 
         /// <summary>
@@ -203,7 +209,7 @@ namespace Utilities.Excel
         /// <returns>The value at the given row and column.</returns>
         public T Cell<T>(int row, int col)
         {
-            return worksheet.Cells[row, col].GetValue<T>();
+            return Data.Cells[row, col].GetValue<T>();
         }
 
         /// <summary>
@@ -214,7 +220,7 @@ namespace Utilities.Excel
         /// <returns>The value at the given row and column.</returns>
         public object Cell(int row, int col)
         {
-            return worksheet.Cells[row, col].Value;
+            return Data.Cells[row, col].Value;
         }
 
         /// <summary>
@@ -225,7 +231,7 @@ namespace Utilities.Excel
         /// <returns>The values at the given address range.</returns>
         public T[,] Cells<T>(string addresses)
         {
-            return worksheet.Cells[addresses].GetValue<T[,]>();
+            return Data.Cells[addresses].GetValue<T[,]>();
         }
 
         /// <summary>
@@ -235,7 +241,7 @@ namespace Utilities.Excel
         /// <returns>The values at the given address range.</returns>
         public object[,] Cells(string addresses)
         {
-            return worksheet.Cells[addresses].GetValue<object[,]>();
+            return Data.Cells[addresses].GetValue<object[,]>();
         }
 
         /// <summary>
@@ -249,7 +255,7 @@ namespace Utilities.Excel
         /// <returns>The values at the given address range.</returns>
         public T[,] Cells<T>(int rowA, int colA, int rowB, int colB)
         {
-            return worksheet.Cells[rowA, colB, rowB, colB].GetValue<T[,]>();
+            return Data.Cells[rowA, colB, rowB, colB].GetValue<T[,]>();
         }
 
         /// <summary>
@@ -262,7 +268,7 @@ namespace Utilities.Excel
         /// <returns>The values at the given address range.</returns>
         public object[,] Cells(int rowA, int colA, int rowB, int colB)
         {
-            return worksheet.Cells[rowA, colB, rowB, colB].GetValue<object[,]>();
+            return Data.Cells[rowA, colB, rowB, colB].GetValue<object[,]>();
         }
 
         /// <summary>
@@ -272,7 +278,7 @@ namespace Utilities.Excel
         /// <returns>The row at the given index.</returns>
         public ExcelRow Row(int index)
         {
-            return worksheet.Row(index);
+            return Data.Row(index);
         }
 
         /// <summary>
@@ -282,7 +288,7 @@ namespace Utilities.Excel
         /// <returns>The column at the given index.</returns>
         public ExcelColumn Column(int index)
         {
-            return worksheet.Column(index);
+            return Data.Column(index);
         }
 
         /// <summary>
@@ -290,7 +296,7 @@ namespace Utilities.Excel
         /// </summary>
         public int Index {
             get {
-                return worksheet.Index;
+                return Data.Index;
             }
         }
 
@@ -299,10 +305,10 @@ namespace Utilities.Excel
         /// </summary>
         public string Name {
             get {
-                return worksheet.Name;
+                return Data.Name;
             }
             set {
-                worksheet.Name = value;
+                Data.Name = value;
             }
         }
 
@@ -311,7 +317,7 @@ namespace Utilities.Excel
         /// </summary>
         public int Rows {
             get {
-                return worksheet.Dimension.Rows;
+                return Data.Dimension.Rows;
             }
         }
 
@@ -320,7 +326,7 @@ namespace Utilities.Excel
         /// </summary>
         public int Columns {
             get {
-                return worksheet.Dimension.Columns;
+                return Data.Dimension.Columns;
             }
         }
 
@@ -330,7 +336,7 @@ namespace Utilities.Excel
         /// <param name="index">The index of the column to remove.</param>
         public void RemoveColumn(int index)
         {
-            worksheet.DeleteColumn(index);
+            Data.DeleteColumn(index);
         }
 
         /// <summary>
@@ -339,9 +345,9 @@ namespace Utilities.Excel
         /// <param name="name">The name of the column to remove.</param>
         public void RemoveColumn(string name)
         {
-            for(int col = 1; col <= worksheet.Dimension.Columns; col++) {
-                if(worksheet.Cells[1, col].Value.ToString() == name) {
-                    worksheet.DeleteColumn(worksheet.Index);
+            for (int col = 1; col <= Data.Dimension.Columns; col++) {
+                if (Data.Cells[1, col].Value.ToString() == name) {
+                    Data.DeleteColumn(Data.Index);
                     return;
                 }
             }
@@ -353,7 +359,7 @@ namespace Utilities.Excel
         /// <param name="index">The index of the row to remove.</param>
         public void RemoveRow(int index)
         {
-            worksheet.DeleteRow(index);
+            Data.DeleteRow(index);
         }
 
         /// <summary>
@@ -361,11 +367,7 @@ namespace Utilities.Excel
         /// </summary>
         public void AutoFit()
         {
-            //worksheet.Cells.AutoFitColumns(0);
-            for (int col = 1; col <= worksheet.Dimension.Columns; col++) {
-                var column = worksheet.Column(col);
-                column.AutoFit();
-            }
+            Data.Cells.AutoFitColumns(0);
         }
 
         /// <summary>
@@ -373,8 +375,8 @@ namespace Utilities.Excel
         /// </summary>
         public bool BestFit {
             set {
-                for (int col = 1; col <= worksheet.Dimension.Columns; col++) {
-                    worksheet.Column(col).BestFit = value;
+                for (int col = 1; col <= Data.Dimension.Columns; col++) {
+                    Data.Column(col).BestFit = value;
                 }
             }
         }
@@ -384,7 +386,7 @@ namespace Utilities.Excel
         /// </summary>
         public ExcelCellAddress End {
             get {
-                return worksheet.Dimension.End;
+                return Data.Dimension.End;
             }
         }
 
@@ -393,7 +395,7 @@ namespace Utilities.Excel
         /// </summary>
         public ExcelCellAddress Start {
             get {
-                return worksheet.Dimension.Start;
+                return Data.Dimension.Start;
             }
         }
 
@@ -402,10 +404,10 @@ namespace Utilities.Excel
         /// </summary>
         public bool AutoFilter {
             get {
-                return worksheet.Cells[worksheet.Dimension.Address].AutoFilter;
+                return Data.Cells[Data.Dimension.Address].AutoFilter;
             }
             set {
-                worksheet.Cells[worksheet.Dimension.Address].AutoFilter = value;
+                Data.Cells[Data.Dimension.Address].AutoFilter = value;
             }
         }
 
@@ -414,10 +416,10 @@ namespace Utilities.Excel
         /// </summary>
         public bool WrapText {
             get {
-                return worksheet.Cells[worksheet.Dimension.Address].Style.WrapText;
+                return Data.Cells[Data.Dimension.Address].Style.WrapText;
             }
             set {
-                worksheet.Cells[worksheet.Dimension.Address].Style.WrapText = value;
+                Data.Cells[Data.Dimension.Address].Style.WrapText = value;
             }
         }
 
@@ -426,10 +428,10 @@ namespace Utilities.Excel
         /// </summary>
         public bool Hidden {
             get {
-                return worksheet.Hidden != eWorkSheetHidden.Visible;
+                return Data.Hidden != eWorkSheetHidden.Visible;
             }
             set {
-                worksheet.Hidden = value ? eWorkSheetHidden.Visible : eWorkSheetHidden.Hidden;
+                Data.Hidden = value ? eWorkSheetHidden.Visible : eWorkSheetHidden.Hidden;
             }
         }
 
@@ -438,19 +440,10 @@ namespace Utilities.Excel
         /// </summary>
         public System.Drawing.Color TabColor {
             get {
-                return worksheet.TabColor;
+                return Data.TabColor;
             }
             set {
-                worksheet.TabColor = value;
-            }
-        }
-
-        /// <summary>
-        /// The EPPlus implementation of the Worksheet (ExcelWorksheet).
-        /// </summary>
-        public ExcelWorksheet Data {
-            get {
-                return worksheet;
+                Data.TabColor = value;
             }
         }
 
@@ -459,14 +452,14 @@ namespace Utilities.Excel
         /// </summary>
         public void Trim()
         {
-            int colCount = worksheet.Dimension.Columns;
+            int colCount = Data.Dimension.Columns;
             for (int row = Rows; row > 0; row++) {
                 for (int col = 1; col <= colCount; col++) {
-                    ExcelRange cell = worksheet.Cells[row, col];
+                    ExcelRange cell = Data.Cells[row, col];
                     if (cell.Value != null && cell.Value.ToString().Length > 0)
                         return;
                 }
-                worksheet.DeleteRow(row);
+                Data.DeleteRow(row);
             }
         }
 
@@ -475,15 +468,15 @@ namespace Utilities.Excel
         /// </summary>
         public void TrimColumns()
         {
-            int rowCount = worksheet.Dimension.Rows;
-            int colCount = worksheet.Dimension.Columns;
+            int rowCount = Data.Dimension.Rows;
+            int colCount = Data.Dimension.Columns;
             for (int col = colCount; col >= 1; col--) {
                 for (int row = 1; row <= rowCount; row++) {
-                    ExcelRange cell = worksheet.Cells[row, col];
+                    ExcelRange cell = Data.Cells[row, col];
                     if (cell.Value != null && cell.Value.ToString().Length > 0)
                         return;
                 }
-                worksheet.DeleteColumn(col);
+                Data.DeleteColumn(col);
             }
         }
 
@@ -513,23 +506,23 @@ namespace Utilities.Excel
         48  ##0.0E+0
         49  @
         */
-        private static readonly Regex currencyRegex = new Regex(@"^\p{Sc}|[^*]\p{Sc}");
 
         /// <summary>
         /// Gets the Type of data stored in the column.
         /// </summary>
         /// <param name="columnIndex">The column index.</param>
         /// <returns>The Type of the data at the given column.</returns>
+        /// <see cref="https://support.office.com/en-us/article/number-format-codes-5026bbd6-04bc-48cd-bf33-80f18b4eae68"/>
         public Type ColumnType(int columnIndex)
         {
             ExcelColumn col = Column(columnIndex);
 
-            string numfmt = col.Style.Numberformat?.Format;
-            if (numfmt == null)
+            if (col.Style.Numberformat == null)
                 return typeof(string);
-            if (numfmt == null) {
-                if (!col.Style.Numberformat.BuildIn)
-                    return typeof(string);
+            string numfmt = col.Style.Numberformat.Format;
+            if (string.IsNullOrEmpty(numfmt)) {
+                //if (!col.Style.Numberformat.BuildIn)
+                //    return typeof(string);
                 int numfmtID = col.Style.Numberformat.NumFmtID;
                 if (numfmtID == 0 || numfmtID == 49)
                     return typeof(string);
@@ -543,22 +536,22 @@ namespace Utilities.Excel
                     return typeof(double);
             }
             else {
-                char ch = numfmt[numfmt.Length - 1];
+                char ch;
                 bool isNum = false;
                 bool isTime = false;
+                bool isDouble = false;
                 bool isDecimal = false;
-                bool isDate = false;
                 for (int i = 0; i < numfmt.Length; i++) {
                     ch = numfmt[i];
-                    if (ch == '.')
-                        isDecimal = true;
-                    else if (ch == '0' || ch == '#' || ch == '?')
+                    if (ch == '0' || ch == '#' || ch == '?')
                         isNum = true;
                     else if (ch == 'd' || ch == 'M')
-                        isDate = true;
+                        return typeof(DateTime);
+                    else if (ch == '.')
+                        isDouble = true;
                     else if (ch == 'y') {
                         if (i < numfmt.Length - 1 && numfmt[i + 1] == 'y')
-                            isDate = true;
+                            return typeof(DateTime);
                     }
                     else if (ch == 'h' || ch == 'H' || ch == 's' || ch == 'm')
                         isTime = true;
@@ -569,16 +562,21 @@ namespace Utilities.Excel
                         while (i < numfmt.Length && numfmt[i] != '"')
                             i++;
                     }
+                    else if (ch == '[') {
+                        i++;
+                        while (i < numfmt.Length && numfmt[i] != ']')
+                            i++;
+                    }
+                    else if (ch == '%' || currencySymbols.Contains(ch))
+                        isDecimal = true;
                     //else if (ch == '@')
                     //    return typeof(string);
                 }
-                if (isDate)
-                    return typeof(DateTime);
-                else if (isTime)
+                if (isTime)
                     return typeof(TimeSpan);
-                else if (currencyRegex.IsMatch(numfmt))
-                    return typeof(decimal);
                 else if (isDecimal)
+                    return typeof(decimal);
+                else if (isDouble)
                     return typeof(double);
                 else if (isNum)
                     return typeof(int);
@@ -589,7 +587,7 @@ namespace Utilities.Excel
         /// <summary>
         /// Converts the Worksheet to a DataTable.
         /// </summary>
-        /// <param name="table"></param>
+        /// <param name="table">The table to fill with data from the worksheet.</param>
         /// <param name="hasHeaders">Determines if the Worksheet has headers.</param>
         /// <returns>The modified DataTable.</returns>
         public DataTable ToDataTable(DataTable table, bool hasHeaders = true)
@@ -600,7 +598,7 @@ namespace Utilities.Excel
                 string[] headers = new string[maxCol];
                 for (int col = 1; col < maxCol; col++) {
                     Type ty = ColumnType(col);
-                    string header = hasHeaders ? worksheet.Cells[1, col].Value?.ToString() : "Column" + col;
+                    string header = hasHeaders ? Data.Cells[1, col].Value?.ToString() : "Column" + col;
                     table.Columns.Add(header ?? new string(' ', col), ty);
                 }
             }
@@ -611,27 +609,24 @@ namespace Utilities.Excel
                 DataRow newRow = table.NewRow();
                 for (int col = 1; col < maxCol; col++) {
                     Type colType = table.Columns[col - 1].DataType;
-                    if (worksheet.Cells[row, col].Value == null)
-                        newRow[col - 1] = DBNull.Value;
-                    else if (colType == typeof(string)) {
-                        newRow[col - 1] = worksheet.Cells[row, col].Value.ToString();
-                    }
+                    if (Data.Cells[row, col].Value == null)
+                        continue;// newRow[col - 1] = DBNull.Value;
+                    else if (colType == typeof(string))
+                        newRow[col - 1] = Data.Cells[row, col].Value.ToString();
                     else {
                         try {
-                            if (colType.IsIntegral()) {
-                                newRow[col - 1] = long.Parse(worksheet.Cells[row, col].Value.ToString());
-                            }
-                            else if (colType.IsFloatingPoint()) {
-                                newRow[col - 1] = decimal.Parse(worksheet.Cells[row, col].Value.ToString());
-                            }
-                            else if (colType == typeof(DateTime) || colType == typeof(DateTimeOffset)) {
-                                newRow[col - 1] = worksheet.Cells[row, col].GetValue<DateTime>();
-                            }
-                            else if (colType == typeof(TimeSpan)) {
-                                newRow[col - 1] = worksheet.Cells[row, col].GetValue<TimeSpan>();
-                            }
+                            if (Data.Cells[row, col].Value == null)
+                                continue;
+                            else if (colType.IsIntegral())
+                                newRow[col - 1] = Data.Cells[row, col].GetValue<long>();
+                            else if (colType.IsFloatingPoint())
+                                newRow[col - 1] = Data.Cells[row, col].GetValue<decimal>();
+                            else if (colType == typeof(DateTime) || colType == typeof(DateTimeOffset))
+                                newRow[col - 1] = Data.Cells[row, col].GetValue<DateTime>();
+                            else if (colType == typeof(TimeSpan))
+                                newRow[col - 1] = Data.Cells[row, col].GetValue<TimeSpan>();
                             else
-                                newRow[col - 1] = worksheet.Cells[row, col].Value;
+                                newRow[col - 1] = Data.Cells[row, col].Value;
                         }
                         catch { }
                     }
@@ -662,7 +657,7 @@ namespace Utilities.Excel
             for (int row = 1; row <= rows; row++) {
                 string[] vals = new string[columns];
                 for (int col = 0; col < columns; col++) {
-                    vals[col] = worksheet.Cells[row, col + 1].Value?.ToString();
+                    vals[col] = Data.Cells[row, col + 1].Value?.ToString();
                 }
                 yield return vals;
             }
@@ -694,7 +689,7 @@ namespace Utilities.Excel
             for (int row = hasHeaders ? 2 : 1; row <= Rows; row++) {
                 for (int col = 1; col <= Columns; col++) {
                     //This is the real wrinkle to using reflection - Excel stores all numbers as double including int
-                    ExcelRange cell = worksheet.Cells[row, col];
+                    ExcelRange cell = Data.Cells[row, col];
                     //If it is numeric it is a double since that is how excel stores all numbers
                     vals[col - 1] = isTimespan[col - 1] ? DateTime.FromOADate(cell.GetValue<double>()).ToString("h:mm:ss") : cell.GetValue<string>();
                 }
@@ -729,19 +724,17 @@ namespace Utilities.Excel
         /// </summary>
         public void AutoFormat()
         {
-            int rows = worksheet.Dimension.Rows;
-            int cols = worksheet.Dimension.Columns;
+            int rows = Data.Dimension.Rows;
+            int cols = Data.Dimension.Columns;
             for (int row = 1; row <= rows; row++) {
                 for (int col = 1; col <= cols; col++) {
-                    object obj = worksheet.Cells[row, col].Value;
+                    object obj = Data.Cells[row, col].Value;
                     if (obj is string) {
-                        worksheet.Cells[row, col].Value = Parse(worksheet.Cells[row, col]);
+                        Data.Cells[row, col].Value = Parse(Data.Cells[row, col]);
                     }
                 }
             }
         }
-
-        private const string currencySymbols = "$¥₤€£฿₿₵¢₡₫₲₱₽₮₩₸₳ℳ₹؋₼﷼₪₭₴";
 
         /// <summary>
         /// Parses a string into a basic Type.
@@ -834,7 +827,7 @@ namespace Utilities.Excel
         /// </summary>
         ~Worksheet()
         {
-            worksheet = null;
+            Data = null;
         }
     }
 }

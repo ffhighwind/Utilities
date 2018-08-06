@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 
 namespace Utilities
@@ -233,8 +232,7 @@ namespace Utilities
         /// <source>https://stackoverflow.com/questions/1025332/determine-a-strings-encoding-in-c-sharp </source>
         public static string GetEncodedText(string path)
         {
-            Encoding encoding;
-            return GetEncodedText(path, out encoding);
+            return GetEncodedText(path, out Encoding encoding);
         }
 
         /// <summary>
@@ -295,8 +293,7 @@ namespace Utilities
             //////////// If the code reaches here, no BOM/signature was found, so now
             //////////// we need to 'taste' the file to see if can manually discover
             //////////// the encoding. A high taster value is desired for UTF-8
-            Encoding encoding;
-            GetEncodedText(path, out encoding, maxBytes);
+            GetEncodedText(path, out Encoding encoding, maxBytes);
             return encoding;
         }
 
@@ -366,7 +363,7 @@ namespace Utilities
             for (int n = 0; n < b.Length; n += 2)
                 if (b[n] == 0)
                     count++;
-            if (((double)count) / b.Length > threshold) {
+            if (((double) count) / b.Length > threshold) {
                 return Encoding.BigEndianUnicode;
             }
             count = 0;
@@ -374,7 +371,7 @@ namespace Utilities
                 if (b[n] == 0)
                     count++;
             }
-            if (((double)count) / b.Length > threshold) {
+            if (((double) count) / b.Length > threshold) {
                 return Encoding.Unicode; // (little-endian)
             }
 
@@ -418,7 +415,7 @@ namespace Utilities
         /// <param name="ty">The Type to get properties of.</param>
         /// <param name="flags">Filters on the properties to obtain.</param>
         /// <returns>The properties of the Type.</returns>
-        public static PropertyInfo[] GetProperties(Type ty, BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance)
+        public static PropertyInfo[] GetProperties(Type ty, BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly)
         {
             return ty.GetProperties(flags);
         }
@@ -429,13 +426,9 @@ namespace Utilities
         /// <param name="ty">The Type to get property names of.</param>
         /// <param name="flags">Filters on the properties to obtain.</param>
         /// <returns>The names of the properties of the Type.</returns>
-        public static List<string> GetPropertyNames(Type ty, BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance)
+        public static List<string> GetPropertyNames(Type ty, BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly)
         {
-            List<string> propertyNames = new List<string>();
-            foreach (PropertyInfo pi in ty.GetProperties(flags)) {
-                propertyNames.Add(pi.Name);
-            }
-            return propertyNames;
+            return ty.GetProperties(flags).Select(prop => prop.Name).ToList();
         }
 
         /// <summary>
@@ -444,13 +437,9 @@ namespace Utilities
         /// <param name="obj">The object to get property values of.</param>
         /// <param name="flags">Filters on the properties to obtain.</param>
         /// <returns>The names of the properties of the object.</returns>
-        public static List<object> GetPropertyValues(object obj, BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance)
+        public static List<object> GetPropertyValues(object obj, BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly)
         {
-            List<object> values = new List<object>();
-            foreach (PropertyInfo pi in obj.GetType().GetProperties(flags)) {
-                values.Add(pi.GetValue(obj));
-            }
-            return values;
+            return obj.GetType().GetProperties(flags).Select(prop => prop.GetValue(obj)).ToList();
         }
 
         /// <summary>
@@ -459,13 +448,9 @@ namespace Utilities
         /// <param name="ty">The Type to get property Types of.</param>
         /// <param name="flags">Filters on the properties to obtain.</param>
         /// <returns>The Types of the properties of the Type.</returns>
-        public static List<Type> GetPropertyTypes(Type ty, BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance)
+        public static List<Type> GetPropertyTypes(Type ty, BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly)
         {
-            List<Type> types = new List<Type>();
-            foreach (PropertyInfo pi in ty.GetProperties(flags)) {
-                types.Add(pi.PropertyType);
-            }
-            return types;
+            return ty.GetProperties(flags).Select(prop => prop.PropertyType).ToList();
         }
         #endregion //Properties
 
@@ -522,7 +507,7 @@ namespace Utilities
         /// <returns>The string representation of a type.</returns>
         public static string ToString<T>(T obj)
         {
-            return ToString((object)obj);
+            return ToString((object) obj);
         }
 
         /// <summary>
@@ -533,7 +518,7 @@ namespace Utilities
         /// <returns>The string representation of a type.</returns>
         public static string ToString(object obj)
         {
-            return (obj != null && ((ToStringDelegate)obj.ToString).Method.DeclaringType == obj.GetType())
+            return (obj != null && ((ToStringDelegate) obj.ToString).Method.DeclaringType == obj.GetType())
                 ? obj.ToString()
                 : JsonConvert.SerializeObject(obj, Formatting.None);
         }
@@ -545,7 +530,7 @@ namespace Utilities
         /// <param name="obj">The object to print.</param>
         public static void Print(object obj)
         {
-            string result = (obj != null && ((ToStringDelegate)obj.ToString).Method.DeclaringType == obj.GetType())
+            string result = (obj != null && ((ToStringDelegate) obj.ToString).Method.DeclaringType == obj.GetType())
                 ? obj.ToString()
                 : JsonConvert.SerializeObject(obj, Formatting.None);
             Console.Write(result);
