@@ -157,7 +157,7 @@ namespace Utilities
         /// <returns>True if there is at least the specified number of elements in the list. False otherwise.</returns>
         public static bool CountAtLeast<T>(this IEnumerable<T> list, int count)
         {
-            return count > 1 && list.Skip(count - 1).Any();
+            return count >= 1 && list.Skip(count - 1).Any();
         }
 
         /// <summary>

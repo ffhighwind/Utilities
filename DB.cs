@@ -210,6 +210,7 @@ namespace Utilities
                     foreach (SqlBulkCopyColumnMapping mapping in mappings) {
                         bulkCpy.ColumnMappings.Add(mapping);
                     }
+                    conn.Open();
                     bulkCpy.WriteToServer(reader);
                 }
                 return true;
@@ -285,6 +286,7 @@ namespace Utilities
                     foreach (SqlBulkCopyColumnMapping mapping in mappings) {
                         bulkCpy.ColumnMappings.Add(mapping);
                     }
+                    conn.Open();
                     bulkCpy.WriteToServer(table);
                     return true;
                 }
@@ -360,10 +362,11 @@ namespace Utilities
                         foreach (SqlBulkCopyColumnMapping mapping in mappings) {
                             bulkCpy.ColumnMappings.Add(mapping);
                         }
+                        conn.Open();
                         writeAction(bulkCpy);
                     }
                     SqlBulkCopyColumnMapping[] bulkMappings = new SqlBulkCopyColumnMapping[mappings.Length];
-                    for(int i = 0; i < bulkMappings.Length; i++) {
+                    for (int i = 0; i < bulkMappings.Length; i++) {
                         bulkMappings[i] = new SqlBulkCopyColumnMapping(mappings[i].DestinationColumn, mappings[i].DestinationColumn);
                     }
                     if (!MergeTables(conn, tablename, "#ATempTable", update, bulkMappings))
@@ -668,7 +671,6 @@ SELECT 1 ELSE SELECT 0", new { tablename = tablename });
         public static int RemoveDuplicates(SqlConnection conn, string tablename, params string[] distinctColumns)
         {
             try {
-                conn.Open();
                 return conn.Execute(
 @"WHILE 1=1
 BEGIN
@@ -691,7 +693,7 @@ END", new { tablename = tablename, columns = distinctColumns.Length > 0 ? string
 
         private static void PrintError(Exception ex, string methodName, SqlConnection conn, string tablename = null)
         {
-            string argStr = string.Format("({0}.{1}{2}", conn.DataSource, conn.Database, tablename == null ? "" : "." + tablename);
+            string argStr = string.Format("({0}.{1}{2}", conn.DataSource ?? "null", conn.Database ?? "null", tablename == null ? "" : "." + tablename);
             PrintError(ex, methodName, argStr);
         }
 
