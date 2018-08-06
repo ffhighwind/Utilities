@@ -326,9 +326,10 @@ namespace Utilities.Excel
         /// </summary>
         public Worksheet Add()
         {
-            for (int i = doc.Workbook.Worksheets.Count + 1; ;) {
-                if (doc.Workbook.Worksheets["Sheet" + i.ToString()] == null) {
-                    return Add("Sheet" + (doc.Workbook.Worksheets.Count + 1));
+            for (int i = doc.Workbook.Worksheets.Count + 1; ; i++) {
+                string sheetName = "Sheet" + i.ToString();
+                if (doc.Workbook.Worksheets[sheetName] == null) {
+                    return Add(sheetName);
                 }
             }
         }
