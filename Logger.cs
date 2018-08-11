@@ -55,7 +55,6 @@ namespace Utilities.Log
 
     public class Logger : ILogger
     {
-        private static Logger singleton = new Logger(Console.Error);
         protected LogAction customStyle = _P.Log_CustomDefault;
         protected List<TextWriter> writers = new List<TextWriter>();
         protected LogAction[] LogStyleActions;
@@ -79,10 +78,7 @@ namespace Utilities.Log
             };
         }
 
-        public static Logger Instance {
-            get { return singleton; }
-        }
-
+        public static Logger Instance { get; } = new Logger(Console.Error);
         public LogStyle DefaultStyle { get; set; }
 
         public LogAction CustomStyle {

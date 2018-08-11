@@ -126,9 +126,9 @@ namespace Utilities
         /// <param name="input">The Type of the input object.</param>
         /// <param name="output">The Type of the output object.</param>
         /// <returns>A function that converts strings to a class.</returns>
-        public static Func<string[], T> StringsConverter<T>() where T : new()
+        public static Func<string[], T> StringsConverter<T>() where T : class, new()
         {
-            const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.SetProperty;
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty;
             PropertyInfo[] pinfos = typeof(T).GetProperties(flags);
             Func<object, object>[] converters = new Func<object, object>[pinfos.Length];
             for (int i = 0; i < pinfos.Length; i++) {
@@ -149,22 +149,23 @@ namespace Utilities
         /// <param name="input">The Type of the input object.</param>
         /// <param name="output">The Type of the output object.</param>
         /// <returns>A function that converts strings to a class.</returns>
-        public static Func<string[], T> StringsConverter<T>(string[] propertyNames) where T : new()
+        public static Func<string[], T> StringsConverter<T>(IEnumerable<string> propertyNames) where T : class, new()
         {
-            const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.SetProperty;
-            PropertyInfo[] pinfos = new PropertyInfo[propertyNames.Length];
-            for (int i = 0; i < pinfos.Length; i++) {
-                pinfos[i] = typeof(T).GetProperty(propertyNames[i], flags);
-                if (pinfos[i] == null)
-                    throw new Exception("Invalid PropertyInfo '" + propertyNames[i] ?? "" + "'");
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty;
+            List<PropertyInfo> pinfos = new List<PropertyInfo>();
+            foreach (string prop in propertyNames) {
+                PropertyInfo pinfo = typeof(T).GetProperty(prop, flags);
+                if (pinfo == null)
+                    throw new Exception("Invalid PropertyInfo '" + prop ?? "" + "'");
+                pinfos.Add(pinfo);
             }
-            Func<object, object>[] converters = new Func<object, object>[pinfos.Length];
-            for (int i = 0; i < pinfos.Length; i++) {
+            Func<object, object>[] converters = new Func<object, object>[pinfos.Count];
+            for (int i = 0; i < pinfos.Count; i++) {
                 converters[i] = converterDict[pinfos[i].PropertyType](typeof(string));
             }
             return (strs) => {
                 T obj = new T();
-                for (int i = 0; i < pinfos.Length; i++) {
+                for (int i = 0; i < pinfos.Count; i++) {
                     pinfos[i].SetValue(obj, converters[i](strs[i]));
                 }
                 return obj;
@@ -183,7 +184,7 @@ namespace Utilities
             string str2 = str.Trim();
 
             char c = str2[0];
-            if (Char.IsDigit(c)) {
+            if (Char.IsDigit(c) || c == '-') {
                 for (int i = 1; i < str2.Length; i++) {
                     c = str2[i];
                     if (Char.IsDigit(c))
@@ -201,6 +202,8 @@ namespace Utilities
                     else if (c == ':') {
                         if (TimeSpan.TryParse(str2, out TimeSpan ts))
                             return ts;
+                        else if (DateTime.TryParse(str2, out DateTime dt))
+                            return dt;
                     }
                     return str;
                 }
@@ -570,9 +573,9 @@ namespace Utilities
         /// <typeparam name="T">The Type to create the DataTable from.</typeparam>
         /// <param name="table">The DataTable to add columns to.</param>
         /// <returns>The modified DataTable with new columns representing the getters/setters of a Type.</returns>
-        public static DataTable DataTable<T>(DataTable table)
+        public static DataTable DataTable<T>(DataTable table) where T : class
         {
-            const BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance;
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance;
             PropertyInfo[] pinfos = typeof(T).GetProperties(flags);
             foreach (var pinfo in pinfos) {
                 table.Columns.Add(pinfo.Name, Nullable.GetUnderlyingType(pinfo.PropertyType) ?? pinfo.PropertyType);
@@ -585,7 +588,7 @@ namespace Utilities
         /// </summary>
         /// <typeparam name="T">The Type to create a DataTable from.</typeparam>
         /// <returns>A DataTable with columns representing the getters/setters of a Type.</returns>
-        public static DataTable DataTable<T>()
+        public static DataTable DataTable<T>() where T : class
         {
             DataTable table = new DataTable();
             return Util.DataTable<T>(table);

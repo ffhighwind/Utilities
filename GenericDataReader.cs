@@ -145,9 +145,8 @@ namespace Utilities
         {
             active = false;
             current = null;
-            IDisposable tmp = enumerator as IDisposable;
             enumerator = null;
-            if (tmp != null)
+            if (enumerator is IDisposable tmp)
                 tmp.Dispose();
         }
 

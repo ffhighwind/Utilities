@@ -8,7 +8,6 @@ namespace Utilities.Log
     {
         private Object l = new object();
         private Logger logger = new Logger();
-        private static SyncLogger singleton = new SyncLogger(Console.Error);
 
         public SyncLogger() { }
 
@@ -17,9 +16,7 @@ namespace Utilities.Log
             logger.Add(writer);
         }
 
-        public static SyncLogger Instance {
-            get { return singleton; }
-        }
+        public static SyncLogger Instance { get; } = new SyncLogger(Console.Error);
 
         public LogStyle DefaultStyle {
             get { return logger.DefaultStyle; }

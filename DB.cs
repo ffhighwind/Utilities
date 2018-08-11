@@ -29,10 +29,11 @@ namespace Utilities
         public static SqlConnectionStringBuilder ConnString(string server, string database, string username, string password, bool testConnection = false, int timeoutSecs = 15)
         {
             //SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder("Integrated Security=SSPI;");
-            SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder();
-            sb.DataSource = server;
-            sb.InitialCatalog = database;
-            sb.ConnectTimeout = timeoutSecs;
+            SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder {
+                DataSource = server,
+                InitialCatalog = database,
+                ConnectTimeout = timeoutSecs
+            };
             if (username == null || password == null) {
                 sb.IntegratedSecurity = true;
             }

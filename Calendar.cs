@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
 namespace Utilities
 {
-    public static class Time
+    public static class Calendar
     {
         public static bool IsBetween(this DateTime time, DateTime start, DateTime end)
         {

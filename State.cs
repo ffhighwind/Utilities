@@ -8,9 +8,7 @@ namespace Utilities
 {
     public class State
     {
-        private static bool isdst = DateTime.Now.IsDaylightSavingTime();
-
-        public static bool IsDaylightSavings { get { return isdst; } }
+        public static bool IsDaylightSavings { get; } = DateTime.Now.IsDaylightSavingTime();
 
         private State(string fullname, string name, int mstdiff)
         {
@@ -20,7 +18,7 @@ namespace Utilities
             Timezone = GetTimezone(mstdiff);
         }
 
-        public State(string fullname, string name, string timezone)
+        private State(string fullname, string name, string timezone)
         {
             Fullname = fullname;
             Name = name;
