@@ -39,7 +39,6 @@ namespace Utilities
                 diff = 4;
             else if (timezone.StartsWith("UTC") && double.TryParse(timezone.Substring(3), out diff))
                 diff = -(diff + 6 + (IsDaylightSavings ? 0 : 1));
-
             else
                 diff = 0;
             //else if (zone.Equals("MST"))

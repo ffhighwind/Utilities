@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 
 namespace Utilities
 {
-    public static class Extentions
+    public static class Extensions
     {
-        #region Sort/Distinct
+        #region DataTable Sort/Distinct
         /// <summary>
         /// Removes duplicate rows from a DataTable.
         /// </summary>
@@ -147,7 +148,20 @@ namespace Utilities
         }
         #endregion //Sort/Distinct
 
-        #region DataTable/List
+        #region DataTable/Enumerable/Collection
+        /// <summary>
+        /// Iterates a list and performs an action for each element.
+        /// </summary>
+        /// <typeparam name="T">The Type of object in the list.</typeparam>
+        /// <param name="enumeration">The enumerable list.</param>
+        /// <param name="action">The action to perform.</param>
+        public static void ForEach<T>(this IEnumerable<T> enumeration, Action<T> action)
+        {
+            foreach (T item in enumeration) {
+                action(item);
+            }
+        }
+
         /// <summary>
         /// Determines if the enumerable list has at least some number of elements.
         /// </summary>
@@ -559,7 +573,30 @@ namespace Utilities
                 Console.WriteLine(tostringT(item));
             }
         }
+
+        /// <summary>
+        /// Prints the contents of an object to the console.
+        /// </summary>
+        /// <param name="obj">The object to print.</param>
+        public static void Print(this TextWriter writer, object obj)
+        {
+            writer.Write(Util.ToString(obj));
+        }
         #endregion
+
+        #region DateTime/DateTimeOffset
+        /// <summary>
+        /// Determines if a time is between start/end or equal to start. 
+        /// Start must be less than or equal to end or the result is always false.
+        /// </summary>
+        /// <param name="time">The time being compared.</param>
+        /// <param name="start">The start time.</param>
+        /// <param name="end">The end time.</param>
+        /// <returns>True if the time is between start/end or equal to start, or false otherwise.</returns>
+        public static bool IsBetween(this DateTime time, DateTime start, DateTime end)
+        {
+            return time >= start && time < end;
+        }
 
         /// <summary>
         /// Converts the DateTimeOffset to a DateTime.
@@ -585,18 +622,6 @@ namespace Utilities
         {
             return dateTimeOff?.ToDateTime();
         }
-
-        /// <summary>
-        /// Iterates a list and performs an action for each element.
-        /// </summary>
-        /// <typeparam name="T">The Type of object in the list.</typeparam>
-        /// <param name="enumeration">The enumerable list.</param>
-        /// <param name="action">The action to perform.</param>
-        public static void ForEach<T>(this IEnumerable<T> enumeration, Action<T> action)
-        {
-            foreach (T item in enumeration) {
-                action(item);
-            }
-        }
+        #endregion
     }
 }

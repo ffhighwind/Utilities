@@ -141,12 +141,13 @@ namespace Utilities.Excel
         /// <summary>
         /// Clears all data in the Excel Spreadsheet.
         /// </summary>
-        public void Clear()
+        public void Clear(bool removeAllSheets = false)
         {
             for (int i = Data.Workbook.Worksheets.Count - 1; i >= 0; i--) {
                 Data.Workbook.Worksheets.Delete(i + (Data.Compatibility.IsWorksheets1Based ? 1 : 0));
             }
-            Add();
+            if (!removeAllSheets)
+                Add();
         }
 
         /// <summary>
@@ -394,8 +395,8 @@ namespace Utilities.Excel
         /// The FileInfo for the Excel Spreadsheet.
         /// </summary>
         public FileInfo File {
-            get { return Data.File; }
-            set { Data.File = value; }
+            get => Data.File;
+            set => Data.File = value;
         }
 
         /// <summary>
@@ -409,36 +410,24 @@ namespace Utilities.Excel
         /// The title of the Excel Spreadsheet.
         /// </summary>
         public string Title {
-            get {
-                return Data.Workbook.Properties.Title;
-            }
-            set {
-                Data.Workbook.Properties.Title = value;
-            }
+            get => Data.Workbook.Properties.Title;
+            set => Data.Workbook.Properties.Title = value;
         }
 
         /// <summary>
         /// The author of the Excel Spreadsheet.
         /// </summary>
         public string Author {
-            get {
-                return Data.Workbook.Properties.Author;
-            }
-            set {
-                Data.Workbook.Properties.Author = value;
-            }
+            get => Data.Workbook.Properties.Author;
+            set => Data.Workbook.Properties.Author = value;
         }
 
         /// <summary>
         /// The company name of the Excel Spreadsheet.
         /// </summary>
         public string Company {
-            get {
-                return Data.Workbook.Properties.Company;
-            }
-            set {
-                Data.Workbook.Properties.Company = value;
-            }
+            get => Data.Workbook.Properties.Company;
+            set => Data.Workbook.Properties.Company = value;
         }
 
         /// <summary>

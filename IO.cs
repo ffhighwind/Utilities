@@ -15,6 +15,35 @@ namespace Utilities
     {
         #region Any
         /// <summary>
+        /// Reads a file into a DataSet.
+        /// </summary>
+        /// <param name="table">The DataSet to fill.</param>
+        /// <param name="path">The path of the file.</param>
+        /// <param name="hasHeaders">Determines if the file has headers. 
+        /// If this is true then the columns are named based on the first line.</param>
+        /// <param name="sheetname">The name of the worksheet to iterate if there are any.
+        /// If this is null then the first sheet will be read.</param>
+        /// <returns>A DataSet with contents from the file.</returns>
+        public static bool Read(this DataSet set, string path, bool hasHeaders = true)
+        {
+            string ext = Path.GetExtension(path);
+            switch (ext) {
+                case ".tsv":
+                case ".csv":
+                    DataTable table = new DataTable();
+                    if (!table.ReadCsv(path, hasHeaders, true, ext == ".tsv" ? "\t" : ","))
+                        return false;
+                    set.Tables.Add(table);
+                    return true;
+                case ".xlsx":
+                    return set.ReadXlsx(path, hasHeaders);
+                case ".xls":
+                    return set.ReadXls(path, hasHeaders);
+            }
+            throw new NotSupportedException("File extension type not supported: '" + ext + "'");
+        }
+
+        /// <summary>
         /// Reads a file into a DataTable.
         /// </summary>
         /// <param name="table">The DataTable to fill.</param>
@@ -36,6 +65,21 @@ namespace Utilities
             else if (ext == ".tsv")
                 return table.ReadCsv(path, hasHeaders, true, "\t");
             throw new NotSupportedException("File extension type not supported: '" + ext + "'");
+        }
+
+        /// <summary>
+        /// Reads a file into a DataTable.
+        /// </summary>
+        /// <param name="table">The DataTable to fill.</param>
+        /// <param name="path">The path of the file.</param>
+        /// <param name="hasHeaders">Determines if the file has headers. 
+        /// If this is true then the columns are named based on the first line.</param>
+        /// <param name="sheetname">The name of the worksheet to iterate if there are any.
+        /// If this is null then the first sheet will be read.</param>
+        /// <returns>A DataTable with contents from the file.</returns>
+        public static bool Read(this DataTable table, string path, string sheetname, bool hasHeaders = true)
+        {
+            return table.Read(path, hasHeaders, sheetname);
         }
 
         /// <summary>
@@ -61,6 +105,22 @@ namespace Utilities
                 Console.Error.WriteLine("Error Read<T>({0}): {1}", path ?? "null", ex.Message);
             }
             return false;
+        }
+
+        /// <summary>
+        /// Reads a file into a List.
+        /// </summary>
+        /// <typeparam name="T"> The Type of object to return.</typeparam>
+        /// <param name="list">The List to fill.</param>
+        /// <param name="path">The path of the file.</param>
+        /// <param name="hasHeaders">Determines if the file has headers. 
+        /// If this is true then the columns are named based on the first line.</param>
+        /// <param name="sheetname">The name of the worksheet to iterate if there are any.
+        /// If this is null then the first sheet will be read.</param>
+        /// <returns>True if the file was read, or null if there was an error.</returns>
+        public static bool Read<T>(this ICollection<T> list, string path, string sheetname, bool hasHeaders = true) where T : class, new()
+        {
+            return list.Read(path, hasHeaders, sheetname);
         }
 
         /// <summary>
@@ -152,16 +212,23 @@ namespace Utilities
         /// <returns>The iterable rows in the file.</returns>
         public static IEnumerable<T> Foreach<T>(string path, bool hasHeaders = true, string sheetname = null) where T : class, new()
         {
-            string ext = Path.GetExtension(path);
-            if (ext == ".csv")
-                return CsvForeach<T>(path, hasHeaders, true);
-            else if (ext == ".xlsx")
-                return XlsxForeach<T>(path, sheetname, hasHeaders);
-            else if (ext == ".xls")
-                return XlsForeach<T>(path, sheetname, hasHeaders);
-            else if (ext == ".tsv")
-                return CsvForeach<T>(path, hasHeaders, true, "\t");
-            throw new NotSupportedException("File extension type not supported: '" + ext + "'");
+            return Foreach<T>(path, Util.StringsConverter<T>(), hasHeaders, sheetname);
+        }
+
+        /// <summary>
+        /// Iterates each row in a file.
+        /// </summary>
+        /// <typeparam name="T"> The Type of object to return.</typeparam>
+        /// <param name="path">The path of the delimited file.</param>
+        /// <param name="constructor">A function that constructs an object from an array of strings.</param>
+        /// <param name="hasHeaders">Determines if the file has headers. 
+        /// If this is true then the columns are named based on the first line.</param>
+        /// <param name="sheetname">The name of the worksheet to iterate if there are any.
+        /// If this is null then the first sheet will be read.</param>
+        /// <returns>The iterable rows in the file.</returns>
+        public static IEnumerable<T> Foreach<T>(string path, string sheetname, bool hasHeaders = true) where T : class, new()
+        {
+            return Foreach<T>(path, Util.StringsConverter<T>(), hasHeaders, sheetname);
         }
         #endregion
 
@@ -401,7 +468,7 @@ namespace Utilities
                         csv.NextRecord();
                     }
                     foreach (T row in list) {
-                        for(int i = 0; i < props.Length; i++) {
+                        for (int i = 0; i < props.Length; i++) {
                             csv.WriteField(props[i].GetValue(row));
                         }
                         csv.NextRecord();
@@ -1043,9 +1110,10 @@ namespace Utilities
         /// <typeparam name="T">The type of object in the list.</typeparam>
         /// <param name="list">The list of objects to write to the Excel file.</param>
         /// <param name="path">Name of file to be written.</param>
-        /// <param name="hasHeaders">Determines if the columns should be written.</param>
-        /// <param name="autofilter">Determines if auto-filtering will be enabled.</param>
-        /// <param name="autoformat">Determines if auto-formatting will be enabled.</param>
+        /// <param name="hasHeaders">Determines if the column headers should be written.</param>
+        /// <param name="autofilter">Determines if auto-filtering will be enabled. Filters allow sorting and filtering by column.</param>
+        /// <param name="autoformat">Determines if auto-formatting will be enabled. 
+        /// Strings values will be converted into basic types in order to remove the green arrow in Excel.</param>
         /// <returns>True if successful, false if something went wrong.</returns>
         public static bool WriteXlsx<T>(this IEnumerable<T> list, string path, bool hasHeaders = true, bool autofilter = true, bool autoformat = true)
         {
@@ -1057,9 +1125,10 @@ namespace Utilities
         /// </summary>
         /// <param name="dt">DataTable containing the data to be written to the Excel file.</param>
         /// <param name="path">Name of file to be written.</param>
-        /// <param name="hasHeaders">Determines if the columns should be written.</param>
-        /// <param name="autofilter">Determines if auto-filtering will be enabled.</param>
-        /// <param name="autoformat">Determines if auto-formatting will be enabled.</param>
+        /// <param name="hasHeaders">Determines if the column headers should be written.</param>
+        /// <param name="autofilter">Determines if auto-filtering will be enabled. Filters allow sorting and filtering by column.</param>
+        /// <param name="autoformat">Determines if auto-formatting will be enabled. 
+        /// Strings values will be converted into basic types in order to remove the green arrow in Excel.</param>
         /// <returns>True if successful, false if something went wrong.</returns>
         public static bool WriteXlsx(this DataTable dt, string path, bool hasHeaders = true, bool autofilter = true, bool autoformat = true)
         {
@@ -1071,9 +1140,10 @@ namespace Utilities
         /// </summary>
         /// <param name="ds">DataSet containing the data to be written to the Excel.</param>
         /// <param name="path">Name of file to be written.</param>
-        /// <param name="hasHeaders">Determines if the columns should be written.</param>
-        /// <param name="autofilter">Determines if auto-filtering will be enabled.</param>
-        /// <param name="autoformat">Determines if auto-formatting will be enabled.</param>
+        /// <param name="hasHeaders">Determines if the column headers should be written.</param>
+        /// <param name="autofilter">Determines if auto-filtering will be enabled. Filters allow sorting and filtering by column.</param>
+        /// <param name="autoformat">Determines if auto-formatting will be enabled. 
+        /// Strings values will be converted into basic types in order to remove the green arrow in Excel.</param>
         /// <returns>True if successful, false if something went wrong.</returns>
         public static bool WriteXlsx(this DataSet ds, string path, bool hasHeaders = true, bool autofilter = true, bool autoformat = true)
         {
@@ -1085,9 +1155,10 @@ namespace Utilities
         /// </summary>
         /// <param name="action">A function that loads the data into the spreadsheet.</param>
         /// <param name="path">Name of file to be written.</param>
-        /// <param name="hasHeaders">Determines if the columns should be written.</param>
-        /// <param name="autofilter">Determines if auto-filtering will be enabled.</param>
-        /// <param name="autoformat">Determines if auto-formatting will be enabled.</param>
+        /// <param name="hasHeaders">Determines if the column headers should be written.</param>
+        /// <param name="autofilter">Determines if auto-filtering will be enabled. Filters allow sorting and filtering by column.</param>
+        /// <param name="autoformat">Determines if auto-formatting will be enabled. 
+        /// Strings values will be converted into basic types in order to remove the green arrow in Excel.</param>
         /// <returns>True if successful, false if something went wrong.</returns>
         private static bool WriteXlsx(Action<Excel.Spreadsheet> action, string path, bool hasHeaders, bool autofilter, bool autoformat)
         {

@@ -715,7 +715,7 @@ namespace Utilities.Excel
         /// <returns>A List with data from the Worksheet.</returns>
         public ICollection<T> ToList<T>(ICollection<T> list) where T : class, new()
         {
-            foreach(T obj in AsEnumerable<T>()) {
+            foreach (T obj in AsEnumerable<T>()) {
                 list.Add(obj);
             }
             return list;
