@@ -104,7 +104,7 @@ namespace Utilities
         public static DateTime PreviousWeek(out int week)
         {
             DateTime prevWeekStart = PreviousWeek();
-            week = 1 + (prevWeekStart.Day / 7);
+            week = (prevWeekStart.Day - 1) / 7 + 1;
             return prevWeekStart;
         }
 
@@ -355,16 +355,27 @@ namespace Utilities
         /// </summary>
         public static void Main(string[] args)
         {
-            //WeeksInMonth
-            for (int year = 1; year <= 9998; year++) {
-                var holidays = WorkCalendar.Holidays(year);
+            //PreviousWeek
+            for (int year = 2; year <= 9999; year++) {
                 for (int month = 1; month <= 12; month++) {
-                    int weeks1 = WeeksInMonth(year, month);
-                    int weeks2 = FirstDay(year, month, WEEK_START).AddDays(7 * 4).Month == month ? 5 : 4;
-                    if (weeks1 != weeks2)
-                        throw new Exception();
+                    for (int week = 1; week <= WorkCalendar.WeeksInMonth(year, month); week++) {
+                        DateTime date1 = WorkCalendar.WeekStart(year, month, week);
+                        int week1 = (date1.Day - 1) / 7 + 1;
+                        if (week1 != week)
+                            throw new Exception();
+                    }
                 }
             }
+                //WeeksInMonth
+                for (int year = 1; year <= 9998; year++) {
+                    var holidays = WorkCalendar.Holidays(year);
+                    for (int month = 1; month <= 12; month++) {
+                        int weeks1 = WeeksInMonth(year, month);
+                        int weeks2 = FirstDay(year, month, WEEK_START).AddDays(7 * 4).Month == month ? 5 : 4;
+                        if (weeks1 != weeks2)
+                            throw new Exception();
+                    }
+                }
 
                 //IsHoliday
                 for (int year = 1; year <= 9998; year++) {
@@ -439,6 +450,7 @@ namespace Utilities
                         }
                     }
                 }
+            Console.WriteLine("Complete...");
             Console.ReadLine();
         }
         */
