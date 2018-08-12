@@ -21,10 +21,12 @@ namespace Utilities
         /// <exception cref="ArgumentOutOfRangeException"></exception>
         public static int WeeksInMonth(int year, int month)
         {
+            //return FirstDay(year, month, WEEK_START).AddDays(7 * 4).Month == month ? 5 : 4;
             // checks if the start of the 5th week is in the same month
             DateTime day1 = new DateTime(year, month, 1);
             int daysAdd = ((int) WEEK_START - (int) day1.DayOfWeek + 7) % 7 + 7 * 4;
-            return day1.AddDays(daysAdd).Month == month ? 5 : 4;
+            //return day1.AddDays(daysAdd).Month == month ? 5 : 4;
+            return daysAdd < DateTime.DaysInMonth(year, month) ? 5 : 4;
         }
 
         /// <summary>
@@ -253,7 +255,7 @@ namespace Utilities
                 case 1:
                     // New Years
                     if (day == 1)
-                        return dow != DayOfWeek.Saturday || dow != DayOfWeek.Sunday;
+                        return dow != DayOfWeek.Saturday && dow != DayOfWeek.Sunday;
                     if (day == 2)
                         return dow == DayOfWeek.Monday;
                     // MLK Jr Day
@@ -271,9 +273,9 @@ namespace Utilities
                     return dow == DayOfWeek.Monday && date.AddDays(7).Month == 6;
                 case 7:
                     // Independence Day
-                    return (date.Day == 3 && dow == DayOfWeek.Friday)
-                        || (date.Day == 4 && dow != DayOfWeek.Saturday && dow != DayOfWeek.Sunday)
-                        || (date.Day == 5 && dow == DayOfWeek.Monday);
+                    return (day == 3 && dow == DayOfWeek.Friday)
+                        || (day == 4 && dow != DayOfWeek.Saturday && dow != DayOfWeek.Sunday)
+                        || (day == 5 && dow == DayOfWeek.Monday);
                 case 9:
                     // Labor Day
                     return dow == DayOfWeek.Monday && weekOfMonth == 1;
@@ -282,7 +284,8 @@ namespace Utilities
                 //if (date.Month == 10 && isMonday && nthWeekDay == 2) return true;
                 case 11:
                     //Thanksgiving + day after Thanksgiving
-                    return weekOfMonth == 4 && (dow == DayOfWeek.Thursday || dow == DayOfWeek.Friday);
+                    return ((weekOfMonth == 4 && dow == DayOfWeek.Thursday)
+                        || ((day - 2) / 7 == 3 && dow == DayOfWeek.Friday));
                 case 12:
                     // New Years
                     if (day == 31)
@@ -292,9 +295,7 @@ namespace Utilities
                         return dow == DayOfWeek.Friday;
                     if (day == 25)
                         return dow != DayOfWeek.Saturday && dow != DayOfWeek.Sunday;
-                    if (day == 26)
-                        return dow == DayOfWeek.Monday;
-                    break;
+                    return day == 26 && dow == DayOfWeek.Monday;
             }
             return false;
         }
@@ -304,7 +305,6 @@ namespace Utilities
         /// </summary>
         /// <param name="year">The year (1-9999).</param>
         /// <returns>All holidays within a given year.</returns>
-        /// <source>https://stackoverflow.com/questions/3709584/business-holiday-date-handling</source>
         public static HashSet<DateTime> Holidays(int year)
         {
             HashSet<DateTime> holidays = new HashSet<DateTime> {
@@ -313,7 +313,7 @@ namespace Utilities
                 // Martin Luther King Jr Day -- 3rd Monday of January
                 FirstDay(year, 1, DayOfWeek.Monday).AddDays(7 * 2),
                 // Memorial Day -- last monday in May
-                PreviousDay(new DateTime(year, 5, 31), DayOfWeek.Monday),
+                PreviousDay(new DateTime(year, 6, 1), DayOfWeek.Monday),
                 // Independence Day
                 NearestWeekDay(new DateTime(year, 7, 4)),
                 // Labor Day -- 1st Monday in September
@@ -355,65 +355,90 @@ namespace Utilities
         /// </summary>
         public static void Main(string[] args)
         {
-            //WeekStart
-            for (int year = 1900; year <= 2300; year++) {
-                int weekCount = 0;
+            //WeeksInMonth
+            for (int year = 1; year <= 9998; year++) {
+                var holidays = WorkCalendar.Holidays(year);
                 for (int month = 1; month <= 12; month++) {
-                    DateTime week1 = WorkCalendar.FirstDay(year, month, DayOfWeek.Monday);
-                    int weeks = WorkCalendar.WeeksInMonth(year, month);
-                    weekCount += weeks;
-                    for(int week = 0; week < weeks; week++) {
-                        DateTime date1 = week1.AddDays(7 * week);
-                        DateTime date2 = WorkCalendar.WeekStart(year, month, week + 1);
-                        if (date1 != date2)
-                            throw new Exception();
-                    }
+                    int weeks1 = WeeksInMonth(year, month);
+                    int weeks2 = FirstDay(year, month, WEEK_START).AddDays(7 * 4).Month == month ? 5 : 4;
+                    if (weeks1 != weeks2)
+                        throw new Exception();
                 }
-                weekCount = 0;
             }
 
-            //FirstDay
-            for (int year = 1900; year <= 2300; year++) {
-                for (int month = 1; month <= 12; month++) {
-                    for (int day = 1; day <= 7; day++) {
-                        DateTime date = new DateTime(year, month, day);
-                        if (WorkCalendar.FirstDay(year, month, date.DayOfWeek) != date)
-                            throw new Exception();
-                    }
-                }
-            }
-            //PreviousDay
-            for (int year = 1900; year <= 2300; year++) {
-                for (int month = 1; month <= 12; month++) {
-                    for (int day = 1; day <= 28; day++) {
-                        DateTime date = new DateTime(year, month, day);
-                        for (int i = 0; i <= 6; i++) {
-                            DateTime date2 = WorkCalendar.PreviousDay(date, (DayOfWeek) i);
-                            if (date2.DayOfWeek != (DayOfWeek) i)
-                                throw new Exception();
-                            double totalDays = (date - date2).TotalDays;
-                            if (totalDays > 7 || totalDays <= 0)
+                //IsHoliday
+                for (int year = 1; year <= 9998; year++) {
+                    var holidays = WorkCalendar.Holidays(year);
+                    for (int month = 1; month <= 12; month++) {
+                        int days = DateTime.DaysInMonth(year, month);
+                        for (int day = 1; day <= days; day++) {
+                            DateTime date = new DateTime(year, month, day);
+                            bool a = IsHoliday(date);
+                            bool b = holidays.Contains(date);
+                            if (a != b)
                                 throw new Exception();
                         }
                     }
                 }
-            }
-            //NextDay
-            for (int year = 1900; year <= 2300; year++) {
-                for (int month = 1; month <= 12; month++) {
-                    for (int day = 1; day <= 28; day++) {
-                        DateTime date = new DateTime(year, month, day);
-                        for (int i = 0; i <= 6; i++) {
-                            DateTime date2 = WorkCalendar.NextDay(date, (DayOfWeek) i);
-                            if (date2.DayOfWeek != (DayOfWeek) i)
+                //WeekStart
+                for (int year = 1; year <= 9998; year++) {
+                    int weekCount = 0;
+                    for (int month = 1; month <= 12; month++) {
+                        DateTime week1 = WorkCalendar.FirstDay(year, month, DayOfWeek.Monday);
+                        int weeks = WorkCalendar.WeeksInMonth(year, month);
+                        weekCount += weeks;
+                        for (int week = 0; week < weeks; week++) {
+                            DateTime date1 = week1.AddDays(7 * week);
+                            DateTime date2 = WorkCalendar.WeekStart(year, month, week + 1);
+                            if (date1 != date2)
                                 throw new Exception();
-                            double totalDays = (date2 - date).TotalDays;
-                            if (totalDays > 7 || totalDays <= 0)
+                        }
+                    }
+                    weekCount = 0;
+                }
+
+                //FirstDay
+                for (int year = 1; year <= 9999; year++) {
+                    for (int month = 1; month <= 12; month++) {
+                        for (int day = 1; day <= 7; day++) {
+                            DateTime date = new DateTime(year, month, day);
+                            if (WorkCalendar.FirstDay(year, month, date.DayOfWeek) != date)
                                 throw new Exception();
                         }
                     }
                 }
-            }
+                //PreviousDay
+                for (int year = 2; year <= 9999; year++) {
+                    for (int month = 1; month <= 12; month++) {
+                        for (int day = 1; day <= 28; day++) {
+                            DateTime date = new DateTime(year, month, day);
+                            for (int i = 0; i <= 6; i++) {
+                                DateTime date2 = WorkCalendar.PreviousDay(date, (DayOfWeek) i);
+                                if (date2.DayOfWeek != (DayOfWeek) i)
+                                    throw new Exception();
+                                double totalDays = (date - date2).TotalDays;
+                                if (totalDays > 7 || totalDays <= 0)
+                                    throw new Exception();
+                            }
+                        }
+                    }
+                }
+                //NextDay
+                for (int year = 1; year <= 9998; year++) {
+                    for (int month = 1; month <= 12; month++) {
+                        for (int day = 1; day <= 28; day++) {
+                            DateTime date = new DateTime(year, month, day);
+                            for (int i = 0; i <= 6; i++) {
+                                DateTime date2 = WorkCalendar.NextDay(date, (DayOfWeek) i);
+                                if (date2.DayOfWeek != (DayOfWeek) i)
+                                    throw new Exception();
+                                double totalDays = (date2 - date).TotalDays;
+                                if (totalDays > 7 || totalDays <= 0)
+                                    throw new Exception();
+                            }
+                        }
+                    }
+                }
             Console.ReadLine();
         }
         */
