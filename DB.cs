@@ -377,7 +377,6 @@ namespace Utilities
                     cmd.ExecuteNonQuery();
                     return mergeSuccess;
                 }
-                return true;
             }
             catch (Exception ex) {
                 PrintError(ex, "DB.BulkUpsert", conn, tablename);

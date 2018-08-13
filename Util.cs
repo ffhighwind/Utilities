@@ -493,10 +493,10 @@ namespace Utilities
                     if (Char.IsDigit(c))
                         continue;
                     else if (c == '.') {
-                        if (TimeSpan.TryParse(str2, out TimeSpan ts))
-                            return ts;
                         if (Double.TryParse(str2, out double d))
                             return d;
+                        if (TimeSpan.TryParse(str2, out TimeSpan ts))
+                            return ts;
                     }
                     else if (c == '/' || c == '-' || c == ',') {
                         if (DateTime.TryParse(str2, out DateTime dt))
@@ -517,11 +517,11 @@ namespace Utilities
                 return dt;
             else {
                 string lower = str2.ToLower();
-                if (str2 == "false")
+                if (lower == "false")
                     return false;
-                else if (str2 == "true")
+                else if (lower == "true")
                     return true;
-                else if (str2 == "null")
+                else if (lower == "null")
                     return null;
             }
             return str;

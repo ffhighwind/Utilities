@@ -817,12 +817,12 @@ namespace Utilities.Excel
                 return dt;
             }
             else {
-                string upper = str2.ToUpper();
-                if (str == "FALSE")
+                string lower = str2.ToUpper();
+                if (lower == "false")
                     return false;
-                else if (str == "TRUE")
+                else if (lower == "true")
                     return true;
-                else if (str == "NULL")
+                else if (lower == "null")
                     return null;
             }
             return str;
