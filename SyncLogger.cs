@@ -6,7 +6,7 @@ namespace Utilities.Log
 {
     public class SyncLogger : ILogger
     {
-        private Object l = new object();
+        private readonly Object l = new object();
         private Logger logger = new Logger();
 
         public SyncLogger() { }
