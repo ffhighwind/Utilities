@@ -284,11 +284,25 @@ namespace Utilities.Excel
         /// <summary>
         /// Gets a column from the Worksheet.
         /// </summary>
-        /// <param name="index">The index of the row (between 1 and Rows).</param>
+        /// <param name="index">The index of the column (between 1 and Columns).</param>
         /// <returns>The column at the given index.</returns>
         public ExcelColumn Column(int index)
         {
             return Data.Column(index);
+        }
+
+        /// <summary>
+        /// Gets a column from the Worksheet.
+        /// </summary>
+        /// <param name="colName">The text of the column header to find.</param>
+        /// <returns>The column with the given header or -1 if it doesn't exist.</returns>
+        public int Column(string colName)
+        {
+            for(int col = 1; col <= Data.Dimension.Columns; col++) {
+                if (Data.Cells[1, col].GetValue<string>() == colName)
+                    return col;
+            }
+            return -1;
         }
 
         /// <summary>
@@ -347,7 +361,7 @@ namespace Utilities.Excel
         {
             for (int col = 1; col <= Data.Dimension.Columns; col++) {
                 if (Data.Cells[1, col].Value.ToString() == name) {
-                    Data.DeleteColumn(Data.Index);
+                    Data.DeleteColumn(col);
                     return;
                 }
             }
