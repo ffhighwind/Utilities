@@ -683,7 +683,7 @@ namespace Utilities.Excel
         /// <typeparam name="T">The Type to convert the rows to.</typeparam>
         /// <param name="hasHeaders">Determines if the first row should be skipped.</param>
         /// <returns>An enumerable list of objects representing the rows in the Worksheet.</returns>
-        public IEnumerable<T> AsEnumerable<T>(bool hasHeaders = true) where T : new()
+        public IEnumerable<T> AsEnumerable<T>(bool hasHeaders = true) where T : class, new()
         {
             Func<string[], T> converter;
             string[] vals = new string[Columns];
@@ -716,7 +716,7 @@ namespace Utilities.Excel
         /// </summary>
         /// <typeparam name="T">The Type to convert the rows to.</typeparam>
         /// <returns>A List with data from the Worksheet.</returns>
-        public List<T> ToList<T>() where T : new()
+        public List<T> ToList<T>() where T : class, new()
         {
             return AsEnumerable<T>().ToList();
         }
@@ -727,9 +727,11 @@ namespace Utilities.Excel
         /// <typeparam name="T">The Type to convert the rows to.</typeparam>
         /// <param name="list">The list to add data to.</param>
         /// <returns>A List with data from the Worksheet.</returns>
-        public List<T> ToList<T>(List<T> list) where T : new()
+        public ICollection<T> ToList<T>(ICollection<T> list) where T : class, new()
         {
-            list.AddRange(AsEnumerable<T>());
+            foreach (T obj in AsEnumerable<T>()) {
+                list.Add(obj);
+            }
             return list;
         }
 
@@ -806,6 +808,10 @@ namespace Utilities.Excel
                             cell.Style.Numberformat.Format = "h:mm:ss";
                             return ts;
                         }
+                        else if (DateTime.TryParse(str, out DateTime dt)) {
+                            cell.Style.Numberformat.Format = "M/d/yyyy H:mm:ss AM/PM";
+                            return dt;
+                        }
                     }
                     return str;
                 }
@@ -825,12 +831,12 @@ namespace Utilities.Excel
                 return dt;
             }
             else {
-                string upper = str2.ToUpper();
-                if (str == "FALSE")
+                string lower = str2.ToUpper();
+                if (lower == "false")
                     return false;
-                else if (str == "TRUE")
+                else if (lower == "true")
                     return true;
-                else if (str == "NULL")
+                else if (lower == "null")
                     return null;
             }
             return str;

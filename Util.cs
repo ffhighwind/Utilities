@@ -23,11 +23,11 @@ namespace Utilities
                 else if (input == typeof(TimeSpan))
                     converter = (inp) => { return ((TimeSpan) inp).ToString("h:mm:ss.fff"); };
                 else if (input == typeof(DateTimeOffset))
-                    converter = (inp) => { return Extentions.ToDateTime((DateTimeOffset) inp).ToString("M-d-yyyy h:mm:ss.fff AM/PM"); };
+                    converter = (inp) => { return Extensions.ToDateTime((DateTimeOffset) inp).ToString("M-d-yyyy h:mm:ss.fff AM/PM"); };
                 else if(input == typeof(DateTime?))
                     converter = (inp) => { return (inp as DateTime?)?.ToString("M-d-yyyy h:mm:ss.fff AM/PM"); };
                 else if(input == typeof(DateTimeOffset?))
-                    converter = (inp) => { return inp == null ? null : Extentions.ToDateTime((DateTimeOffset)inp).ToString("M-d-yyyy h:mm:ss.fff AM/PM"); };
+                    converter = (inp) => { return inp == null ? null : Extensions.ToDateTime((DateTimeOffset)inp).ToString("M-d-yyyy h:mm:ss.fff AM/PM"); };
                 else if(input == typeof(TimeSpan?))
                     converter = (inp) => { return (inp as TimeSpan?)?.ToString("h:mm:ss.fff"); };
                 else
@@ -39,7 +39,7 @@ namespace Utilities
                 if (input == typeof(DateTime?))
                     converter = (inp) => { return (DateTime)inp; };
                 else if (input == typeof(DateTimeOffset) || input == typeof(DateTimeOffset?))
-                    converter = (inp) => { return Extentions.ToDateTime((DateTimeOffset)inp); };
+                    converter = (inp) => { return Extensions.ToDateTime((DateTimeOffset)inp); };
                 else if(input == typeof(TimeSpan) || input == typeof(TimeSpan?))
                     converter = (inp) => { return new DateTime(((TimeSpan) inp).Ticks); };
                 else
@@ -53,11 +53,11 @@ namespace Utilities
                 else if (input == typeof(DateTime))
                     converter = (inp) => { return ((DateTime) inp).TimeOfDay; };
                 else if (input == typeof(DateTimeOffset))
-                    converter = (inp) => { return Extentions.ToDateTime((DateTimeOffset) inp).TimeOfDay; };
+                    converter = (inp) => { return Extensions.ToDateTime((DateTimeOffset) inp).TimeOfDay; };
                 else if (input == typeof(DateTime?))
                     converter = (inp) => { return inp == null ? TimeSpan.MinValue : ((DateTime) inp).TimeOfDay; };
                 else if (input == typeof(DateTimeOffset?))
-                    converter = (inp) => { return inp == null ? TimeSpan.MinValue : Extentions.ToDateTime((DateTimeOffset) inp).TimeOfDay; };
+                    converter = (inp) => { return inp == null ? TimeSpan.MinValue : Extensions.ToDateTime((DateTimeOffset) inp).TimeOfDay; };
                 else
                     converter = NoConvert;
                 return converter;
@@ -126,9 +126,9 @@ namespace Utilities
         /// <param name="input">The Type of the input object.</param>
         /// <param name="output">The Type of the output object.</param>
         /// <returns>A function that converts strings to a class.</returns>
-        public static Func<string[], T> StringsConverter<T>() where T : new()
+        public static Func<string[], T> StringsConverter<T>() where T : class, new()
         {
-            const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.SetProperty;
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty;
             PropertyInfo[] pinfos = typeof(T).GetProperties(flags);
             Func<object, object>[] converters = new Func<object, object>[pinfos.Length];
             for (int i = 0; i < pinfos.Length; i++) {
@@ -149,76 +149,27 @@ namespace Utilities
         /// <param name="input">The Type of the input object.</param>
         /// <param name="output">The Type of the output object.</param>
         /// <returns>A function that converts strings to a class.</returns>
-        public static Func<string[], T> StringsConverter<T>(string[] propertyNames) where T : new()
+        public static Func<string[], T> StringsConverter<T>(IEnumerable<string> propertyNames) where T : class, new()
         {
-            const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.SetProperty;
-            PropertyInfo[] pinfos = new PropertyInfo[propertyNames.Length];
-            for (int i = 0; i < pinfos.Length; i++) {
-                pinfos[i] = typeof(T).GetProperty(propertyNames[i], flags);
-                if (pinfos[i] == null)
-                    throw new Exception("Invalid PropertyInfo '" + propertyNames[i] ?? "" + "'");
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty;
+            List<PropertyInfo> pinfos = new List<PropertyInfo>();
+            foreach (string prop in propertyNames) {
+                PropertyInfo pinfo = typeof(T).GetProperty(prop, flags);
+                if (pinfo == null)
+                    throw new Exception("Invalid PropertyInfo '" + prop ?? "" + "'");
+                pinfos.Add(pinfo);
             }
-            Func<object, object>[] converters = new Func<object, object>[pinfos.Length];
-            for (int i = 0; i < pinfos.Length; i++) {
+            Func<object, object>[] converters = new Func<object, object>[pinfos.Count];
+            for (int i = 0; i < pinfos.Count; i++) {
                 converters[i] = converterDict[pinfos[i].PropertyType](typeof(string));
             }
             return (strs) => {
                 T obj = new T();
-                for (int i = 0; i < pinfos.Length; i++) {
+                for (int i = 0; i < pinfos.Count; i++) {
                     pinfos[i].SetValue(obj, converters[i](strs[i]));
                 }
                 return obj;
             };
-        }
-
-        /// <summary>
-        /// Parses a string into a basic Type.
-        /// </summary>
-        /// <param name="str">The string to parse.</param>
-        /// <returns>The result of the string being parsed.</returns>
-        public static object Parse(string str)
-        {
-            if (str == null || str.Length == 0)
-                return null;
-            string str2 = str.Trim();
-
-            char c = str2[0];
-            if (Char.IsDigit(c)) {
-                for (int i = 1; i < str2.Length; i++) {
-                    c = str2[i];
-                    if (Char.IsDigit(c))
-                        continue;
-                    else if (c == '.') {
-                        if (TimeSpan.TryParse(str2, out TimeSpan ts))
-                            return ts;
-                        if (Double.TryParse(str2, out double d))
-                            return d;
-                    }
-                    else if (c == '/' || c == '-' || c == ',') {
-                        if (DateTime.TryParse(str2, out DateTime dt))
-                            return dt;
-                    }
-                    else if (c == ':') {
-                        if (TimeSpan.TryParse(str2, out TimeSpan ts))
-                            return ts;
-                    }
-                    return str;
-                }
-                if (Int32.TryParse(str2, out int ival))
-                    return ival;
-            }
-            else if (DateTime.TryParse(str2, out DateTime dt))
-                return dt;
-            else {
-                string lower = str2.ToLower();
-                if (str2 == "false")
-                    return false;
-                else if (str2 == "true")
-                    return true;
-                else if (str2 == "null")
-                    return null;
-            }
-            return str;
         }
         #endregion //Converters
 
@@ -229,7 +180,6 @@ namespace Utilities
         /// </summary>
         /// <param name="path">The file to detect encoding of.</param>
         /// <returns>The text of the file after it has been processed for encoding.</returns>
-        /// <source>https://stackoverflow.com/questions/1025332/determine-a-strings-encoding-in-c-sharp </source>
         public static string GetEncodedText(string path)
         {
             return GetEncodedText(path, out Encoding encoding);
@@ -245,7 +195,6 @@ namespace Utilities
         /// but more reliable (especially UTF-8 with special characters later on may appear to be ASCII initially). 
         /// If negative then the whole file is read in (maximum reliability)</param>
         /// <returns>The text of the file after it has been processed for encoding.</returns>
-        /// <source>https://stackoverflow.com/questions/1025332/determine-a-strings-encoding-in-c-sharp </source>
         public static string GetEncodedText(string path, out Encoding encoding, int maxBytes = -1)
         {
             //////////// If the code reaches here, no BOM/signature was found, so now
@@ -303,6 +252,7 @@ namespace Utilities
         /// <param name="b">The array of bytes to read for Encoding.</param>
         /// <param name="index">The start of the file. This will be after the Encoding BOM/signature if one exists.</param>
         /// <returns>The Encoding of the array of bytes.</returns>
+        /// <source>https://stackoverflow.com/questions/1025332/determine-a-strings-encoding-in-c-sharp </source>
         private static Encoding GetTextEncoding(byte[] b, out int index)
         {
             //////////////// First check the low hanging fruit by checking if a
@@ -455,6 +405,8 @@ namespace Utilities
         #endregion //Properties
 
         #region ToString
+        private delegate string ToStringDelegate();
+
         /// <summary>
         /// Gets the string representation of this DataTable.
         /// </summary>
@@ -498,7 +450,6 @@ namespace Utilities
             return sb.ToString();
         }
 
-        private delegate string ToStringDelegate();
         /// <summary>
         /// A default ToString method.
         /// </summary>
@@ -525,15 +476,64 @@ namespace Utilities
         #endregion //ToString
 
         /// <summary>
+        /// Parses a string into a basic Type.
+        /// </summary>
+        /// <param name="str">The string to parse.</param>
+        /// <returns>The result of the string being parsed.</returns>
+        public static object Parse(string str)
+        {
+            if (str == null || str.Length == 0)
+                return null;
+            string str2 = str.Trim();
+
+            char c = str2[0];
+            if (Char.IsDigit(c) || c == '-') {
+                for (int i = 1; i < str2.Length; i++) {
+                    c = str2[i];
+                    if (Char.IsDigit(c))
+                        continue;
+                    else if (c == '.') {
+                        if (Double.TryParse(str2, out double d))
+                            return d;
+                        if (TimeSpan.TryParse(str2, out TimeSpan ts))
+                            return ts;
+                    }
+                    else if (c == '/' || c == '-' || c == ',') {
+                        if (DateTime.TryParse(str2, out DateTime dt))
+                            return dt;
+                    }
+                    else if (c == ':') {
+                        if (TimeSpan.TryParse(str2, out TimeSpan ts))
+                            return ts;
+                        else if (DateTime.TryParse(str2, out DateTime dt))
+                            return dt;
+                    }
+                    return str;
+                }
+                if (Int32.TryParse(str2, out int ival))
+                    return ival;
+            }
+            else if (DateTime.TryParse(str2, out DateTime dt))
+                return dt;
+            else {
+                string lower = str2.ToLower();
+                if (lower == "false")
+                    return false;
+                else if (lower == "true")
+                    return true;
+                else if (lower == "null")
+                    return null;
+            }
+            return str;
+        }
+
+        /// <summary>
         /// Prints the contents of an object to the console.
         /// </summary>
         /// <param name="obj">The object to print.</param>
         public static void Print(object obj)
         {
-            string result = (obj != null && ((ToStringDelegate) obj.ToString).Method.DeclaringType == obj.GetType())
-                ? obj.ToString()
-                : JsonConvert.SerializeObject(obj, Formatting.None);
-            Console.Write(result);
+            Extensions.Print(Console.Out, obj);
         }
 
         /// <summary>
@@ -570,9 +570,9 @@ namespace Utilities
         /// <typeparam name="T">The Type to create the DataTable from.</typeparam>
         /// <param name="table">The DataTable to add columns to.</param>
         /// <returns>The modified DataTable with new columns representing the getters/setters of a Type.</returns>
-        public static DataTable DataTable<T>(DataTable table)
+        public static DataTable DataTable<T>(DataTable table) where T : class
         {
-            const BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance;
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance;
             PropertyInfo[] pinfos = typeof(T).GetProperties(flags);
             foreach (var pinfo in pinfos) {
                 table.Columns.Add(pinfo.Name, Nullable.GetUnderlyingType(pinfo.PropertyType) ?? pinfo.PropertyType);
@@ -585,7 +585,7 @@ namespace Utilities
         /// </summary>
         /// <typeparam name="T">The Type to create a DataTable from.</typeparam>
         /// <returns>A DataTable with columns representing the getters/setters of a Type.</returns>
-        public static DataTable DataTable<T>()
+        public static DataTable DataTable<T>() where T : class
         {
             DataTable table = new DataTable();
             return Util.DataTable<T>(table);

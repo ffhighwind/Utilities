@@ -51,22 +51,7 @@ namespace Utilities
         /// <param name="type">The expected Type of the information to be read</param>
         /// <param name="source">The sequence of objects to represent</param>
         /// <param name="members">The members that should be exposed to the reader</param>
-        public GenericDataReader(IEnumerable<T> source, params string[] members)
-        {
-            pinfos = typeof(T).GetProperties(defaultFlags);
-            this.enumerator = source.GetEnumerator();
-            this.current = null;
-            propertyNames = new string[pinfos.Length];
-            types = new Type[pinfos.Length];
-            allowNull = new BitArray(pinfos.Length);
-            for (int i = 0; i < pinfos.Length; i++) {
-                PropertyInfo pi = pinfos[i];
-                propertyNames[i] = pi.Name;
-                Type ty = Nullable.GetUnderlyingType(pi.PropertyType);
-                allowNull[i] = ty != null;
-                types[i] = ty ?? pi.PropertyType;
-            }
-        }
+        public GenericDataReader(IEnumerable<T> source, params string[] members) : this(source, defaultFlags, members) { }
 
         public override int Depth {
             get { throw new NotImplementedException(); }
@@ -145,9 +130,8 @@ namespace Utilities
         {
             active = false;
             current = null;
-            IDisposable tmp = enumerator as IDisposable;
             enumerator = null;
-            if (tmp != null)
+            if (enumerator is IDisposable tmp)
                 tmp.Dispose();
         }
 

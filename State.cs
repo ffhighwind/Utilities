@@ -8,9 +8,7 @@ namespace Utilities
 {
     public class State
     {
-        private static bool isdst = DateTime.Now.IsDaylightSavingTime();
-
-        public static bool IsDaylightSavings { get { return isdst; } }
+        private static readonly bool IsDaylightSavings = DateTime.Now.IsDaylightSavingTime();
 
         private State(string fullname, string name, int mstdiff)
         {
@@ -20,7 +18,7 @@ namespace Utilities
             Timezone = GetTimezone(mstdiff);
         }
 
-        public State(string fullname, string name, string timezone)
+        private State(string fullname, string name, string timezone)
         {
             Fullname = fullname;
             Name = name;
@@ -30,22 +28,30 @@ namespace Utilities
 
         public static double GetMSTDiff(string timezone)
         {
+            
             double diff = 0;
-            if (timezone == "PST")
-                diff = 1;
-            else if (timezone == "CST")
-                diff = -1;
-            else if (timezone == "EST" || timezone == "AST")
-                diff = -2;
-            else if (timezone == "HST")
-                diff = 4;
-            else if (timezone.StartsWith("UTC") && double.TryParse(timezone.Substring(3), out diff))
-                diff = -(diff + 6 + (IsDaylightSavings ? 0 : 1));
-
-            else
+            if (timezone == "MST" || timezone == "MT" || timezone == "MDT")
                 diff = 0;
-            //else if (zone.Equals("MST"))
-            //    diff = 0;
+            else if (timezone == "PST" || timezone == "PT" || timezone == "PDT")
+                diff = 1;
+            else if (timezone == "CST" || timezone == "CT" || timezone == "CDT")
+                diff = -1;
+            else if (timezone == "EST" || timezone == "AST" || timezone == "ET" || timezone == "EDT")
+                diff = -2;
+            else if (timezone == "AKST" || timezone == "AKDT")
+                diff = 4;
+            else if (timezone == "HST")
+                diff = IsDaylightSavings ? 5 : 4;
+            else if (timezone.StartsWith("UTC") || timezone.StartsWith("GMT")) {
+                string diffstr = timezone.Substring(3);
+                if (double.TryParse(diffstr, out diff))
+                    diff = -(diff + 6 + (IsDaylightSavings ? 1 : 0));
+            }
+            else {
+                if (timezone == null)
+                    throw new ArgumentNullException("timezone");
+                throw new InvalidTimeZoneException(timezone + " is not a valid timezone.");
+            }
             return diff;
         }
 
@@ -53,23 +59,26 @@ namespace Utilities
         {
             string timezone;
             switch (mstdiff) {
-                case 0:
-                    timezone = "MST";
-                    break;
                 case 1:
-                    timezone = "PST";
+                    timezone = "PT";
+                    break;
+                case 0:
+                    timezone = "MT";
                     break;
                 case -1:
-                    timezone = "CST";
+                    timezone = "CT";
                     break;
                 case -2:
-                    timezone = "EST";
+                    timezone = "ET";
                     break;
                 case -3:
-                    timezone = "HST";
+                    timezone = IsDaylightSavings ? "AKDT" : "AKST";
                     break;
                 default:
-                    timezone = null;
+                    if (mstdiff < -13 || mstdiff > 24)
+                        throw new ArgumentOutOfRangeException("mstdiff", "Value must be between -12 and 24");
+                    int utcdiff = ((mstdiff + 24 + 6 + (IsDaylightSavings ? 1 : 0)) % 24) - 12;
+                    timezone = string.Format("UTC{0}", utcdiff);
                     break;
             }
             return timezone;
@@ -88,9 +97,9 @@ namespace Utilities
         }
 
         //https://simple.wikipedia.org/wiki/List_of_U.S._states_by_time_zone
-        public static readonly State Unknown = new State("Unknown", " ", " ");
+        public static readonly State Unknown = new State("Unknown", " ", 0);
         public static readonly State AL = new State("Alabama", "AL", "CST");
-        public static readonly State AK = new State("Alaska", "AK", "HST");
+        public static readonly State AK = new State("Alaska", "AK", "AKST");
         public static readonly State AS = new State("American Samoa", "AS", "UTC-11");
         public static readonly State AZ = new State("Arizona", "AZ", "MST"); //The Navajo Nation uses Daylight Saving Time (DST), the rest of the state does not
         public static readonly State AR = new State("Arkansas", "AR", "CST");

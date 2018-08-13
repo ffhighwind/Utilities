@@ -12,7 +12,6 @@ namespace Utilities.Excel
     /// </summary>
     public class Spreadsheet : IDisposable
     {
-        private ExcelPackage doc = null;
         private bool disposed = false;
 
         /// <summary>
@@ -77,18 +76,18 @@ namespace Utilities.Excel
         {
             try {
                 FileInfo fi = new FileInfo(path);
-                if (doc != null && !doc.File.Equals(fi)) {
-                    doc.Dispose();
-                    doc = null;
+                if (Data != null && !Data.File.Equals(fi)) {
+                    Data.Dispose();
+                    Data = null;
                 }
                 //if (fi.Exists && fi.IsReadOnly)
                 //    doc = new ExcelPackage(new FileStream(fi.FullName, FileMode.OpenOrCreate, FileAccess.Read), password);
                 //else
-                if (doc == null)
-                    doc = new ExcelPackage(fi, password);
-                if (doc != null && doc.Workbook.Worksheets.Count == 0)
+                if (Data == null)
+                    Data = new ExcelPackage(fi, password);
+                if (Data != null && Data.Workbook.Worksheets.Count == 0)
                     Add();
-                return doc != null;
+                return Data != null;
             }
             catch (Exception ex) {
                 string msg = (path != null && !path.EndsWith(".xlsx")) ? "wrong file extension." : ex.Message;
@@ -101,7 +100,7 @@ namespace Utilities.Excel
         /// Returns whether the Spreadsheet is currently open and usable.
         /// </summary>
         public bool IsOpen {
-            get { return doc != null; }
+            get { return Data != null; }
         }
 
         /// <summary>
@@ -123,15 +122,15 @@ namespace Utilities.Excel
         public bool Open(Stream stream, string password)
         {
             try {
-                if (doc != null) {
-                    doc.Dispose();
-                    doc = null;
+                if (Data != null) {
+                    Data.Dispose();
+                    Data = null;
                 }
-                if (doc == null)
-                    doc = new ExcelPackage(stream, password);
-                if (doc != null && doc.Workbook.Worksheets.Count == 0)
+                if (Data == null)
+                    Data = new ExcelPackage(stream, password);
+                if (Data != null && Data.Workbook.Worksheets.Count == 0)
                     Add();
-                return doc != null;
+                return Data != null;
             }
             catch (Exception ex) {
                 Console.Error.WriteLine("Error Spreadsheet.Open(Stream): " + ex.Message);
@@ -142,12 +141,13 @@ namespace Utilities.Excel
         /// <summary>
         /// Clears all data in the Excel Spreadsheet.
         /// </summary>
-        public void Clear()
+        public void Clear(bool removeAllSheets = false)
         {
-            for (int i = doc.Workbook.Worksheets.Count - 1; i >= 0; i--) {
-                doc.Workbook.Worksheets.Delete(i + (doc.Compatibility.IsWorksheets1Based ? 1 : 0));
+            for (int i = Data.Workbook.Worksheets.Count - 1; i >= 0; i--) {
+                Data.Workbook.Worksheets.Delete(i + (Data.Compatibility.IsWorksheets1Based ? 1 : 0));
             }
-            Add();
+            if (!removeAllSheets)
+                Add();
         }
 
         /// <summary>
@@ -158,8 +158,8 @@ namespace Utilities.Excel
         /// <param name="useTableNames">Determines if the DataTable names will be used for the sheet names.</param>
         public void Load(DataSet dataset, bool printHeaders = true, bool useTableNames = true)
         {
-            for (int i = doc.Workbook.Worksheets.Count - 1; i >= 0; i--) {
-                doc.Workbook.Worksheets.Delete(i + (doc.Compatibility.IsWorksheets1Based ? 1 : 0));
+            for (int i = Data.Workbook.Worksheets.Count - 1; i >= 0; i--) {
+                Data.Workbook.Worksheets.Delete(i + (Data.Compatibility.IsWorksheets1Based ? 1 : 0));
             }
             for (int i = 0; i < dataset.Tables.Count; i++) {
                 DataTable table = dataset.Tables[i];
@@ -178,7 +178,7 @@ namespace Utilities.Excel
         public void Load(DataTable table, bool printHeaders = true, bool useTableName = true)
         {
             Clear();
-            ExcelWorksheet ws = doc.Workbook.Worksheets.First();
+            ExcelWorksheet ws = Data.Workbook.Worksheets.First();
             ws.Name = useTableName ? table.TableName : "Sheet1";
             new Worksheet(ws).Load(table, printHeaders);
         }
@@ -192,7 +192,7 @@ namespace Utilities.Excel
         public void Load(IDataReader reader, bool printHeaders = true, string sheetname = "Sheet1")
         {
             Clear();
-            ExcelWorksheet ws = doc.Workbook.Worksheets.First();
+            ExcelWorksheet ws = Data.Workbook.Worksheets.First();
             ws.Name = sheetname;
             new Worksheet(ws).Load(reader, printHeaders);
         }
@@ -205,7 +205,7 @@ namespace Utilities.Excel
         public void Load(IEnumerable<object[]> list, string sheetname = "Sheet1")
         {
             Clear();
-            ExcelWorksheet ws = doc.Workbook.Worksheets.First();
+            ExcelWorksheet ws = Data.Workbook.Worksheets.First();
             ws.Name = sheetname;
             new Worksheet(ws).Load(list);
         }
@@ -219,7 +219,7 @@ namespace Utilities.Excel
         public void Load<T>(IEnumerable<T> list, string sheetname = "Sheet1")
         {
             Clear();
-            ExcelWorksheet ws = doc.Workbook.Worksheets.First();
+            ExcelWorksheet ws = Data.Workbook.Worksheets.First();
             ws.Name = sheetname;
             new Worksheet(ws).Load(list);
         }
@@ -232,7 +232,7 @@ namespace Utilities.Excel
         public void Load(string csvtext, string sheetname = "Sheet1")
         {
             Clear();
-            ExcelWorksheet ws = doc.Workbook.Worksheets.First();
+            ExcelWorksheet ws = Data.Workbook.Worksheets.First();
             ws.Name = sheetname;
             new Worksheet(ws).Load(csvtext);
         }
@@ -245,7 +245,7 @@ namespace Utilities.Excel
         /// <returns>The modified DataSet.</returns>
         public DataSet ToDataSet(DataSet dataset, bool hasHeaders = true)
         {
-            for (int i = 0; i < doc.Workbook.Worksheets.Count; i++) {
+            for (int i = 0; i < Data.Workbook.Worksheets.Count; i++) {
                 DataTable table = this[i].ToDataTable(hasHeaders);
                 table.TableName = this[i].Name;
                 dataset.Tables.Add(table);
@@ -269,7 +269,7 @@ namespace Utilities.Excel
         /// </summary>
         public int Sheets {
             get {
-                return doc.Workbook.Worksheets.Count;
+                return Data.Workbook.Worksheets.Count;
             }
         }
 
@@ -278,15 +278,15 @@ namespace Utilities.Excel
         /// </summary>
         public IEnumerable<Worksheet> Worksheets {
             get {
-                for (int i = 0; i < doc.Workbook.Worksheets.Count; i++)
+                for (int i = 0; i < Data.Workbook.Worksheets.Count; i++)
                     yield return this[i];
             }
         }
 
         public bool AutoFilter {
             set {
-                for (int i = 0; i < doc.Workbook.Worksheets.Count; i++) {
-                    ExcelWorksheet worksheet = doc.Workbook.Worksheets[i + (doc.Compatibility.IsWorksheets1Based ? 1 : 0)];
+                for (int i = 0; i < Data.Workbook.Worksheets.Count; i++) {
+                    ExcelWorksheet worksheet = Data.Workbook.Worksheets[i + (Data.Compatibility.IsWorksheets1Based ? 1 : 0)];
                     worksheet.Cells[worksheet.Dimension.Address].AutoFilter = value;
                 }
             }
@@ -294,14 +294,14 @@ namespace Utilities.Excel
 
         public void AutoFormat()
         {
-            for (int i = 0; i < doc.Workbook.Worksheets.Count; i++)
+            for (int i = 0; i < Data.Workbook.Worksheets.Count; i++)
                 this[i].AutoFormat();
         }
 
         public void AutoFit()
         {
-            for (int i = 0; i < doc.Workbook.Worksheets.Count; i++) {
-                ExcelWorksheet worksheet = doc.Workbook.Worksheets[i + (doc.Compatibility.IsWorksheets1Based ? 1 : 0)];
+            for (int i = 0; i < Data.Workbook.Worksheets.Count; i++) {
+                ExcelWorksheet worksheet = Data.Workbook.Worksheets[i + (Data.Compatibility.IsWorksheets1Based ? 1 : 0)];
                 worksheet.Cells.AutoFitColumns(0);
                 /*
                 for (int col = 1; col <= worksheet.Dimension.Columns; col++) {
@@ -312,8 +312,8 @@ namespace Utilities.Excel
 
         public bool BestFit {
             set {
-                for (int i = 0; i < doc.Workbook.Worksheets.Count; i++) {
-                    ExcelWorksheet worksheet = doc.Workbook.Worksheets[i + (doc.Compatibility.IsWorksheets1Based ? 1 : 0)];
+                for (int i = 0; i < Data.Workbook.Worksheets.Count; i++) {
+                    ExcelWorksheet worksheet = Data.Workbook.Worksheets[i + (Data.Compatibility.IsWorksheets1Based ? 1 : 0)];
                     for (int col = 1; col <= worksheet.Dimension.Columns; col++) {
                         worksheet.Column(col).BestFit = value;
                     }
@@ -326,9 +326,9 @@ namespace Utilities.Excel
         /// </summary>
         public Worksheet Add()
         {
-            for (int i = doc.Workbook.Worksheets.Count + 1; ; i++) {
+            for (int i = Data.Workbook.Worksheets.Count + 1; ; i++) {
                 string sheetName = "Sheet" + i.ToString();
-                if (doc.Workbook.Worksheets[sheetName] == null) {
+                if (Data.Workbook.Worksheets[sheetName] == null) {
                     return Add(sheetName);
                 }
             }
@@ -340,7 +340,7 @@ namespace Utilities.Excel
         /// <param name="sheetname">The name of the Worksheet to add.</param>
         public Worksheet Add(string sheetname)
         {
-            var ws = doc.Workbook.Worksheets.Add(sheetname);
+            var ws = Data.Workbook.Worksheets.Add(sheetname);
             ws.Cells["A1"].Value = "";
             return new Worksheet(ws);
         }
@@ -351,7 +351,7 @@ namespace Utilities.Excel
         /// <param name="sheetname">The name of the Worksheet to remove.</param>
         public void Remove(string sheetname)
         {
-            doc.Workbook.Worksheets.Delete(sheetname);
+            Data.Workbook.Worksheets.Delete(sheetname);
         }
 
         /// <summary>
@@ -360,9 +360,9 @@ namespace Utilities.Excel
         /// <param name="index">The index of the Worksheet to remove.</param>
         public void Remove(int index)
         {
-            if (doc.Compatibility.IsWorksheets1Based)
+            if (Data.Compatibility.IsWorksheets1Based)
                 index += 1;
-            doc.Workbook.Worksheets.Delete(index);
+            Data.Workbook.Worksheets.Delete(index);
         }
 
         /// <summary>
@@ -372,7 +372,7 @@ namespace Utilities.Excel
         /// <returns></returns>
         public Worksheet this[string sheetname] {
             get {
-                ExcelWorksheet worksheet = doc.Workbook.Worksheets[sheetname];
+                ExcelWorksheet worksheet = Data.Workbook.Worksheets[sheetname];
                 return worksheet == null ? null : new Worksheet(worksheet);
             }
         }
@@ -384,10 +384,10 @@ namespace Utilities.Excel
         /// <returns></returns>
         public Worksheet this[int sheetIndex] {
             get {
-                if (doc.Compatibility.IsWorksheets1Based)
+                if (Data.Compatibility.IsWorksheets1Based)
                     sheetIndex += 1;
-                ExcelWorksheet worksheet = doc.Workbook.Worksheets[sheetIndex];
-                return worksheet == null ? null : new Worksheet(doc.Workbook.Worksheets[sheetIndex]);
+                ExcelWorksheet worksheet = Data.Workbook.Worksheets[sheetIndex];
+                return worksheet == null ? null : new Worksheet(Data.Workbook.Worksheets[sheetIndex]);
             }
         }
 
@@ -395,51 +395,39 @@ namespace Utilities.Excel
         /// The FileInfo for the Excel Spreadsheet.
         /// </summary>
         public FileInfo File {
-            get { return doc.File; }
-            set { doc.File = value; }
+            get => Data.File;
+            set => Data.File = value;
         }
 
         /// <summary>
         /// Information about the Excel Spreadsheet.
         /// </summary>
         public OfficeProperties Properties {
-            get { return doc.Workbook.Properties; }
+            get { return Data.Workbook.Properties; }
         }
 
         /// <summary>
         /// The title of the Excel Spreadsheet.
         /// </summary>
         public string Title {
-            get {
-                return doc.Workbook.Properties.Title;
-            }
-            set {
-                doc.Workbook.Properties.Title = value;
-            }
+            get => Data.Workbook.Properties.Title;
+            set => Data.Workbook.Properties.Title = value;
         }
 
         /// <summary>
         /// The author of the Excel Spreadsheet.
         /// </summary>
         public string Author {
-            get {
-                return doc.Workbook.Properties.Author;
-            }
-            set {
-                doc.Workbook.Properties.Author = value;
-            }
+            get => Data.Workbook.Properties.Author;
+            set => Data.Workbook.Properties.Author = value;
         }
 
         /// <summary>
         /// The company name of the Excel Spreadsheet.
         /// </summary>
         public string Company {
-            get {
-                return doc.Workbook.Properties.Company;
-            }
-            set {
-                doc.Workbook.Properties.Company = value;
-            }
+            get => Data.Workbook.Properties.Company;
+            set => Data.Workbook.Properties.Company = value;
         }
 
         /// <summary>
@@ -447,7 +435,7 @@ namespace Utilities.Excel
         /// </summary>
         public void Save()
         {
-            doc.Save();
+            Data.Save();
         }
 
         /// <summary>
@@ -456,7 +444,7 @@ namespace Utilities.Excel
         /// <param name="password">The password to the Excel Spreadsheet.</param>
         public void Save(string password)
         {
-            doc.Save(password);
+            Data.Save(password);
         }
 
         /// <summary>
@@ -465,7 +453,7 @@ namespace Utilities.Excel
         /// <param name="path">The file to create.</param>
         public void SaveAs(string path)
         {
-            doc.SaveAs(new FileInfo(path));
+            Data.SaveAs(new FileInfo(path));
         }
 
         /// <summary>
@@ -475,17 +463,13 @@ namespace Utilities.Excel
         /// <param name="password">The password to the Excel Spreadsheet.</param>
         public void SaveAs(string path, string password)
         {
-            doc.SaveAs(new FileInfo(path), password);
+            Data.SaveAs(new FileInfo(path), password);
         }
 
         /// <summary>
         /// The EPPlus implementation of the Spreadsheet (Package).
         /// </summary>
-        public ExcelPackage Data {
-            get {
-                return doc;
-            }
-        }
+        public ExcelPackage Data { get; private set; } = null;
 
         /// <summary>
         /// Disposes of the object and releases all data.
@@ -495,9 +479,9 @@ namespace Utilities.Excel
         {
             if (!disposed) {
                 if (disposing) {
-                    if (doc != null) {
-                        doc.Dispose();
-                        doc = null;
+                    if (Data != null) {
+                        Data.Dispose();
+                        Data = null;
                     }
                 }
                 disposed = true;

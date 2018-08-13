@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 
 namespace Utilities
 {
-    public static class Extentions
+    public static class Extensions
     {
-        #region Sort/Distinct
+        #region DataTable Sort/Distinct
         /// <summary>
         /// Removes duplicate rows from a DataTable.
         /// </summary>
@@ -147,7 +148,20 @@ namespace Utilities
         }
         #endregion //Sort/Distinct
 
-        #region DataTable/List
+        #region DataTable/Enumerable/Collection
+        /// <summary>
+        /// Iterates a list and performs an action for each element.
+        /// </summary>
+        /// <typeparam name="T">The Type of object in the list.</typeparam>
+        /// <param name="enumeration">The enumerable list.</param>
+        /// <param name="action">The action to perform.</param>
+        public static void ForEach<T>(this IEnumerable<T> enumeration, Action<T> action)
+        {
+            foreach (T item in enumeration) {
+                action(item);
+            }
+        }
+
         /// <summary>
         /// Determines if the enumerable list has at least some number of elements.
         /// </summary>
@@ -251,90 +265,6 @@ namespace Utilities
             }
             return dataTable;
         }
-
-        /*
-        /// <summary>
-        /// Converts a list of DataRows to a DataTable.
-        /// </summary>
-        /// <param name="table">The DataTable to remove duplicates rows from.</param>
-        /// <returns>The distinct sorted Datatable.</returns>
-        public static DataTable ToDataTable(this IEnumerable<DataRow> rows)
-        {
-            DataTable table = new DataTable();
-            return ToDataTable(rows, table);
-        }
-
-        /// <summary>
-        /// Converts a list of DataRows to a DataTable.
-        /// </summary>
-        /// <param name="table">The DataTable to remove duplicates rows from.</param>
-        /// <returns>The distinct sorted Datatable.</returns>
-        public static DataTable ToDataTable(this IEnumerable<DataRow> rows, DataTable table)
-        {
-            if (table.Columns.Count == 0) {
-                if (rows.Any()) {
-                    DataRow first = rows.First();
-                    for (int i = 0; i < first.ItemArray.Length; i++) {
-                        Type type = first[i].GetType();
-                        table.Columns.Add("Column" + (i + 1), type == typeof(DBNull) ? typeof(string) : type);
-                    }
-                    int errorCount = 0;
-                    foreach (DataRow row in rows) {
-                        try {
-                            table.Rows.Add(row.ItemArray);
-                        }
-                        catch (Exception ex) {
-                            for (int i = 0; i < row.ItemArray.Length; i++) {
-                                if (row[i] != DBNull.Value && row[i].GetType() != table.Columns[i].DataType) {
-                                    table.Columns[i].DataType = row[i].GetType();
-                                }
-                            }
-                            errorCount++;
-                            if (errorCount > row.ItemArray.Length)
-                                throw ex;
-                        }
-                    }
-                }
-            }
-            else {
-                foreach (DataRow row in rows) {
-                    table.Rows.Add(row.ItemArray);
-                }
-            }
-            return table;
-        }
-
-        /// <summary>
-        /// Creates a List from an enumerable list of DataRow.
-        /// </summary>
-        /// <param name="rows">The enumerable list of rows to copy.</param>
-        /// <returns>The list with contents.</returns>
-        public static List<object[]> ToList(this IEnumerable<DataRow> rows)
-        {
-            List<object[]> list = new List<object[]>();
-            foreach (DataRow row in rows) {
-                list.Add(row.ItemArray);
-            }
-            return list;
-        }
-
-        /// <summary>
-        /// Creates a List from an enumerable list of DataRow.
-        /// </summary>
-        /// <param name="rows">The enumerable list of rows to copy.</param>
-        /// <returns>The list with contents.</returns>
-        public static List<T> ToList<T>(this IEnumerable<DataRow> rows) where T : new()
-        {
-            List<T> list = new List<T>();
-            if (rows.Any()) {
-                var converter = DataRowConverter<T>.Create(rows.First());
-                foreach (DataRow row in rows)
-                    list.Add(converter.Convert(row));
-            }
-            return list;
-        }
-        */
-
 
         /// <summary>
         /// Converts an Enumerable list to a DataTable.
@@ -643,7 +573,30 @@ namespace Utilities
                 Console.WriteLine(tostringT(item));
             }
         }
+
+        /// <summary>
+        /// Prints the contents of an object to the console.
+        /// </summary>
+        /// <param name="obj">The object to print.</param>
+        public static void Print(this TextWriter writer, object obj)
+        {
+            writer.Write(Util.ToString(obj));
+        }
         #endregion
+
+        #region DateTime/DateTimeOffset
+        /// <summary>
+        /// Determines if a time is between start/end or equal to start. 
+        /// Start must be less than or equal to end or the result is always false.
+        /// </summary>
+        /// <param name="time">The time being compared.</param>
+        /// <param name="start">The start time.</param>
+        /// <param name="end">The end time.</param>
+        /// <returns>True if the time is between start/end or equal to start, or false otherwise.</returns>
+        public static bool IsBetween(this DateTime time, DateTime start, DateTime end)
+        {
+            return time >= start && time < end;
+        }
 
         /// <summary>
         /// Converts the DateTimeOffset to a DateTime.
@@ -669,18 +622,6 @@ namespace Utilities
         {
             return dateTimeOff?.ToDateTime();
         }
-
-        /// <summary>
-        /// Iterates a list and performs an action for each element.
-        /// </summary>
-        /// <typeparam name="T">The Type of object in the list.</typeparam>
-        /// <param name="enumeration">The enumerable list.</param>
-        /// <param name="action">The action to perform.</param>
-        public static void ForEach<T>(this IEnumerable<T> enumeration, Action<T> action)
-        {
-            foreach (T item in enumeration) {
-                action(item);
-            }
-        }
+        #endregion
     }
 }
