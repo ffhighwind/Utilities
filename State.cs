@@ -168,7 +168,7 @@ namespace Utilities
         public static readonly State NU = new State("Nunavut", "NU", "EST");
         public static readonly State ON = new State("Ontario", "ON", "EST"); //western third is CST
         public static readonly State PE = new State("Prince Edward Island", "PE", "AST");
-        public static readonly State QC = new State("Quebec", "QC", ""); //small parts do not observe daylight savings
+        public static readonly State QC = new State("Quebec", "QC", "EST"); //small parts do not observe daylight savings
         public static readonly State SK = new State("Saskatchewan", "SK", "UTC-6");
         public static readonly State YT = new State("Yukon", "YT", "PST");
 

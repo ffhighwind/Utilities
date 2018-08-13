@@ -109,6 +109,16 @@ namespace Utilities
         }
 
         /// <summary>
+        /// Gets the week number for the given date. This assumes the date given is the start of the week.
+        /// </summary>
+        /// <param name="startOfWeek">The start of the week</param>
+        /// <returns>The week number for the given date.</returns>
+        public static int WeekNumber(DateTime startOfWeek)
+        {
+            return (startOfWeek.Day - 1) / 7 + 1;
+        }
+
+        /// <summary>
         /// Gets the start of a week with the given year, month, and week number.
         /// </summary>
         /// <param name="year">The year (1-9999).</param>
