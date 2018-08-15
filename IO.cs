@@ -1174,6 +1174,8 @@ namespace Utilities
                         ss.AutoFilter = true;
                     if (autoformat)
                         ss.AutoFormat();
+                    if (hasHeaders)
+                        ss.FreezePanes();
                     ss.AutoFit();
                     ss.BestFit = true;
                     ss.Save();

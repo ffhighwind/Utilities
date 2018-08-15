@@ -400,6 +400,17 @@ namespace Utilities.Excel
         }
 
         /// <summary>
+        /// Freezes the headers on all worksheets (locks them for visibility).
+        /// </summary>
+        public void FreezePanes()
+        {
+            for(int i = 0; i < Data.Workbook.Worksheets.Count; i++) {
+                ExcelWorksheet worksheet = Data.Workbook.Worksheets[i + (Data.Compatibility.IsWorksheets1Based ? 1 : 0)];
+                worksheet.View.FreezePanes(2, 1);
+            }
+        }
+
+        /// <summary>
         /// Information about the Excel Spreadsheet.
         /// </summary>
         public OfficeProperties Properties {

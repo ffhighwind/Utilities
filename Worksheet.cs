@@ -32,6 +32,24 @@ namespace Utilities.Excel
         }
 
         /// <summary>
+        /// Freezes the headers (locks them for visibility).
+        /// </summary>
+        public void FreezePanes()
+        {
+            this.Data.View.FreezePanes(2, 1);
+        }
+
+        /// <summary>
+        /// Freezes the panes (locks them for visibility). The 
+        /// </summary>
+        /// <param name="cols">The number of columns to freeze (0-Columns).</param>
+        /// <param name="rows">The rows to freeze (0-Rows).</param>
+        public void FreezePanes(int rows, int cols)
+        {
+            this.Data.View.FreezePanes(rows + 1, cols + 1);
+        }
+
+        /// <summary>
         /// Loads data into the Worksheet from an enumerable list.
         /// </summary>
         /// <typeparam name="T">The type of objects in the enumerable list.</typeparam>
