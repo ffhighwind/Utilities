@@ -70,7 +70,7 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Returns an empty table with columns representing that of the database and table in the query.
+        /// Returns an empty table representing the database.
         /// </summary>
         /// <param name="conn">The database connection.</param>
         /// <param name="tablename">The name of the table.</param>
@@ -80,7 +80,7 @@ namespace Utilities
             try {
                 DataTable dt;
                 conn.Open();
-                using (var adapter = new SqlDataAdapter("SELECT TOP 0 * FROM " + tablename, conn)) {
+                using (var adapter = new SqlDataAdapter("SELECT TOP 0 * FROM [" + tablename + "]", conn)) {
                     dt = new DataTable();
                     adapter.FillSchema(dt, SchemaType.Source);
                 }
@@ -99,16 +99,39 @@ namespace Utilities
         /// <param name="conn">The database connection.</param>
         /// <param name="tablename">The name of the table.</param>
         /// <returns>A DataTable with the schema information of an SQL table, or null on error.</returns>
-        public static DataTable TableSchema(SqlConnection conn, string tablename)
+        public static SchemaTable SelectSchema(SqlConnection conn, string selectCmd)
         {
             try {
-                DataTable dt;
+                DataTable tableSchema;
                 conn.Open();
-                using (var reader = conn.ExecuteReader("SELECT TOP 0 * FROM " + tablename, conn)) {
-                    dt = reader.GetSchemaTable();
+                using (SqlCommand cmd = new SqlCommand(selectCmd, conn))
+                using (var reader = cmd.ExecuteReader(CommandBehavior.KeyInfo | CommandBehavior.SchemaOnly)) {
+                    tableSchema = reader.GetSchemaTable();
                 }
-                dt.TableName = tablename;
-                return dt;
+                return new SchemaTable(tableSchema);
+            }
+            catch (Exception ex) {
+                PrintError(ex, "DB.SelectSchema", conn, selectCmd);
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Returns a DataTable with schema information of an SQL table.
+        /// </summary>
+        /// <param name="conn">The database connection.</param>
+        /// <param name="tablename">The name of the table.</param>
+        /// <returns>A DataTable with the schema information of an SQL table, or null on error.</returns>
+        public static SchemaTable TableSchema(SqlConnection conn, string tablename)
+        {
+            try {
+                DataTable tableSchema;
+                conn.Open();
+                using (SqlCommand cmd = new SqlCommand("SELECT TOP 0 * FROM " + tablename, conn))
+                using (var reader = cmd.ExecuteReader(CommandBehavior.KeyInfo | CommandBehavior.SchemaOnly)) {
+                    tableSchema = reader.GetSchemaTable();
+                }
+                return new SchemaTable(tableSchema);
             }
             catch (Exception ex) {
                 PrintError(ex, "DB.TableSchema", conn, tablename);
@@ -117,27 +140,52 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Gets the full name of a datatable.
+        /// Gets a list of table names.
         /// </summary>
         /// <param name="conn">The database connection.</param>
-        /// <param name="tablename">The short name of the table.</param>
-        /// <returns></returns>
-        public static string TableName(SqlConnection conn, string shortTableName)
+        /// <param name="catalog">The catalog to search. Null means the DataSource of the connection is used.</param>
+        /// <returns>A list of table names, or null on error.</returns>
+        public static List<string> GetTableNames(SqlConnection conn, string catalog = null)
         {
             try {
-                string[] restrictions = new string[4];
-                restrictions[2] = shortTableName;
-                conn.Open();
-                using (DataTable table = conn.GetSchema("Tables", restrictions)) {
-                    conn.Close();
-                    DataRow row1 = table.Rows[0];
-                    return string.Format("[{0}].[{1}].[{2}]", row1[0].ToString(), row1[1].ToString(), row1[2].ToString());
-                }
+                return GetObjectNames(conn, catalog, "BASE TABLE");
             }
             catch (Exception ex) {
-                PrintError(ex, "DB.TableName", conn, shortTableName);
+                PrintError(ex, "DB.GetTableNames", conn, null);
             }
             return null;
+        }
+
+        /// <summary>
+        /// Gets a list of view names.
+        /// </summary>
+        /// <param name="conn">The database connection.</param>
+        /// <param name="catalog">The catalog to search. Null means the DataSource of the connection is used.</param>
+        /// <returns>A list of view names, or null on error.</returns>
+        public static List<string> GetViewNames(SqlConnection conn, string catalog = null)
+        {
+            try {
+                return GetObjectNames(conn, catalog, "VIEW");
+            }
+            catch (Exception ex) {
+                PrintError(ex, "DB.GetViewNames", conn, null);
+            }
+            return null;
+        }
+
+        private static List<string> GetObjectNames(SqlConnection conn, string catalog = null, string restriction3 = null)
+        {
+            string[] restrictions = new string[4];
+            restrictions[0] = catalog;
+            restrictions[3] = restriction3;
+            conn.Open();
+            using (DataTable table = conn.GetSchema("Tables", restrictions)) {
+                List<string> tableNames = new List<string>();
+                foreach (DataRow row in table.Rows) {
+                    tableNames.Add(string.Format("[{0}].[{1}].[{2}]", row[0], row[1], row[2]));
+                }
+                return tableNames;
+            }
         }
 
         /// <summary>
@@ -207,7 +255,10 @@ namespace Utilities
             Exception e = null;
             for (int i = 0; i < maxRetries; i++) {
                 try {
-                    return conn.Execute(cmd, param, null, timeoutSecs);
+                    conn.Open();
+                    using (SqlTransaction trans = conn.BeginTransaction()) {
+                        return conn.Execute(cmd, param, trans, timeoutSecs);
+                    }
                 }
                 catch (Exception ex) {
                     e = ex;
@@ -408,30 +459,32 @@ namespace Utilities
         private static bool BulkUpsert(SqlConnection conn, string tablename, Action<SqlBulkCopy> writeAction, int timeoutSecs, bool update, SqlBulkCopyColumnMapping[] mappings)
         {
             try {
+                conn.Open();
                 using (SqlTransaction trans = conn.BeginTransaction())
                 using (SqlCommand cmd = conn.CreateCommand()) {
+                    cmd.Transaction = trans;
                     cmd.Parameters.AddWithValue("@tablename", tablename);
                     cmd.CommandText = @"SELECT * INTO @tablename FROM #ATempTable WHERE 1 = 0";
                     if (cmd.ExecuteNonQuery() < 1)
                         return false;
 
-                    using (SqlBulkCopy bulkCpy = new SqlBulkCopy(conn, SqlBulkCopyOptions.Default, trans)) {
+                    using (SqlBulkCopy bulkCpy = new SqlBulkCopy(conn, SqlBulkCopyOptions.FireTriggers | SqlBulkCopyOptions.TableLock, trans)) {
                         bulkCpy.DestinationTableName = "#ATempTable";
                         bulkCpy.BulkCopyTimeout = timeoutSecs;
                         foreach (SqlBulkCopyColumnMapping mapping in mappings) {
                             bulkCpy.ColumnMappings.Add(mapping);
                         }
-                        conn.Open();
                         writeAction(bulkCpy);
                     }
                     SqlBulkCopyColumnMapping[] bulkMappings = new SqlBulkCopyColumnMapping[mappings.Length];
                     for (int i = 0; i < bulkMappings.Length; i++) {
                         bulkMappings[i] = new SqlBulkCopyColumnMapping(mappings[i].DestinationColumn, mappings[i].DestinationColumn);
                     }
-                    bool mergeSuccess = !MergeTables(conn, tablename, "#ATempTable", update, bulkMappings);
+                    bool mergeSuccess = !MergeTables(conn, tablename, "#ATempTable", trans, update, bulkMappings);
                     cmd.Parameters.Clear();
                     cmd.CommandText = "DROP TABLE #ATempTable";
                     cmd.ExecuteNonQuery();
+                    conn.Close();
                     return mergeSuccess;
                 }
             }
@@ -452,8 +505,26 @@ namespace Utilities
         /// <returns>True if the tables were merged. False otherwise.</returns>
         public static bool MergeTables(SqlConnection conn, string source, string target, bool update, SqlBulkCopyColumnMapping[] mappings)
         {
+            using (SqlTransaction trans = conn.BeginTransaction()) {
+                return MergeTables(conn, source, target, trans, update, mappings);
+            }
+        }
+
+        /// <summary>
+        /// Merges two tables together using the column mappings.
+        /// </summary>
+        /// <param name="conn">The database connection.</param>
+        /// <param name="source">The source table.</param>
+        /// <param name="target">The destination table.</param>
+        /// /<param name="trans">The database transaction.</param>
+        /// <param name="update">Determines if duplicate rows should be updated.</param>
+        /// <param name="mappings">The column mappings between the tables.</param>
+        /// <returns>True if the tables were merged. False otherwise.</returns>
+        public static bool MergeTables(SqlConnection conn, string source, string target, SqlTransaction trans, bool update, SqlBulkCopyColumnMapping[] mappings)
+        {
             try {
                 using (SqlCommand cmd = conn.CreateCommand()) {
+                    cmd.Transaction = trans;
                     cmd.Parameters.AddWithValue("@SourceT", source);
                     cmd.Parameters.AddWithValue("@TargetT", target);
                     StringBuilder onStringBuilder = new StringBuilder("MERGE INTO @TargetT AS Target\nUSING @SourceT AS Source\n\tON");
@@ -477,6 +548,7 @@ namespace Utilities
                     if (update)
                         onStringBuilder.Append(updateStringBuilder);
                     cmd.CommandText = onStringBuilder.Append(insertStringBuilder).Append(valuesStringBuilder).ToString();
+                    conn.Open();
                     return cmd.ExecuteNonQuery() >= 0;
                 }
             }
@@ -496,7 +568,10 @@ namespace Utilities
         public static bool DeleteTable(SqlConnection conn, string tablename, int timeoutSecs = 0)
         {
             try {
-                return conn.Execute("DELETE FROM @tablename", new { tablename = tablename }, null, timeoutSecs) > 0;
+                conn.Open();
+                using (SqlTransaction trans = conn.BeginTransaction()) {
+                    return conn.Execute("DELETE FROM @tablename", new { tablename = tablename }, null, timeoutSecs) > 0;
+                }
             }
             catch (Exception ex) {
                 PrintError(ex, "DB.DeleteTable", conn, tablename);
@@ -505,115 +580,155 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Recreates a database table.
+        /// Creates a command string that can be used to generate a table. It is imperfect because
+        /// it doesn't copy the constraints/indexes.
         /// </summary>
         /// <param name="conn">The database connection.</param>
-        /// <param name="tablename">The name of the table.</param>
-        /// <returns>True if the table was recreated. False otherwise.</returns>
-        public static bool RecreateTable(SqlConnection conn, string tablename, int timeoutSecs = 0)
+        /// <param name="tableName">The name of the table to query.</param>
+        /// <param name="newTableName">The name of the table to create. If this is null then the same name is used.</param>
+        /// <returns>The SQL command to create a table with the name and schema of the input DataTable.</returns>
+        public static string CloneTableScript(SqlConnection conn, string tableName, string newTableName = null)
         {
             try {
-                using (DataTable schema = TableSchema(conn, tablename)) {
-                    if (schema == null)
-                        return false;
-                    string createTableString = CreateTableString(conn, tablename);
-                    conn.Open();
-                    using (SqlTransaction trans = conn.BeginTransaction()) {
-                        return conn.Execute("DROP TABLE [" + tablename + "]", null, trans, 50) > 0
-                            && conn.Execute(createTableString, null, trans, 0) > 0;
+                conn.Open();
+                using (SqlCommand cmd = new SqlCommand("SELECT TOP 0 * FROM " + tableName, conn))
+                using (SqlDataReader reader = cmd.ExecuteReader(CommandBehavior.KeyInfo | CommandBehavior.SchemaOnly)) {
+                    using (DataTable schema = reader.GetSchemaTable())
+                    using (DataTable cloneTable = CreateDataTable(conn, tableName)) {
+                        newTableName = newTableName ?? tableName;
+                        StringBuilder sql = new StringBuilder();
+                        StringBuilder constraints = new StringBuilder();
+                        //https://stackoverflow.com/questions/7818701/generate-create-table-script-from-select-statement
+                        sql.AppendFormat("CREATE TABLE {0} (", tableName);
+                        for (int i = 0; i < schema.Rows.Count; i++) {
+                            DataRow dr = schema.Rows[i];
+                            string typeName = dr["DataTypeName"].ToString();
+                            bool hasPrecision = hasPrecisionScaleDict.ContainsKey(typeName);
+                            bool hasSize = hasSizeDict.ContainsKey(typeName);
+                            sql.AppendFormat("\n\t[{0}] {1}{2} {3} {4},",
+                                dr["ColumnName"].ToString(),
+                                typeName,
+                                hasSize ? "(" + dr["ColumnSize"].ToString() + ")"
+                                    : hasPrecision ? "(" + dr["NumericPrecision"].ToString() + "," + dr["NumericScale"].ToString() + ")"
+                                    : "",
+                            (dr["IsIdentity"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase)) ? "IDENTITY" : "",
+                            (dr["AllowDBNull"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase)) ? "NULL" : "NOT NULL");
+                            DefaultValue(tableName, cloneTable.Columns[i], usesDefault[cloneTable.Columns[i].DataType].IsNumeric, constraints);
+                        }
+                        if (cloneTable.PrimaryKey.Length > 0) {
+                            sql.AppendFormat(",\n\tCONSTRAINT PK_{0} PRIMARY KEY ({1})",
+                                tableName,
+                                string.Join(",", cloneTable.PrimaryKey.Select(col => col.ColumnName)));
+                        }
+                        return sql.Append("\n)").ToString();
                     }
                 }
             }
             catch (Exception ex) {
-                PrintError(ex, "DB.RecreateTable", conn, tablename);
+                PrintError(ex, "DB.CloneTableScript", conn, newTableName);
             }
-            return false;
+            return null;
         }
 
-        /// <summary>
-        /// Creates a command string that can be used to generate a table.
-        /// </summary>
-        /// <param name="conn">The database connection.</param>
-        /// <param name="tablename">The table to create a command string from.</param>
-        /// <param name="newTableName">The new table name.</param>
-        /// <returns>The SQL command to create a table with the name and schema of the input DataTable.</returns>
-        public static string CreateTableString(SqlConnection conn, string tablename, string newTableName = null)
-        {
-            StringBuilder sql = new StringBuilder();
-            StringBuilder alterSql = new StringBuilder();
+        private static Dictionary<string, bool> hasSizeDict = new Dictionary<string, bool>() {
+            { "bigint",  false },
+            { "binary",  true },
+            { "bit",  false },
+            { "char",  true },
+            { "date",  false },
+            { "datetime",  false },
+            { "datetime2",  false },
+            { "datetimeoffset",  false },
+            { "decimal",  false },
+            { "float",  false },
+            { "geography",  false },
+            { "geometry",  false },
+            { "hierarchyid",  false },
+            { "image",  true },
+            { "int",  false },
+            { "money",  false },
+            { "nchar",  true },
+            { "ntext",  true },
+            { "numeric",  false },
+            { "nvarchar",  true },
+            { "real",  false },
+            { "smalldatetime",  false },
+            { "smallint",  false },
+            { "smallmoney",  false },
+            { "sql_variant",  false },
+            { "sysname",  false },
+            { "text",  true },
+            { "time",  false },
+            { "timestamp",  false },
+            { "tinyint",  false },
+            { "uniqueidentifier",  false },
+            { "varbinary",  true },
+            { "varchar",  true },
+            { "xml",  false },
+        };
 
-            return sql.ToString();
-        }
+        private static Dictionary<string, bool> hasPrecisionScaleDict = new Dictionary<string, bool>() {
+            { "bigint", false },
+            { "binary", false },
+            { "bit",  false },
+            { "char",  false },
+            { "date",  false },
+            { "datetime",  false },
+            { "datetime2",  false },
+            { "datetimeoffset",  false },
+            { "decimal",  true },
+            { "float",  true },
+            { "geography",  false },
+            { "geometry",  false },
+            { "hierarchyid",  false },
+            { "image",  false },
+            { "int",  false },
+            { "money",  false },
+            { "nchar",  false },
+            { "ntext",  false },
+            { "numeric",  false },
+            { "nvarchar",  false },
+            { "real",  true },
+            { "smalldatetime",  false },
+            { "smallint",  false },
+            { "smallmoney",  false },
+            { "sql_variant",  false },
+            { "sysname",  false },
+            { "text",  false },
+            { "time",  false },
+            { "timestamp",  false },
+            { "tinyint",  false },
+            { "uniqueidentifier",  false },
+            { "varbinary",  false },
+            { "varchar",  false },
+            { "xml",  false },
+        };
 
         /// <summary>
-        /// Creates a command string that can be used to generate a table. This is imperfect as it
-        /// creates an nvarchar in all cases for strings (never nchar/varchar).
+        /// Creates a command string that can be used to generate a table. This is imperfect 
+        /// as it creates an nvarchar in all cases for strings (never nchar(n)/varchar). It also
+        /// doesn't copy the constraints/indexes.
         /// </summary>
         /// <param name="table">The table representation to create a command string from.</param>
-        /// <param name="min_nvarcharLen">The default length of nvarchar.</param>
         /// <returns>The SQL command to create a table with the name and schema of the input DataTable.</returns>
-        public static string CreateTableString(DataTable table, int min_nvarcharLen = 100)
+        public static string CreateTableScript(DataTable table)
         {
             StringBuilder sql = new StringBuilder();
             StringBuilder alterSql = new StringBuilder();
-            const int MAX_NVARCHAR_LEN = 4000;
 
             sql.AppendFormat("CREATE TABLE [{0}] (", table.TableName);
             for (int i = 0; i < table.Columns.Count; i++) {
-                bool isNumeric = false;
-                bool usesColumnDefault = true;
-
-                sql.AppendFormat("\n\t[{0}]", table.Columns[i].ColumnName);
-                switch (Type.GetTypeCode(table.Columns[i].DataType)) {
-                    case TypeCode.Boolean:
-                        sql.Append(" bit");
-                        isNumeric = true;
-                        break;
-                    case TypeCode.Char:
-                        sql.Append(" nvarchar(2)");
-                        break;
-                    case TypeCode.Byte:
-                    case TypeCode.SByte:
-                        sql.Append(" tinyint");
-                        isNumeric = true;
-                        break;
-                    case TypeCode.Int16:
-                    case TypeCode.UInt16:
-                        sql.Append(" smallint");
-                        isNumeric = true;
-                        break;
-                    case TypeCode.UInt32:
-                    case TypeCode.Int32:
-                        sql.Append(" int");
-                        isNumeric = true;
-                        break;
-                    case TypeCode.UInt64:
-                    case TypeCode.Int64:
-                        sql.Append(" bigint");
-                        isNumeric = true;
-                        break;
-                    case TypeCode.DateTime:
-                        sql.Append(" datetime2");
-                        usesColumnDefault = false;
-                        break;
-                    case TypeCode.String:
+                sql.AppendFormat("\n\t[{0}] ", table.Columns[i].ColumnName);
+                if (usesDefault.TryGetValue(table.Columns[i].DataType, out DefaultData data)) {
+                    if (data.HasMaxLength) {
                         int maxlen = table.Columns[i].MaxLength;
-                        sql.AppendFormat(" nvarchar({0})", maxlen > MAX_NVARCHAR_LEN ? "max" : (maxlen <= 0 ? min_nvarcharLen.ToString() : table.Columns[i].MaxLength.ToString()));
-                        break;
-                    case TypeCode.Single:
-                    case TypeCode.Double:
-                        sql.Append(" float");
-                        isNumeric = true;
-                        break;
-                    case TypeCode.Decimal:
-                        sql.AppendFormat(" decimal(18, 6)");
-                        isNumeric = true;
-                        break;
-                    default:
-                        int maxLen = table.Columns[i].MaxLength;
-                        sql.AppendFormat(" nvarchar({0}) ", maxLen <= 0 || maxLen > 4000 ? "max" : maxLen.ToString());
-                        break;
+                        sql.AppendFormat(data.Name, maxlen <= 0 || maxlen > 4000 ? "MAX" : maxlen.ToString());
+                    }
+                    else
+                        sql.Append(data.Name);
                 }
+                else
+                    throw new InvalidOperationException("CreateTableString: invalid type '" + table.Columns[i].DataType.ToString() + "'");
 
                 if (table.Columns[i].AutoIncrement) {
                     sql.AppendFormat(" IDENTITY({0},{1})",
@@ -623,66 +738,95 @@ namespace Utilities
                 else {
                     // DataColumns will add a blank DefaultValue for any AutoIncrement column. 
                     // We only want to create an ALTER statement for those columns that are not set to AutoIncrement. 
-                    if (table.Columns[i].DefaultValue != null) {
-                        if (usesColumnDefault) {
-                            string defaultVal = table.Columns[i].DefaultValue.ToString();
-                            alterSql.AppendFormat("\nALTER TABLE {0} ADD CONSTRAINT [DF_{0}_{1}]  DEFAULT ({2}) FOR [{1}];",
-                                table.TableName,
-                                table.Columns[i].ColumnName,
-                                isNumeric ? defaultVal : "'" + defaultVal + "'");
-                        }
-                        else {
-                            // Default values on Date columns, e.g., "DateTime.Now" will not translate to SQL.
-                            // This inspects the caption for a simple XML string to see if there is a SQL compliant default value, e.g., "GETDATE()".
-                            try {
-                                System.Xml.XmlDocument xml = new System.Xml.XmlDocument();
-                                xml.LoadXml(table.Columns[i].Caption);
-                                alterSql.AppendFormat("\nALTER TABLE {0} ADD CONSTRAINT [DF_{0}_{1}]  DEFAULT ({2}) FOR [{1}];",
-                                    table.TableName,
-                                    table.Columns[i].ColumnName,
-                                    xml.GetElementsByTagName("defaultValue")[0].InnerText);
-                            }
-                            catch {
-                                // Handle
-                            }
-                        }
-                    }
+                    DefaultValue(table.TableName, table.Columns[i], data.IsNumeric, alterSql);
                 }
                 if (!table.Columns[i].AllowDBNull)
                     sql.Append(" NOT NULL");
                 sql.Append(",");
             }
+            sql.Remove(sql.Length - 1, 1);
 
             if (table.PrimaryKey.Length > 0) {
-                StringBuilder primaryKeySql = new StringBuilder();
-
-                primaryKeySql.AppendFormat("\n\tCONSTRAINT PK_{0} PRIMARY KEY (", table.TableName);
-
-                for (int i = 0; i < table.PrimaryKey.Length; i++) {
-                    primaryKeySql.AppendFormat("{0},", table.PrimaryKey[i].ColumnName);
-                }
-                primaryKeySql.Remove(primaryKeySql.Length - 1, 1);
-                primaryKeySql.Append(")");
-
-                sql.Append(primaryKeySql);
+                sql.AppendFormat(",\n\tCONSTRAINT PK_{0} PRIMARY KEY ({1})",
+                    table.TableName,
+                    string.Join(",", table.PrimaryKey.Select(col => col.ColumnName)));
             }
-            else
-                sql.Remove(sql.Length - 1, 1);
 
-            sql.AppendFormat("\n);\n{0}", alterSql.ToString());
-            return sql.ToString();
+            return sql.Append("\n);\n").Append(alterSql.ToString()).ToString();
         }
+
+        private class DefaultData
+        {
+            public DefaultData(string name, bool hasMaxLen, bool isNumeric = false, bool hasDefault = true)
+            {
+                Name = name;
+                HasDefault = hasDefault;
+            }
+            public string Name { get; set; }
+            public bool HasDefault { get; set; }
+            public bool IsNumeric { get; set; }
+            public bool HasMaxLength { get; set; }
+        }
+
+        private static Dictionary<Type, DefaultData> usesDefault = new Dictionary<Type, DefaultData>() {
+            { typeof(Boolean) , new DefaultData("bit", false, true) },
+            { typeof(Char) , new DefaultData("nchar(1)", false, false) },
+            { typeof(Byte) , new DefaultData("tinyint", false, true) },
+            { typeof(SByte) , new DefaultData("tinyint", false, true) },
+            { typeof(Int16) , new DefaultData("smallint", false, true) },
+            { typeof(UInt16) , new DefaultData("smallint", false, true) },
+            { typeof(Int32) , new DefaultData("int", false, true) },
+            { typeof(UInt32) , new DefaultData("int", false, true) },
+            { typeof(Int64) , new DefaultData("bigint", false, true) },
+            { typeof(UInt64) , new DefaultData("bigint", false, true) },
+            { typeof(Single) , new DefaultData("float", false, true) },
+            { typeof(Double) , new DefaultData("float", false, true) },
+            { typeof(Decimal) , new DefaultData("decimal(18, 6)", false, true) },
+            { typeof(DateTime) , new DefaultData("datetime2", false, false, false) },
+            { typeof(DateTimeOffset) , new DefaultData("datetimeoffset", false, false, false) },
+            { typeof(byte[]), new DefaultData("varbinary({0})", true, false, false) },
+            { typeof(TimeSpan) , new DefaultData("time", false, false, false) },
+            { typeof(string) , new DefaultData("nvarchar({0})", true, false, true) },
+        };
+
+        private static void DefaultValue(string tablename, DataColumn col, bool isNumeric, StringBuilder alterSql)
+        {
+            if (!col.AutoIncrement && col.DefaultValue != null) {
+                string defaultVal = col.DefaultValue.ToString();
+                alterSql.AppendFormat("\nALTER TABLE {0} ADD CONSTRAINT [DF_{0}_{1}]  DEFAULT ({2}) FOR [{1}];",
+                    tablename,
+                    col.ColumnName,
+                    isNumeric ? defaultVal : "'" + defaultVal + "'");
+            }
+            else {
+                // Default values on Date columns, e.g., "DateTime.Now" will not translate to SQL.
+                // This inspects the caption for a simple XML string to see if there is a SQL compliant default value, e.g., "GETDATE()".
+                try {
+                    System.Xml.XmlDocument xml = new System.Xml.XmlDocument();
+                    xml.LoadXml(col.Caption);
+                    alterSql.AppendFormat("\nALTER TABLE {0} ADD CONSTRAINT [DF_{0}_{1}]  DEFAULT ({2}) FOR [{1}];",
+                        tablename,
+                        col.ColumnName,
+                        xml.GetElementsByTagName("defaultValue")[0].InnerText);
+                }
+                catch {
+                    // Handle
+                }
+            }
+        }
+
 
         /// <summary>
         /// Drops a table from a database.
         /// </summary>
         /// <param name="conn">The database connection.</param>
         /// <param name="tablename">The name of the table.</param>
+        /// <param name="transaction">The database transaction.</param>
         /// <returns>True if the table was dropped. False otherwise.</returns>
-        public static bool DropTable(SqlConnection conn, string tablename)
+        public static bool DropTable(SqlConnection conn, string tablename, IDbTransaction transaction = null)
         {
             try {
-                conn.Execute("DROP TABLE [@tablename]", new { tablename = tablename });
+                conn.Execute("DROP TABLE [@tablename]", new { tablename = tablename }, transaction);
             }
             catch (Exception ex) {
                 PrintError(ex, "DB.DropTable", conn, tablename);
@@ -702,7 +846,7 @@ namespace Utilities
             try {
                 // ANSI SQL way.  Works in PostgreSQL, MSSQL, MySQL.
                 return 1 == conn.ExecuteScalar<int>(
-        @"IF EXISTS (
+    @"IF EXISTS (
     SELECT 1 FROM INFORMATION_SCHEMA.TABLES 
     WHERE TABLE_NAME = @tablename
 )
@@ -732,7 +876,7 @@ SELECT 1 ELSE SELECT 0", new { tablename = tablename });
         {
             try {
                 return conn.Execute(
-        @"WHILE 1=1
+    @"WHILE 1=1
 BEGIN
 WITH CTE AS (
     SELECT ROW_NUMBER() OVER (PARTITION BY @columns ORDER BY (SELECT NULL)) AS DuplicateRows
