@@ -22,7 +22,7 @@ namespace Utilities
         /// <param name="server">The server to connect to.</param>
         /// <param name="database">The initial database to connect to.</param>
         /// <param name="username">The username to log into the database. If null then integrated security is used.</param>
-        /// <param name="password">The password to log into the server. If null the, integrated security is used.</param>
+        /// <param name="password">The password to log into the server. If null then integrated security is used.</param>
         /// <param name="testConnection">Determines if the connection should be tested before being returned.</param>
         /// <param name="timeoutSecs">The maximum timeout in seconds for the connection.</param>
         /// <returns>The connection string builder or null if the connection failed.</returns>
@@ -75,15 +75,67 @@ namespace Utilities
         /// <param name="conn">The database connection.</param>
         /// <param name="tablename">The name of the table.</param>
         /// <returns>An empty table representing the database, or null on error.</returns>
-        public static DataTable TableSchema(SqlConnection conn, string tablename)
+        public static DataTable CreateDataTable(SqlConnection conn, string tablename)
         {
             try {
-                string[] restrictions = new string[4];
-                restrictions[2] = tablename;
-                return conn.GetSchema("Tables", restrictions);
+                DataTable dt;
+                conn.Open();
+                using (var adapter = new SqlDataAdapter("SELECT TOP 0 * FROM " + tablename, conn)) {
+                    dt = new DataTable();
+                    adapter.FillSchema(dt, SchemaType.Source);
+                }
+                dt.TableName = tablename;
+                return dt;
             }
             catch (Exception ex) {
                 PrintError(ex, "DB.TableSchema", conn, tablename);
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Returns a DataTable with schema information of an SQL table.
+        /// </summary>
+        /// <param name="conn">The database connection.</param>
+        /// <param name="tablename">The name of the table.</param>
+        /// <returns>A DataTable with the schema information of an SQL table, or null on error.</returns>
+        public static DataTable TableSchema(SqlConnection conn, string tablename)
+        {
+            try {
+                DataTable dt;
+                conn.Open();
+                using (var reader = conn.ExecuteReader("SELECT TOP 0 * FROM " + tablename, conn)) {
+                    dt = reader.GetSchemaTable();
+                }
+                dt.TableName = tablename;
+                return dt;
+            }
+            catch (Exception ex) {
+                PrintError(ex, "DB.TableSchema", conn, tablename);
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Gets the full name of a datatable.
+        /// </summary>
+        /// <param name="conn">The database connection.</param>
+        /// <param name="tablename">The short name of the table.</param>
+        /// <returns></returns>
+        public static string TableName(SqlConnection conn, string shortTableName)
+        {
+            try {
+                string[] restrictions = new string[4];
+                restrictions[2] = shortTableName;
+                conn.Open();
+                using (DataTable table = conn.GetSchema("Tables", restrictions)) {
+                    conn.Close();
+                    DataRow row1 = table.Rows[0];
+                    return string.Format("[{0}].[{1}].[{2}]", row1[0].ToString(), row1[1].ToString(), row1[2].ToString());
+                }
+            }
+            catch (Exception ex) {
+                PrintError(ex, "DB.TableName", conn, shortTableName);
             }
             return null;
         }
@@ -95,10 +147,10 @@ namespace Utilities
         /// <param name="conn">The database connection.</param>
         /// <param name="cmd">The command to execute.</param>
         /// <param name="param">The parameters to pass to the command.</param>
-        /// <param name="timeoutSecs">The timeout in seconds for the command.</param>
+        /// <param name="timeoutSecs">The timeout in seconds for the command. A value of 0 means no timeout.</param>
         /// <param name="maxRetries">The number of attempts to retry the command.</param>
         /// <returns>The results from the query, or null on error.</returns>
-        public static IEnumerable<T> Query<T>(SqlConnection conn, string cmd, object param = null, int? timeoutSecs = null, int maxRetries = 5)
+        public static IEnumerable<T> Query<T>(SqlConnection conn, string cmd, object param = null, int timeoutSecs = 0, int maxRetries = 5)
         {
             Exception e = null;
             for (int i = 0; i < maxRetries; i++) {
@@ -116,10 +168,13 @@ namespace Utilities
         /// <summary>
         /// Executes an SQL query.
         /// </summary>
+        /// <param name="conn">The database connection.</param>
         /// <param name="cmd">The command to execute.</param>
-        /// <param name="maxRetries">The number of attempts to retry the command.</param>
+        /// <param name="param">The parameters and values.</param>
+        /// <param name="timeoutSecs">The command timeout in seconds. A value of 0 means no timeout.</param>
+        /// <param name="maxRetries">The maximum number of attempts to retry the command on failure.</param>
         /// <returns>The results from the query, or null on error.</returns>
-        public static DataTable Query(SqlConnection conn, string cmd, object param = null, int? timeoutSecs = null, int maxRetries = 5)
+        public static DataTable Query(SqlConnection conn, string cmd, object param = null, int timeoutSecs = 0, int maxRetries = 5)
         {
             Exception e = null;
             for (int i = 0; i < maxRetries; i++) {
@@ -141,16 +196,18 @@ namespace Utilities
         /// <summary>
         /// Executes an SQL command.
         /// </summary>
+        /// <param name="conn">The database connection.</param>
         /// <param name="cmd">The command to execute.</param>
-        /// <param name="timeout">The command timeout in seconds.</param>
+        /// <param name="param">The parameters and values.</param>
+        /// <param name="timeoutSecs">The command timeout in seconds. A value of 0 means no timeout.</param>
         /// <param name="maxRetries">The maximum number of attempts to retry the command on failure.</param>
         /// <returns>The number of rows affected, or -1 on error.</returns>
-        public static int Execute(SqlConnection conn, string cmd, object param = null, int? timeout = null, int maxRetries = 5)
+        public static int Execute(SqlConnection conn, string cmd, object param = null, int timeoutSecs = 0, int maxRetries = 5)
         {
             Exception e = null;
             for (int i = 0; i < maxRetries; i++) {
                 try {
-                    return conn.Execute(cmd, param, null, timeout);
+                    return conn.Execute(cmd, param, null, timeoutSecs);
                 }
                 catch (Exception ex) {
                     e = ex;
@@ -171,7 +228,7 @@ namespace Utilities
         /// <returns>True if the upload was successful. False otherwise.</returns>
         public static bool BulkUpload<T>(SqlConnection conn, string tablename, IEnumerable<T> list, params string[] columns) where T : class
         {
-            return BulkInsert<T>(conn, tablename, list, 600, CreateMappings(columns));
+            return BulkInsert<T>(conn, tablename, list, 0, CreateMappings(columns));
         }
 
         /// <summary>
@@ -181,7 +238,7 @@ namespace Utilities
         /// <param name="conn">The database connection.</param>
         /// <param name="tablename">The name of the database table to upload data to.</param>
         /// <param name="list">The List to upload.</param>
-        /// <param name="timeoutSecs">The timeout in seconds for the command.</param>
+        /// <param name="timeoutSecs">The timeout in seconds for the command. A value of 0 means no timeout.</param>
         /// <param name="columns">The columns names. If no columns are given then all columns are mapped automatically by name using reflection.</param>
         /// <returns>True if the upload was successful. False otherwise.</returns>
         public static bool BulkUpload<T>(SqlConnection conn, string tablename, IEnumerable<T> list, int timeoutSecs, params string[] columns) where T : class
@@ -199,7 +256,7 @@ namespace Utilities
         /// <param name="timeoutSecs">The maximum timeout in seconds for the command.</param>
         /// <param name="mappings">The column mappings.</param>
         /// <returns>True if the upload was successful. False otherwise.</returns>
-        public static bool BulkInsert<T>(SqlConnection conn, string tablename, IEnumerable<T> list, int timeoutSecs = 600, params SqlBulkCopyColumnMapping[] mappings) where T : class
+        public static bool BulkInsert<T>(SqlConnection conn, string tablename, IEnumerable<T> list, int timeoutSecs = 0, params SqlBulkCopyColumnMapping[] mappings) where T : class
         {
             try {
                 using (GenericDataReader<T> reader = new GenericDataReader<T>(list))
@@ -272,11 +329,11 @@ namespace Utilities
         /// </summary>
         /// <param name="conn">The database connection.</param>
         /// <param name="table">The DataTable to upload.</param>
-        /// <param name="timeoutSecs">The maximum timeout in seconds for the command.</param>
+        /// <param name="timeoutSecs">The maximum timeout in seconds for the command. A value of 0 means no timeout.</param>
         /// <param name="options">The bulk copy options. If you do not wish to lock the database table then you will need to change this.</param>
         /// <param name="mappings">The column mappings. If no mappings are given then all columns are mapped.</param>
         /// <returns>True if the upload was successful, false otherwise.</returns>
-        public static bool BulkInsert(SqlConnection conn, DataTable table, int timeoutSecs = 600, params SqlBulkCopyColumnMapping[] mappings)
+        public static bool BulkInsert(SqlConnection conn, DataTable table, int timeoutSecs = 0, params SqlBulkCopyColumnMapping[] mappings)
         {
             try {
                 using (SqlBulkCopy bulkCpy = new SqlBulkCopy(conn, bulkCopyOptions, null)) {
@@ -305,11 +362,11 @@ namespace Utilities
         /// <param name="conn">The database connection.</param>
         /// <param name="tablename">The name of the database table to upload data to.</param>
         /// <param name="list">The List to upload.</param>
-        /// <param name="timeoutSecs">The maximum timeout in seconds for the command.</param>
+        /// <param name="timeoutSecs">The maximum timeout in seconds for the command. A value of 0 means no timeout.</param>
         /// <param name="mappings">The column mappings.</param>
         /// <param name="update">Determines if duplicate rows should be updated.</param>
         /// <returns>True if the upload was successful. False otherwise.</returns>
-        public static bool BulkUpsert<T>(SqlConnection conn, string tablename, IEnumerable<T> list, int timeoutSecs = 600, bool update = true, params SqlBulkCopyColumnMapping[] mappings) where T : class
+        public static bool BulkUpsert<T>(SqlConnection conn, string tablename, IEnumerable<T> list, int timeoutSecs = 0, bool update = true, params SqlBulkCopyColumnMapping[] mappings) where T : class
         {
             if (!list.Any())
                 return true;
@@ -325,11 +382,11 @@ namespace Utilities
         /// </summary>
         /// <param name="conn">The database connection.</param>
         /// <param name="table">The DataTable to upload.</param>
-        /// <param name="timeoutSecs">The maximum timeout in seconds for the command.</param>
+        /// <param name="timeoutSecs">The maximum timeout in seconds for the command. A value of 0 means no timeout.</param>
         /// <param name="mappings">The column mappings.</param>
         /// <param name="update">Determines if duplicate rows should be updated.</param>
         /// <returns>True if the upload was successful. False otherwise.</returns>
-        public static bool BulkUpsert(SqlConnection conn, DataTable table, int timeoutSecs = 600, bool update = true, params SqlBulkCopyColumnMapping[] mappings)
+        public static bool BulkUpsert(SqlConnection conn, DataTable table, int timeoutSecs = 0, bool update = true, params SqlBulkCopyColumnMapping[] mappings)
         {
             if (table.Rows.Count == 0)
                 return true;
@@ -344,7 +401,7 @@ namespace Utilities
         /// <param name="conn">The database connection.</param>
         /// <param name="tablename"></param>
         /// <param name="writeAction">A function for bulk uploading to the temporary table.</param>
-        /// <param name="timeoutSecs">The maximum timeout in seconds for the command.</param>
+        /// <param name="timeoutSecs">The maximum timeout in seconds for the command. A value of 0 means no timeout.</param>
         /// <param name="update">Determines if duplicate rows should be updated.</param>
         /// <param name="mappings">The column mappings.</param>
         /// <returns>True if the upload was successful. False otherwise.</returns>
@@ -430,31 +487,13 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Creates a database table.
-        /// </summary>
-        /// <param name="conn">The database connection.</param>
-        /// <param name="tablename">The name of the table.</param>
-        /// <returns>True if the table was created. False otherwise.</returns>
-        public static bool CreateTable(SqlConnection conn, DataTable table)
-        {
-            try {
-                conn.Execute(CreateTableString(table));
-                return true;
-            }
-            catch (Exception ex) {
-                PrintError(ex, "DB.CreateTable", conn, table.TableName);
-            }
-            return false;
-        }
-
-        /// <summary>
         /// Deletes all rows from a database table.
         /// </summary>
         /// <param name="conn">The database connection.</param>
         /// <param name="tablename">The name of the table.</param>
-        /// <param name="timeoutSecs">The maximum timeout in seconds for the command.</param>
+        /// <param name="timeoutSecs">The maximum timeout in seconds for the command. A value of 0 means no timeout.</param>
         /// <returns>True if the database was deleted. False otherwise.</returns>
-        public static bool DeleteTable(SqlConnection conn, string tablename, int timeoutSecs = 600)
+        public static bool DeleteTable(SqlConnection conn, string tablename, int timeoutSecs = 0)
         {
             try {
                 return conn.Execute("DELETE FROM @tablename", new { tablename = tablename }, null, timeoutSecs) > 0;
@@ -471,13 +510,17 @@ namespace Utilities
         /// <param name="conn">The database connection.</param>
         /// <param name="tablename">The name of the table.</param>
         /// <returns>True if the table was recreated. False otherwise.</returns>
-        public static bool RecreateTable(SqlConnection conn, string tablename)
+        public static bool RecreateTable(SqlConnection conn, string tablename, int timeoutSecs = 0)
         {
             try {
-                using (DataTable table = TableSchema(conn, tablename)) {
-                    if (table != null) {
-                        return conn.Execute("DROP TABLE [@tablename]", new { tablename = tablename }) > 0
-                            && conn.Execute(CreateTableString(table)) > 0;
+                using (DataTable schema = TableSchema(conn, tablename)) {
+                    if (schema == null)
+                        return false;
+                    string createTableString = CreateTableString(conn, tablename);
+                    conn.Open();
+                    using (SqlTransaction trans = conn.BeginTransaction()) {
+                        return conn.Execute("DROP TABLE [" + tablename + "]", null, trans, 50) > 0
+                            && conn.Execute(createTableString, null, trans, 0) > 0;
                     }
                 }
             }
@@ -490,16 +533,32 @@ namespace Utilities
         /// <summary>
         /// Creates a command string that can be used to generate a table.
         /// </summary>
-        /// <param name="table">The table name and schema to create a command string from.</param>
-        /// <param name="varCharLen">The default length of strings.</param>
+        /// <param name="conn">The database connection.</param>
+        /// <param name="tablename">The table to create a command string from.</param>
+        /// <param name="newTableName">The new table name.</param>
         /// <returns>The SQL command to create a table with the name and schema of the input DataTable.</returns>
-        public static string CreateTableString(DataTable table, int varCharLen = 100)
+        public static string CreateTableString(SqlConnection conn, string tablename, string newTableName = null)
         {
             StringBuilder sql = new StringBuilder();
             StringBuilder alterSql = new StringBuilder();
 
-            sql.AppendFormat("CREATE TABLE [{0}] (", table.TableName);
+            return sql.ToString();
+        }
 
+        /// <summary>
+        /// Creates a command string that can be used to generate a table. This is imperfect as it
+        /// creates an nvarchar in all cases for strings (never nchar/varchar).
+        /// </summary>
+        /// <param name="table">The table representation to create a command string from.</param>
+        /// <param name="min_nvarcharLen">The default length of nvarchar.</param>
+        /// <returns>The SQL command to create a table with the name and schema of the input DataTable.</returns>
+        public static string CreateTableString(DataTable table, int min_nvarcharLen = 100)
+        {
+            StringBuilder sql = new StringBuilder();
+            StringBuilder alterSql = new StringBuilder();
+            const int MAX_NVARCHAR_LEN = 4000;
+
+            sql.AppendFormat("CREATE TABLE [{0}] (", table.TableName);
             for (int i = 0; i < table.Columns.Count; i++) {
                 bool isNumeric = false;
                 bool usesColumnDefault = true;
@@ -511,7 +570,7 @@ namespace Utilities
                         isNumeric = true;
                         break;
                     case TypeCode.Char:
-                        sql.Append(" nchar(1)");
+                        sql.Append(" nvarchar(2)");
                         break;
                     case TypeCode.Byte:
                     case TypeCode.SByte:
@@ -538,7 +597,8 @@ namespace Utilities
                         usesColumnDefault = false;
                         break;
                     case TypeCode.String:
-                        sql.AppendFormat(" nvarchar({0})", (table.Columns[i].MaxLength <= 0) ? varCharLen : table.Columns[i].MaxLength);
+                        int maxlen = table.Columns[i].MaxLength;
+                        sql.AppendFormat(" nvarchar({0})", maxlen > MAX_NVARCHAR_LEN ? "max" : (maxlen <= 0 ? min_nvarcharLen.ToString() : table.Columns[i].MaxLength.ToString()));
                         break;
                     case TypeCode.Single:
                     case TypeCode.Double:
@@ -610,7 +670,6 @@ namespace Utilities
                 sql.Remove(sql.Length - 1, 1);
 
             sql.AppendFormat("\n);\n{0}", alterSql.ToString());
-
             return sql.ToString();
         }
 
@@ -642,8 +701,8 @@ namespace Utilities
         {
             try {
                 // ANSI SQL way.  Works in PostgreSQL, MSSQL, MySQL.
-                return 1 == conn.Execute(
-@"IF EXISTS (
+                return 1 == conn.ExecuteScalar<int>(
+        @"IF EXISTS (
     SELECT 1 FROM INFORMATION_SCHEMA.TABLES 
     WHERE TABLE_NAME = @tablename
 )
@@ -652,7 +711,7 @@ SELECT 1 ELSE SELECT 0", new { tablename = tablename });
             catch (Exception ex) {
                 try {
                     // Other RDBMS.  Graceful degradation
-                    return 1 == conn.Execute("SELECT 1 FROM @tablename WHERE 1 = 0", new { tablename = tablename });
+                    return 1 == conn.ExecuteScalar<int>("SELECT 1 FROM @tablename WHERE 1 = 0", new { tablename = tablename });
                 }
                 catch {
                     PrintError(ex, "DB.TableExists", conn, tablename);
@@ -673,7 +732,7 @@ SELECT 1 ELSE SELECT 0", new { tablename = tablename });
         {
             try {
                 return conn.Execute(
-@"WHILE 1=1
+        @"WHILE 1=1
 BEGIN
 WITH CTE AS (
     SELECT ROW_NUMBER() OVER (PARTITION BY @columns ORDER BY (SELECT NULL)) AS DuplicateRows
