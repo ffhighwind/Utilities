@@ -124,19 +124,20 @@ namespace Utilities
         /// <returns>A DataTable with the schema information of an SQL table, or null on error.</returns>
         public static SchemaTable TableSchema(SqlConnection conn, string tablename)
         {
-            try {
-                DataTable tableSchema;
-                conn.Open();
-                using (SqlCommand cmd = new SqlCommand("SELECT TOP 0 * FROM " + tablename, conn))
-                using (var reader = cmd.ExecuteReader(CommandBehavior.KeyInfo | CommandBehavior.SchemaOnly)) {
-                    tableSchema = reader.GetSchemaTable();
-                }
-                return new SchemaTable(tableSchema);
+            //try {
+            DataTable tableSchema;
+            conn.Open();
+            using (SqlCommand cmd = new SqlCommand("SELECT TOP 0 * FROM " + tablename, conn))
+            using (var reader = cmd.ExecuteReader(CommandBehavior.KeyInfo | CommandBehavior.SchemaOnly)) {
+                tableSchema = reader.GetSchemaTable();
             }
-            catch (Exception ex) {
-                PrintError(ex, "DB.TableSchema", conn, tablename);
-            }
-            return null;
+            conn.Close();
+            return new SchemaTable(tableSchema);
+            //}
+            //catch (Exception ex) {
+            //    PrintError(ex, "DB.TableSchema", conn, tablename);
+            //}
+            //return null;
         }
 
         /// <summary>
@@ -257,7 +258,10 @@ namespace Utilities
                 try {
                     conn.Open();
                     using (SqlTransaction trans = conn.BeginTransaction()) {
-                        return conn.Execute(cmd, param, trans, timeoutSecs);
+                        int count = conn.Execute(cmd, param, trans, timeoutSecs);
+                        if (count > 0)
+                            trans.Commit();
+                        return count;
                     }
                 }
                 catch (Exception ex) {
@@ -484,6 +488,8 @@ namespace Utilities
                     cmd.Parameters.Clear();
                     cmd.CommandText = "DROP TABLE #ATempTable";
                     cmd.ExecuteNonQuery();
+                    if (mergeSuccess)
+                        trans.Commit();
                     conn.Close();
                     return mergeSuccess;
                 }
@@ -506,7 +512,10 @@ namespace Utilities
         public static bool MergeTables(SqlConnection conn, string source, string target, bool update, SqlBulkCopyColumnMapping[] mappings)
         {
             using (SqlTransaction trans = conn.BeginTransaction()) {
-                return MergeTables(conn, source, target, trans, update, mappings);
+                bool result = MergeTables(conn, source, target, update, mappings);
+                if (result == true)
+                    trans.Commit();
+                return result;
             }
         }
 
@@ -564,19 +573,22 @@ namespace Utilities
         /// <param name="conn">The database connection.</param>
         /// <param name="tablename">The name of the table.</param>
         /// <param name="timeoutSecs">The maximum timeout in seconds for the command. A value of 0 means no timeout.</param>
-        /// <returns>True if the database was deleted. False otherwise.</returns>
-        public static bool DeleteTable(SqlConnection conn, string tablename, int timeoutSecs = 0)
+        /// <returns>The number of rows that were deleted from the database. -1 on error.</returns>
+        public static int DeleteTable(SqlConnection conn, string tablename, int timeoutSecs = 0)
         {
             try {
                 conn.Open();
                 using (SqlTransaction trans = conn.BeginTransaction()) {
-                    return conn.Execute("DELETE FROM @tablename", new { tablename = tablename }, null, timeoutSecs) > 0;
+                    int result = conn.Execute("DELETE FROM " + tablename, null, trans, timeoutSecs);
+                    if(result > 0)
+                        trans.Commit();
+                    return result;
                 }
             }
             catch (Exception ex) {
                 PrintError(ex, "DB.DeleteTable", conn, tablename);
             }
-            return false;
+            return -1;
         }
 
         /// <summary>
@@ -593,34 +605,8 @@ namespace Utilities
                 conn.Open();
                 using (SqlCommand cmd = new SqlCommand("SELECT TOP 0 * FROM " + tableName, conn))
                 using (SqlDataReader reader = cmd.ExecuteReader(CommandBehavior.KeyInfo | CommandBehavior.SchemaOnly)) {
-                    using (DataTable schema = reader.GetSchemaTable())
-                    using (DataTable cloneTable = CreateDataTable(conn, tableName)) {
-                        newTableName = newTableName ?? tableName;
-                        StringBuilder sql = new StringBuilder();
-                        StringBuilder constraints = new StringBuilder();
-                        //https://stackoverflow.com/questions/7818701/generate-create-table-script-from-select-statement
-                        sql.AppendFormat("CREATE TABLE {0} (", tableName);
-                        for (int i = 0; i < schema.Rows.Count; i++) {
-                            DataRow dr = schema.Rows[i];
-                            string typeName = dr["DataTypeName"].ToString();
-                            bool hasPrecision = hasPrecisionScaleDict.ContainsKey(typeName);
-                            bool hasSize = hasSizeDict.ContainsKey(typeName);
-                            sql.AppendFormat("\n\t[{0}] {1}{2} {3} {4},",
-                                dr["ColumnName"].ToString(),
-                                typeName,
-                                hasSize ? "(" + dr["ColumnSize"].ToString() + ")"
-                                    : hasPrecision ? "(" + dr["NumericPrecision"].ToString() + "," + dr["NumericScale"].ToString() + ")"
-                                    : "",
-                            (dr["IsIdentity"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase)) ? "IDENTITY" : "",
-                            (dr["AllowDBNull"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase)) ? "NULL" : "NOT NULL");
-                            DefaultValue(tableName, cloneTable.Columns[i], usesDefault[cloneTable.Columns[i].DataType].IsNumeric, constraints);
-                        }
-                        if (cloneTable.PrimaryKey.Length > 0) {
-                            sql.AppendFormat(",\n\tCONSTRAINT PK_{0} PRIMARY KEY ({1})",
-                                tableName,
-                                string.Join(",", cloneTable.PrimaryKey.Select(col => col.ColumnName)));
-                        }
-                        return sql.Append("\n)").ToString();
+                    using (DataTable schema = reader.GetSchemaTable()) {
+                        new SchemaTable(schema).CreateTableScript(newTableName ?? tableName);
                     }
                 }
             }
@@ -629,80 +615,6 @@ namespace Utilities
             }
             return null;
         }
-
-        private static Dictionary<string, bool> hasSizeDict = new Dictionary<string, bool>() {
-            { "bigint",  false },
-            { "binary",  true },
-            { "bit",  false },
-            { "char",  true },
-            { "date",  false },
-            { "datetime",  false },
-            { "datetime2",  false },
-            { "datetimeoffset",  false },
-            { "decimal",  false },
-            { "float",  false },
-            { "geography",  false },
-            { "geometry",  false },
-            { "hierarchyid",  false },
-            { "image",  true },
-            { "int",  false },
-            { "money",  false },
-            { "nchar",  true },
-            { "ntext",  true },
-            { "numeric",  false },
-            { "nvarchar",  true },
-            { "real",  false },
-            { "smalldatetime",  false },
-            { "smallint",  false },
-            { "smallmoney",  false },
-            { "sql_variant",  false },
-            { "sysname",  false },
-            { "text",  true },
-            { "time",  false },
-            { "timestamp",  false },
-            { "tinyint",  false },
-            { "uniqueidentifier",  false },
-            { "varbinary",  true },
-            { "varchar",  true },
-            { "xml",  false },
-        };
-
-        private static Dictionary<string, bool> hasPrecisionScaleDict = new Dictionary<string, bool>() {
-            { "bigint", false },
-            { "binary", false },
-            { "bit",  false },
-            { "char",  false },
-            { "date",  false },
-            { "datetime",  false },
-            { "datetime2",  false },
-            { "datetimeoffset",  false },
-            { "decimal",  true },
-            { "float",  true },
-            { "geography",  false },
-            { "geometry",  false },
-            { "hierarchyid",  false },
-            { "image",  false },
-            { "int",  false },
-            { "money",  false },
-            { "nchar",  false },
-            { "ntext",  false },
-            { "numeric",  false },
-            { "nvarchar",  false },
-            { "real",  true },
-            { "smalldatetime",  false },
-            { "smallint",  false },
-            { "smallmoney",  false },
-            { "sql_variant",  false },
-            { "sysname",  false },
-            { "text",  false },
-            { "time",  false },
-            { "timestamp",  false },
-            { "tinyint",  false },
-            { "uniqueidentifier",  false },
-            { "varbinary",  false },
-            { "varchar",  false },
-            { "xml",  false },
-        };
 
         /// <summary>
         /// Creates a command string that can be used to generate a table. This is imperfect 
@@ -821,12 +733,11 @@ namespace Utilities
         /// </summary>
         /// <param name="conn">The database connection.</param>
         /// <param name="tablename">The name of the table.</param>
-        /// <param name="transaction">The database transaction.</param>
         /// <returns>True if the table was dropped. False otherwise.</returns>
-        public static bool DropTable(SqlConnection conn, string tablename, IDbTransaction transaction = null)
+        public static bool DropTable(SqlConnection conn, string tablename)
         {
             try {
-                conn.Execute("DROP TABLE [@tablename]", new { tablename = tablename }, transaction);
+                conn.Execute("DROP TABLE " + tablename);
             }
             catch (Exception ex) {
                 PrintError(ex, "DB.DropTable", conn, tablename);

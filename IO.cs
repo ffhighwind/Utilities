@@ -864,18 +864,17 @@ namespace Utilities
                 using (OleDbConnection conn = new OleDbConnection(connStr))
                 using (OleDbCommand cmd = new OleDbCommand())
                 using (OleDbDataAdapter oda = new OleDbDataAdapter()) {
+                    conn.Open();
                     if (sheetName == null) {
                         DataTable dtExcelSchema = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
                         if (dtExcelSchema.Rows.Count == 0)
                             return false;
                         sheetName = dtExcelSchema.Rows[0]["TABLE_NAME"].ToString();
                     }
-                    cmd.Connection = conn;
                     dt.TableName = sheetName;
                     cmd.Connection = conn;
                     cmd.CommandText = "SELECT * FROM [" + sheetName + "]";
                     oda.SelectCommand = cmd;
-                    conn.Open();
                     oda.Fill(dt);
                     dt.TableName = sheetName;
                     if (hasHeaders && dt.Rows.Count > 0) {
@@ -1205,7 +1204,10 @@ namespace Utilities
                     Console.Error.WriteLine("Error IO.Move({0}, {1}): File doesn't exist.", inpath ?? "null", outpath ?? "null");
                     return false;
                 }
-                if (overwrite && new FileInfo(outpath).Exists)
+                FileInfo fo = new FileInfo(outpath);
+                if (fo.Equals(fi))
+                    return true;
+                if (overwrite)
                     File.Delete(outpath);
                 fi.MoveTo(outpath);
                 return true;
