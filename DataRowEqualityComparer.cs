@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 
@@ -31,24 +30,21 @@ namespace Utilities
 
         public static int GetHashCode(T obj)
         {
-            int hashcode = obj.ItemArray.Length == 0 ? 1 : obj[0].GetHashCode();
+            int hashcode = 0;
             for (int i = 0; i < obj.ItemArray.Length; i++) {
-                hashcode ^= obj[i].GetHashCode();
+                hashcode ^= obj.ItemArray[i].GetHashCode();
             }
             return hashcode;
         }
 
-        bool IEqualityComparer<T>.Equals(T row1, T row2)
+        bool IEqualityComparer<T>.Equals(T x, T y)
         {
-            bool result = row1 == row2;
-            if (!result) {
-                result = row1.ItemArray.Length == row2.ItemArray.Length;
-                if (result) {
-                    for (int i = 0; i < row1.ItemArray.Length; i++) {
-                        result = row1[i].Equals(row2[i]);
-                        if (!result)
-                            break;
-                    }
+            bool result = x.ItemArray.Length == y.ItemArray.Length;
+            if (result) {
+                for (int i = 0; i < x.ItemArray.Length; i++) {
+                    result = x.ItemArray[i].Equals(y.ItemArray[i]);
+                    if (!result)
+                        break;
                 }
             }
             return result;
@@ -56,7 +52,7 @@ namespace Utilities
 
         private class DataRowEqualityComparerAll : DataRowEqualityComparer<T>, IEqualityComparer<T>
         {
-            private int[] columnIndexes;
+            private readonly int[] columnIndexes;
             public DataRowEqualityComparerAll(params int[] columnIndexes)
             {
                 this.columnIndexes = columnIndexes;
@@ -64,24 +60,21 @@ namespace Utilities
 
             int IEqualityComparer<T>.GetHashCode(T obj)
             {
-                int hashcode = obj[columnIndexes[0]].GetHashCode();
-                for (int i = 1; i < columnIndexes.Length; i++) {
+                int hashcode = 0;
+                for (int i = 0; i < columnIndexes.Length; i++) {
                     hashcode ^= obj[columnIndexes[i]].GetHashCode();
                 }
                 return hashcode;
             }
 
-            bool IEqualityComparer<T>.Equals(T row1, T row2)
+            bool IEqualityComparer<T>.Equals(T x, T y)
             {
-                bool result = row1 == row2;
-                if (!result) {
-                    result = row1.ItemArray.Length == row2.ItemArray.Length;
-                    if (result) {
-                        for (int i = 0; i < columnIndexes.Length; i++) {
-                            result = row1[columnIndexes[i]].Equals(row2[columnIndexes[i]]);
-                            if (!result)
-                                break;
-                        }
+                bool result = x.ItemArray.Length == y.ItemArray.Length;
+                if (result) {
+                    for (int i = 0; i < columnIndexes.Length; i++) {
+                        result = x.ItemArray[columnIndexes[i]].Equals(y.ItemArray[columnIndexes[i]]);
+                        if (!result)
+                            break;
                     }
                 }
                 return result;

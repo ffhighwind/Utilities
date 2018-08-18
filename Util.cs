@@ -11,6 +11,7 @@ namespace Utilities
 {
     public static class Util
     {
+        private const BindingFlags FLAGS = BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty;
         #region Converters
         /// <summary>
         /// Converters for most basic types. converterDict(outputType)(inputType) returns a converter function that takes an objet of inputType and converts it to outputType.
@@ -87,13 +88,13 @@ namespace Utilities
             { typeof(short), (input) => { return (inp) => { return System.Convert.ToInt16(inp); }; } },
             { typeof(long), (input) => { return (inp) => { return System.Convert.ToInt64(inp); }; } },
             { typeof(uint), (input) => { return (inp) => { return System.Convert.ToUInt32(inp); }; } },
-            { typeof(UInt16), (input) => { return (inp) => { return System.Convert.ToUInt16(inp); }; } },
-            { typeof(UInt64), (input) => { return (inp) => { return System.Convert.ToUInt64(inp); }; } },
+            { typeof(ushort), (input) => { return (inp) => { return System.Convert.ToUInt16(inp); }; } },
+            { typeof(ulong), (input) => { return (inp) => { return System.Convert.ToUInt64(inp); }; } },
             { typeof(bool), (input) => { return (inp) => { return System.Convert.ToBoolean(inp); }; } },
             { typeof(byte), (input) => { return (inp) => { return System.Convert.ToByte(inp); }; } },
             { typeof(sbyte), (input) => { return (inp) => { return System.Convert.ToSByte(inp); }; } },
             { typeof(char), (input) => { return (inp) => { return System.Convert.ToChar(inp); }; } },
-            { typeof(Single), (input) => { return (inp) => { return System.Convert.ToSingle(inp); }; } },
+            { typeof(float), (input) => { return (inp) => { return System.Convert.ToSingle(inp); }; } },
             { typeof(double), (input) => { return (inp) => { return System.Convert.ToDouble(inp); }; } },
             { typeof(decimal), (input) => { return (inp) => { return System.Convert.ToDecimal(inp); }; } },
             { typeof(byte[]), (input) => { return NoConvert; } },
@@ -114,8 +115,7 @@ namespace Utilities
         /// <returns>A function that converts objects from one Type to another.</returns>
         public static Func<object, object> Converter(Type input, Type output)
         {
-            Func<Type, Func<object, object>> converter;
-            if (input == output || !converterDict.TryGetValue(output, out converter))
+            if (input == output || !converterDict.TryGetValue(output, out Func<Type, Func<object, object>> converter))
                 return NoConvert;
             return converter(input);
         }
@@ -128,8 +128,7 @@ namespace Utilities
         /// <returns>A function that converts strings to a class.</returns>
         public static Func<string[], T> StringsConverter<T>() where T : class, new()
         {
-            const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty;
-            PropertyInfo[] pinfos = typeof(T).GetProperties(flags);
+            PropertyInfo[] pinfos = typeof(T).GetProperties(FLAGS);
             Func<object, object>[] converters = new Func<object, object>[pinfos.Length];
             for (int i = 0; i < pinfos.Length; i++) {
                 converters[i] = converterDict[typeof(string)](pinfos[i].PropertyType);
@@ -151,12 +150,11 @@ namespace Utilities
         /// <returns>A function that converts strings to a class.</returns>
         public static Func<string[], T> StringsConverter<T>(IEnumerable<string> propertyNames) where T : class, new()
         {
-            const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty;
             List<PropertyInfo> pinfos = new List<PropertyInfo>();
             foreach (string prop in propertyNames) {
-                PropertyInfo pinfo = typeof(T).GetProperty(prop, flags);
+                PropertyInfo pinfo = typeof(T).GetProperty(prop, FLAGS);
                 if (pinfo == null)
-                    throw new Exception("Invalid PropertyInfo '" + prop ?? "" + "'");
+                    throw new InvalidOperationException("Invalid PropertyInfo '" + prop ?? "" + "'");
                 pinfos.Add(pinfo);
             }
             Func<object, object>[] converters = new Func<object, object>[pinfos.Count];
@@ -222,13 +220,11 @@ namespace Utilities
         /// <returns>The TextReader with the file encoding automatically detected.</returns>
         public static TextReader TextReader(FileInfo fi, int maxBytesRead = 100000000)
         {
-            if (fi.Exists) {
-                if (fi.Length > maxBytesRead) {
-                    return new StreamReader(fi.FullName, GetEncoding(fi.FullName), true);
-                }
-                return new StringReader(GetEncodedText(fi.FullName));
-            }
-            return null;
+            if (!fi.Exists)
+                return null;
+            if (fi.Length > maxBytesRead)
+                return new StreamReader(fi.FullName, GetEncoding(fi.FullName), true);
+            return new StringReader(GetEncodedText(fi.FullName));
         }
 
         /// <summary>
@@ -310,28 +306,37 @@ namespace Utilities
             // threshold is reached, the code is 'probably' UF-16.          
             double threshold = 0.1; // proportion of chars step 2 which must be zeroed to be diagnosed as utf-16. 0.1 = 10%
             int count = 0;
-            for (int n = 0; n < b.Length; n += 2)
+            for (int n = 0; n < b.Length; n += 2) {
                 if (b[n] == 0)
                     count++;
-            if (((double) count) / b.Length > threshold) {
-                return Encoding.BigEndianUnicode;
             }
+            if (((double) count) / b.Length > threshold)
+                return Encoding.BigEndianUnicode;
             count = 0;
             for (int n = 1; n < b.Length; n += 2) {
                 if (b[n] == 0)
                     count++;
             }
-            if (((double) count) / b.Length > threshold) {
+            if (((double) count) / b.Length > threshold)
                 return Encoding.Unicode; // (little-endian)
-            }
 
             // Finally, a long shot - let's see if we can find "charset=xyz" or
             // "encoding=xyz" to identify the encoding:
             for (int n = 0; n < b.Length - 9; n++) {
-                if (
-                    ((b[n + 0] == 'c' || b[n + 0] == 'C') && (b[n + 1] == 'h' || b[n + 1] == 'H') && (b[n + 2] == 'a' || b[n + 2] == 'A') && (b[n + 3] == 'r' || b[n + 3] == 'R') && (b[n + 4] == 's' || b[n + 4] == 'S') && (b[n + 5] == 'e' || b[n + 5] == 'E') && (b[n + 6] == 't' || b[n + 6] == 'T') && (b[n + 7] == '=')) ||
-                    ((b[n + 0] == 'e' || b[n + 0] == 'E') && (b[n + 1] == 'n' || b[n + 1] == 'N') && (b[n + 2] == 'c' || b[n + 2] == 'C') && (b[n + 3] == 'o' || b[n + 3] == 'O') && (b[n + 4] == 'd' || b[n + 4] == 'D') && (b[n + 5] == 'i' || b[n + 5] == 'I') && (b[n + 6] == 'n' || b[n + 6] == 'N') && (b[n + 7] == 'g' || b[n + 7] == 'G') && (b[n + 8] == '='))
-                    ) {
+                if (((b[n + 0] == 'c' || b[n + 0] == 'C') && (b[n + 1] == 'h' || b[n + 1] == 'H')
+                    && (b[n + 2] == 'a' || b[n + 2] == 'A') && (b[n + 3] == 'r' || b[n + 3] == 'R')
+                    && (b[n + 4] == 's' || b[n + 4] == 'S') && (b[n + 5] == 'e' || b[n + 5] == 'E')
+                    && (b[n + 6] == 't' || b[n + 6] == 'T') && (b[n + 7] == '='))
+                    ||
+                    ((b[n + 0] == 'e' || b[n + 0] == 'E')
+                    && (b[n + 1] == 'n' || b[n + 1] == 'N')
+                    && (b[n + 2] == 'c' || b[n + 2] == 'C')
+                    && (b[n + 3] == 'o' || b[n + 3] == 'O')
+                    && (b[n + 4] == 'd' || b[n + 4] == 'D')
+                    && (b[n + 5] == 'i' || b[n + 5] == 'I')
+                    && (b[n + 6] == 'n' || b[n + 6] == 'N')
+                    && (b[n + 7] == 'g' || b[n + 7] == 'G')
+                    && (b[n + 8] == '='))) {
                     if (b[n + 0] == 'c' || b[n + 0] == 'C')
                         n += 8;
                     else
@@ -339,12 +344,15 @@ namespace Utilities
                     if (b[n] == '"' || b[n] == '\'')
                         n++;
                     int oldn = n;
-                    while (n < b.Length && (b[n] == '_' || b[n] == '-' || (b[n] >= '0' && b[n] <= '9') || (b[n] >= 'a' && b[n] <= 'z') || (b[n] >= 'A' && b[n] <= 'Z'))) { n++; }
+                    while (n < b.Length && (b[n] == '_' 
+                        || b[n] == '-' || (b[n] >= '0' && b[n] <= '9') 
+                        || (b[n] >= 'a' && b[n] <= 'z') || (b[n] >= 'A' && b[n] <= 'Z'))) {
+                        n++;
+                    }
                     byte[] nb = new byte[n - oldn];
                     Array.Copy(b, oldn, nb, 0, n - oldn);
                     try {
-                        string internalEnc = Encoding.ASCII.GetString(nb);
-                        return Encoding.GetEncoding(internalEnc);
+                        return Encoding.GetEncoding(Encoding.ASCII.GetString(nb));
                     }
                     catch { break; }    // If C# doesn't recognize the name of the encoding, break.
                 }
@@ -487,13 +495,13 @@ namespace Utilities
             string str2 = str.Trim();
 
             char c = str2[0];
-            if (Char.IsDigit(c) || c == '-') {
+            if (char.IsDigit(c) || c == '-') {
                 for (int i = 1; i < str2.Length; i++) {
                     c = str2[i];
-                    if (Char.IsDigit(c))
+                    if (char.IsDigit(c))
                         continue;
                     else if (c == '.') {
-                        if (Double.TryParse(str2, out double d))
+                        if (double.TryParse(str2, out double d))
                             return d;
                         if (TimeSpan.TryParse(str2, out TimeSpan ts))
                             return ts;
@@ -510,7 +518,7 @@ namespace Utilities
                     }
                     return str;
                 }
-                if (Int32.TryParse(str2, out int ival))
+                if (int.TryParse(str2, out int ival))
                     return ival;
             }
             else if (DateTime.TryParse(str2, out DateTime dt))
@@ -526,7 +534,7 @@ namespace Utilities
             }
             return str;
         }
-
+         
         /// <summary>
         /// Prints the contents of an object to the console.
         /// </summary>
@@ -572,9 +580,8 @@ namespace Utilities
         /// <returns>The modified DataTable with new columns representing the getters/setters of a Type.</returns>
         public static DataTable DataTable<T>(DataTable table) where T : class
         {
-            const BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance;
-            PropertyInfo[] pinfos = typeof(T).GetProperties(flags);
-            foreach (var pinfo in pinfos) {
+            PropertyInfo[] pinfos = typeof(T).GetProperties(FLAGS);
+            foreach (PropertyInfo pinfo in pinfos) {
                 table.Columns.Add(pinfo.Name, Nullable.GetUnderlyingType(pinfo.PropertyType) ?? pinfo.PropertyType);
             }
             return table;

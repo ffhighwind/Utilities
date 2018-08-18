@@ -76,18 +76,16 @@ namespace Utilities.Excel
         {
             try {
                 FileInfo fi = new FileInfo(path);
-                if (Data != null && !Data.File.Equals(fi)) {
+                if (Data != null) {
+                    if(Data.File.Equals(fi))
+                        return true;
                     Data.Dispose();
                     Data = null;
                 }
-                //if (fi.Exists && fi.IsReadOnly)
-                //    doc = new ExcelPackage(new FileStream(fi.FullName, FileMode.OpenOrCreate, FileAccess.Read), password);
-                //else
-                if (Data == null)
-                    Data = new ExcelPackage(fi, password);
-                if (Data != null && Data.Workbook.Worksheets.Count == 0)
+                Data = new ExcelPackage(fi, password);
+                if (Data.Workbook.Worksheets.Count == 0)
                     Add();
-                return Data != null;
+                return true;
             }
             catch (Exception ex) {
                 string msg = (path != null && !path.EndsWith(".xlsx")) ? "wrong file extension." : ex.Message;
@@ -99,9 +97,7 @@ namespace Utilities.Excel
         /// <summary>
         /// Returns whether the Spreadsheet is currently open and usable.
         /// </summary>
-        public bool IsOpen {
-            get { return Data != null; }
-        }
+        public bool IsOpen => Data != null;
 
         /// <summary>
         /// Reads a stream and constructs an Excel Spreadsheet from it.
@@ -267,11 +263,7 @@ namespace Utilities.Excel
         /// <summary>
         /// The number of Worksheets in the Excel Spreadsheet.
         /// </summary>
-        public int Sheets {
-            get {
-                return Data.Workbook.Worksheets.Count;
-            }
-        }
+        public int Sheets => Data.Workbook.Worksheets.Count;
 
         /// <summary>
         /// The number of Worksheets in the Excel Spreadsheet.
@@ -283,6 +275,9 @@ namespace Utilities.Excel
             }
         }
 
+        /// <summary>
+        /// Auto-filtering for all columns in the Spreadsheet. This allows sorting and filtering of data.
+        /// </summary>
         public bool AutoFilter {
             set {
                 for (int i = 0; i < Data.Workbook.Worksheets.Count; i++) {
@@ -292,32 +287,24 @@ namespace Utilities.Excel
             }
         }
 
+        /// <summary>
+        /// Automatically formats string values to numbers, dates, timespans, currency, percentages, etc.
+        /// </summary>
         public void AutoFormat()
         {
             for (int i = 0; i < Data.Workbook.Worksheets.Count; i++)
                 this[i].AutoFormat();
         }
 
-        public void AutoFit()
+        /// <summary>
+        /// Resizes the columns to fit the data. Cells with wrapped text and formulas are not counted for this.
+        /// </summary>
+        /// <param name="minimumWidth">The minimum width of all columns.</param>
+        public void AutoFit(double minimumWidth = 0)
         {
             for (int i = 0; i < Data.Workbook.Worksheets.Count; i++) {
                 ExcelWorksheet worksheet = Data.Workbook.Worksheets[i + (Data.Compatibility.IsWorksheets1Based ? 1 : 0)];
-                worksheet.Cells.AutoFitColumns(0);
-                /*
-                for (int col = 1; col <= worksheet.Dimension.Columns; col++) {
-                    worksheet.Column(col).AutoFit();
-                } */
-            }
-        }
-
-        public bool BestFit {
-            set {
-                for (int i = 0; i < Data.Workbook.Worksheets.Count; i++) {
-                    ExcelWorksheet worksheet = Data.Workbook.Worksheets[i + (Data.Compatibility.IsWorksheets1Based ? 1 : 0)];
-                    for (int col = 1; col <= worksheet.Dimension.Columns; col++) {
-                        worksheet.Column(col).BestFit = value;
-                    }
-                }
+                worksheet.Cells.AutoFitColumns(minimumWidth);
             }
         }
 
@@ -340,7 +327,7 @@ namespace Utilities.Excel
         /// <param name="sheetname">The name of the Worksheet to add.</param>
         public Worksheet Add(string sheetname)
         {
-            var ws = Data.Workbook.Worksheets.Add(sheetname);
+            ExcelWorksheet ws = Data.Workbook.Worksheets.Add(sheetname);
             ws.Cells["A1"].Value = "";
             return new Worksheet(ws);
         }
@@ -372,8 +359,7 @@ namespace Utilities.Excel
         /// <returns></returns>
         public Worksheet this[string sheetname] {
             get {
-                ExcelWorksheet worksheet = Data.Workbook.Worksheets[sheetname];
-                return worksheet == null ? null : new Worksheet(worksheet);
+                return new Worksheet(Data.Workbook.Worksheets[sheetname]);
             }
         }
 
@@ -386,8 +372,7 @@ namespace Utilities.Excel
             get {
                 if (Data.Compatibility.IsWorksheets1Based)
                     sheetIndex += 1;
-                ExcelWorksheet worksheet = Data.Workbook.Worksheets[sheetIndex];
-                return worksheet == null ? null : new Worksheet(Data.Workbook.Worksheets[sheetIndex]);
+                return new Worksheet(Data.Workbook.Worksheets[sheetIndex]);
             }
         }
 
@@ -404,7 +389,7 @@ namespace Utilities.Excel
         /// </summary>
         public void FreezePanes()
         {
-            for(int i = 0; i < Data.Workbook.Worksheets.Count; i++) {
+            for (int i = 0; i < Data.Workbook.Worksheets.Count; i++) {
                 ExcelWorksheet worksheet = Data.Workbook.Worksheets[i + (Data.Compatibility.IsWorksheets1Based ? 1 : 0)];
                 worksheet.View.FreezePanes(2, 1);
             }
@@ -413,9 +398,7 @@ namespace Utilities.Excel
         /// <summary>
         /// Information about the Excel Spreadsheet.
         /// </summary>
-        public OfficeProperties Properties {
-            get { return Data.Workbook.Properties; }
-        }
+        public OfficeProperties Properties => Data.Workbook.Properties;
 
         /// <summary>
         /// The title of the Excel Spreadsheet.
@@ -490,10 +473,8 @@ namespace Utilities.Excel
         {
             if (!disposed) {
                 if (disposing) {
-                    if (Data != null) {
-                        Data.Dispose();
-                        Data = null;
-                    }
+                    Data.Dispose();
+                    Data = null;
                 }
                 disposed = true;
             }

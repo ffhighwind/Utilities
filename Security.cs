@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Text;
-using System.Security;
 using System.Runtime.InteropServices;
+using System.Security;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace Utilities
 {
@@ -100,18 +100,14 @@ namespace Utilities
         /// Geneates an encrypted section in the app.config file. This should only be used once before deployment.
         /// </summary>
         /// <param name="sectionKey">The section to encrypt.</param>
-        private static void EncryptConfig(string sectionKey = "configuration")
+        public static void EncryptConfig(string sectionKey = "configuration")
         {
             System.Configuration.Configuration config = System.Configuration.ConfigurationManager.OpenExeConfiguration(System.Configuration.ConfigurationUserLevel.None);
             System.Configuration.ConfigurationSection section = config.GetSection(sectionKey);
-            if (section != null) {
-                if (!section.SectionInformation.IsProtected) {
-                    if (!section.ElementInformation.IsLocked) {
-                        section.SectionInformation.ProtectSection("DataProtectionConfigurationProvider");
-                        section.SectionInformation.ForceSave = true;
-                        config.Save(System.Configuration.ConfigurationSaveMode.Full);
-                    }
-                }
+            if (section != null && !section.SectionInformation.IsProtected && !section.ElementInformation.IsLocked) {
+                section.SectionInformation.ProtectSection("DataProtectionConfigurationProvider");
+                section.SectionInformation.ForceSave = true;
+                config.Save(System.Configuration.ConfigurationSaveMode.Full);
             }
         }
     }

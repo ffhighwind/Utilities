@@ -82,12 +82,8 @@ namespace Utilities.Log
         public LogStyle DefaultStyle { get; set; }
 
         public LogAction CustomStyle {
-            get {
-                return LogStyleActions[(int) LogStyle.Custom];
-            }
-            set {
-                LogStyleActions[(int) LogStyle.Custom] = value ?? customStyle;
-            }
+            get => LogStyleActions[(int) LogStyle.Custom];
+            set => LogStyleActions[(int) LogStyle.Custom] = value ?? customStyle;
         }
 
         public TextWriter Add()

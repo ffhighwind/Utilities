@@ -18,7 +18,7 @@ namespace Utilities
         /// <returns>The rows with duplicates removed.</returns>
         public static DataTable Distinct(this DataTable table)
         {
-            var result = table.AsEnumerable().Distinct(DataRowEqualityComparer<DataRow>.Default).Select(row => row.ItemArray).ToList();
+            List<object[]> result = table.AsEnumerable().Distinct(DataRowEqualityComparer<DataRow>.Default).Select(row => row.ItemArray).ToList();
             table.Clear();
             foreach (object[] objs in result)
                 table.Rows.Add(objs);
@@ -45,10 +45,10 @@ namespace Utilities
         /// <returns>The datatable with duplicates removed.</returns>
         public static DataTable Distinct(this DataTable table, params int[] columns)
         {
-            var result = table.AsEnumerable().Distinct(DataRowEqualityComparer<DataRow>.Create(columns)).Select(row => row.ItemArray).ToList();
+            List<object[]> rows = table.AsEnumerable().Distinct(DataRowEqualityComparer<DataRow>.Create(columns)).Select(row => row.ItemArray).ToList();
             table.Clear();
-            foreach (object[] objs in result) {
-                table.Rows.Add(objs);
+            foreach (object[] row in rows) {
+                table.Rows.Add(row);
             }
             return table;
         }
@@ -80,14 +80,13 @@ namespace Utilities
         /// <returns>The sorted rows.</returns>
         public static DataTable Sort(this DataTable table, int column, params int[] columns)
         {
-            var rows = table.AsEnumerable().OrderBy(dr => dr[column]).ToList();
+            List<object[]> rows = table.AsEnumerable().Select(row => row.ItemArray).OrderBy(row => row[column]).ToList();
             for (int i = 0; i < columns.Length; i++) {
-                rows = rows.OrderBy(dr => dr[columns[i]]).ToList();
+                rows = rows.OrderBy(row => row[columns[i]]).ToList();
             }
-            IEnumerable<object[]> result = rows.Select(row => row.ItemArray).ToList();
             table.Clear();
-            foreach (object[] objs in result)
-                table.Rows.Add(objs);
+            foreach (object[] row in rows)
+                table.Rows.Add(row);
             return table;
         }
 
@@ -99,15 +98,14 @@ namespace Utilities
         public static DataTable Sort(this DataTable table, string column, params string[] columns)
         {
             int index = table.Columns[column].Ordinal;
-            var rows = table.AsEnumerable().OrderBy(dr => dr[index]).ToList();
+            List<object[]> rows = table.AsEnumerable().Select(row => row.ItemArray).OrderBy(row => row[index]).ToList();
             for (int i = 0; i < columns.Length; i++) {
                 index = table.Columns[columns[i]].Ordinal;
-                rows = rows.OrderBy(dr => dr[index]).ToList();
+                rows = rows.OrderBy(row => row[index]).ToList();
             }
-            IEnumerable<object[]> result = rows.Select(row => row.ItemArray).ToList();
             table.Clear();
-            foreach (object[] objs in result)
-                table.Rows.Add(objs);
+            foreach (object[] row in rows)
+                table.Rows.Add(row);
             return table;
         }
 
@@ -118,13 +116,13 @@ namespace Utilities
         /// <returns>The sorted rows.</returns>
         public static DataTable SortDescending(this DataTable table, int column, params int[] columns)
         {
-            var result = table.AsEnumerable().OrderByDescending(dr => dr[column]).ToList();
+            List<object[]> rows = table.AsEnumerable().Select(row => row.ItemArray).OrderByDescending(row => row[column]).ToList();
             for (int i = 0; i < columns.Length; i++) {
-                result = result.OrderByDescending(dr => dr[columns[i]]).ToList();
+                rows = rows.OrderByDescending(row => row[columns[i]]).ToList();
             }
             table.Clear();
-            foreach (DataRow row in result)
-                table.Rows.Add(row.ItemArray);
+            foreach (object[] row in rows)
+                table.Rows.Add(row);
             return table;
         }
 
@@ -136,14 +134,14 @@ namespace Utilities
         public static DataTable SortDescending(this DataTable table, string column, params string[] columns)
         {
             int index = table.Columns[column].Ordinal;
-            var result = table.AsEnumerable().OrderByDescending(dr => dr[index]).ToList();
+            List<object[]> rows = table.AsEnumerable().Select(row => row.ItemArray).OrderByDescending(row => row[index]).ToList();
             for (int i = 0; i < columns.Length; i++) {
                 index = table.Columns[columns[i]].Ordinal;
-                result = result.OrderByDescending(dr => dr[index]).ToList();
+                rows = rows.OrderByDescending(row => row[index]).ToList();
             }
             table.Clear();
-            foreach (DataRow row in result)
-                table.Rows.Add(row.ItemArray);
+            foreach (object[] row in rows)
+                table.Rows.Add(row);
             return table;
         }
         #endregion //Sort/Distinct
@@ -181,18 +179,17 @@ namespace Utilities
         /// <returns>The trimmed DataTable.</returns>
         public static DataTable TrimColumns(this DataTable table)
         {
+            int rows = table.Rows.Count;
             for (int col = table.Columns.Count - 1; col >= 0; col--) {
                 if (table.Columns[col].DataType == typeof(string)) {
-                    for (int row = 0; row < table.Rows.Count; row++) {
+                    for (int row = 0; row < rows; row++) {
                         object o = table.Rows[row][col];
-                        if (o == DBNull.Value || o == null && (o as string).Length == 0) {
-                            continue;
-                        }
-                        return table;
+                        if (o != DBNull.Value && (o as string).Length > 0)
+                            return table;
                     }
                 }
                 else {
-                    for (int row = 0; row < table.Rows.Count; row++) {
+                    for (int row = 0; row < rows; row++) {
                         object o = table.Rows[row][col];
                         if (o != System.DBNull.Value)
                             return table;
@@ -223,13 +220,14 @@ namespace Utilities
         /// <returns>The trimmed DataTable.</returns>
         public static DataTable Trim(this DataTable table)
         {
+            int cols = table.Columns.Count;
             for (int i = table.Rows.Count - 1; i >= 0; i--) {
                 DataRow row = table.Rows[i];
-                for (int j = 0; j < table.Columns.Count; j++) {
+                for (int j = 0; j < cols; j++) {
                     object obj = row[j];
-                    if (obj != DBNull.Value && !((obj is string) && (obj as string).Length == 0)) {
-                        return table;
-                    }
+                    if (obj == DBNull.Value || ((obj is string str) && str.Length == 0))
+                        continue;
+                    return table;
                 }
                 table.Rows.RemoveAt(i);
             }
@@ -245,9 +243,7 @@ namespace Utilities
         /// <returns>The modified DataTable.</returns>
         public static DataTable ToDataTable<T>(this IEnumerable<T> list, DataTable dataTable) where T : class
         {
-            Type type = typeof(T);
-            PropertyInfo[] properties = type.GetProperties();
-
+            PropertyInfo[] properties = typeof(T).GetProperties();
             foreach (PropertyInfo info in properties) {
                 if (!dataTable.Columns.Contains(info.Name)) {
                     Type ty = Nullable.GetUnderlyingType(info.PropertyType) ?? info.PropertyType;
@@ -274,8 +270,7 @@ namespace Utilities
         /// <returns>The DataTable containing the data from the list.</returns>
         public static DataTable ToDataTable<T>(this IEnumerable<T> list) where T : class
         {
-            DataTable dt = new DataTable();
-            return list.ToDataTable(dt);
+            return list.ToDataTable(new DataTable());
         }
 
         /// <summary>
@@ -285,10 +280,7 @@ namespace Utilities
         /// <returns>A list with strings from the DataTable.</returns>
         public static List<string[]> ToList(this DataTable dataTable)
         {
-            List<string[]> list = new List<string[]>();
-            if (!dataTable.ToList(list))
-                list = null;
-            return list;
+            return dataTable.ToList(new List<string[]>());
         }
 
         /// <summary>
@@ -296,23 +288,17 @@ namespace Utilities
         /// </summary>
         /// <param name="dataTable">The DataTable to convert to a List.</param>
         /// <returns>True if successful, or false otherwise.</returns>
-        public static bool ToList(this DataTable dataTable, ICollection<string[]> list)
+        public static T ToList<T>(this DataTable dataTable, T list) where T : ICollection<string[]>
         {
-            try {
-                int columns = dataTable.Columns.Count;
-                foreach (DataRow row in dataTable.Rows) {
-                    string[] strs = new string[columns];
-                    for (int col = 0; col < columns; col++) {
-                        strs[col] = row[col] == DBNull.Value ? null : row[col].ToString();
-                    }
-                    list.Add(strs);
+            int cols = dataTable.Columns.Count;
+            foreach (DataRow row in dataTable.Rows) {
+                string[] strs = new string[cols];
+                for (int col = 0; col < cols; col++) {
+                    strs[col] = row[col] == DBNull.Value ? null : row[col].ToString();
                 }
-                return true;
+                list.Add(strs);
             }
-            catch (Exception ex) {
-                Console.Error.WriteLine("Error ToList: " + ex.Message);
-            }
-            return false;
+            return list;
         }
 
         /// <summary>
@@ -340,7 +326,7 @@ namespace Utilities
         public static bool ToList<T>(this DataTable dataTable, ICollection<T> list) where T : class, new()
         {
             try {
-                var converter = DataRowConverter<T>.Create(dataTable);
+                DataRowConverter<T> converter = DataRowConverter<T>.Create(dataTable);
                 foreach (T obj in converter.Convert(dataTable)) {
                     list.Add(obj);
                 }
@@ -441,7 +427,7 @@ namespace Utilities
         /// <returns>A combined string with separators between each input string.</returns>
         public static string Join(this IEnumerable<string> strings, char sep)
         {
-            return String.Join(sep.ToString(), strings);
+            return string.Join(sep.ToString(), strings);
         }
 
         /// <summary>
@@ -452,7 +438,7 @@ namespace Utilities
         /// <returns>A combined string with separators between each input string.</returns>
         public static string Join(this IEnumerable<string> strings, string sep = ",")
         {
-            return String.Join(sep, strings);
+            return string.Join(sep, strings);
         }
 
         /// <summary>
@@ -484,8 +470,7 @@ namespace Utilities
         /// </summary>
         /// <param name="table">The datatable to print.</param>
         /// <param name="printRowNumbers">Determines if row numbers are printed before each row.</param>
-        /// <param name="columnsToPrint">Determines which columns are printed by index and their order. 
-        /// Null means all columns are printed.</param>
+        /// <param name="columnsToPrint">Determines which columns are printed by index and their order. Empty means all columns are printed.</param>
         public static void Print(this DataTable table, bool printRowNumbers = false, params int[] columnsToPrint)
         {
             Print(table, -1, printRowNumbers, columnsToPrint);
@@ -497,40 +482,26 @@ namespace Utilities
         /// <param name="table">The datatable to print.</param>
         /// <param name="maxRows">The maximum number of rows.</param>
         /// <param name="printRowNumbers">Determines if row numbers are printed before each row.</param>
-        /// <param name="columnsToPrint">Determines which columns are printed by index and their order. 
-        /// Null means all columns are printed.</param>
+        /// <param name="columnsToPrint">Determines which columns are printed by index and their order. Empty means all columns are printed.</param>
         public static void Print(this DataTable table, int maxRows, bool printRowNumbers = false, params int[] columnsToPrint)
         {
             if (table.Columns.Count == 0)
                 return;
             maxRows = maxRows < 0 ? table.Rows.Count : Math.Min(maxRows, table.Rows.Count);
+            if (columnsToPrint.Length == 0)
+                columnsToPrint = Enumerable.Range(0, table.Columns.Count).ToArray();
             if (columnsToPrint.Length != 0) {
                 Console.Write(table.Columns[columnsToPrint[0]].ColumnName);
                 for (int col = 1; col < columnsToPrint.Length; col++) {
-                    Console.Write(',');
-                    Console.Write(table.Columns[columnsToPrint[col]].ColumnName);
+                    Console.Write(",{0}", table.Columns[columnsToPrint[col]].ColumnName);
                 }
                 Console.WriteLine();
                 for (int row = 0; row < maxRows; row++) {
                     if (printRowNumbers)
-                        Console.Write(row + " ");
+                        Console.Write("{0} ", row);
                     Console.Write(table.Rows[row][columnsToPrint[0]]);
                     for (int col = 1; col < columnsToPrint.Length; col++) {
-                        Console.Write(',');
-                        Console.Write(table.Rows[row][columnsToPrint[col]]);
-                    }
-                    Console.WriteLine();
-                }
-            }
-            else {
-                Console.WriteLine(table.Columns.Cast<DataColumn>().Select(col => col.ColumnName).Join());
-                for (int row = 0; row < table.Rows.Count; row++) {
-                    if (printRowNumbers)
-                        Console.Write(row + " ");
-                    Console.Write(table.Rows[row][0]);
-                    for (int col = 1; col < table.Columns.Count; col++) {
-                        Console.Write(',');
-                        Console.Write(table.Rows[row][col]);
+                        Console.Write(",{0}", table.Rows[row][columnsToPrint[col]]);
                     }
                     Console.WriteLine();
                 }
@@ -557,17 +528,12 @@ namespace Utilities
         /// <param name="printRowNumbers">Determines if row numbers should be printed before each row.</param>
         public static void Print<T>(this IEnumerable<T> list, Func<T, string> tostringT, bool printRowNumbers = false)
         {
+            if (!list.Any())
+                return;
             int i = 1;
-
-            if (list.Any()) {
-                if (printRowNumbers)
-                    Console.Write("1 ");
-                Console.WriteLine(tostringT(list.First()));
-                i++;
-            }
-            foreach (T item in list.Skip(1)) {
+            foreach (T item in list) {
                 if (printRowNumbers) {
-                    Console.Write(i + " ");
+                    Console.Write("{0} ", i.ToString());
                     i++;
                 }
                 Console.WriteLine(tostringT(item));

@@ -1,18 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.OleDb;
 using System.IO;
 using System.Linq;
-using CsvHelper.Configuration;
-using CsvHelper;
 using System.Reflection;
-using System.Data.OleDb;
-using System.Text;
+using CsvHelper;
+using CsvHelper.Configuration;
+using Utilities.Excel;
 
 namespace Utilities
 {
     public static class IO
     {
+        private const BindingFlags FLAGS = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance;
+
         #region Any
         /// <summary>
         /// Reads a file into a DataSet.
@@ -24,22 +26,19 @@ namespace Utilities
         /// <param name="sheetname">The name of the worksheet to iterate if there are any.
         /// If this is null then the first sheet will be read.</param>
         /// <returns>A DataSet with contents from the file.</returns>
-        public static bool Read(this DataSet set, string path, bool hasHeaders = true)
+        public static DataSet Read(this DataSet set, string path, bool hasHeaders = true)
         {
             string ext = Path.GetExtension(path);
-            switch (ext) {
-                case ".tsv":
-                case ".csv":
-                    DataTable table = new DataTable();
-                    if (!table.ReadCsv(path, hasHeaders, true, ext == ".tsv" ? "\t" : ","))
-                        return false;
-                    set.Tables.Add(table);
-                    return true;
-                case ".xlsx":
-                    return set.ReadXlsx(path, hasHeaders);
-                case ".xls":
-                    return set.ReadXls(path, hasHeaders);
+            if (ext == ".xlsx")
+                return set.ReadXlsx(path, hasHeaders);
+            else if (ext == ".csv" || ext == ".tsv") {
+                DataTable table = new DataTable();
+                table.ReadCsv(path, hasHeaders, true, ext == ".csv" ? "," : "\t");
+                set.Tables.Add(table);
+                return set;
             }
+            else if (ext == ".xls")
+                return set.ReadXls(path, hasHeaders);
             throw new NotSupportedException("File extension type not supported: '" + ext + "'");
         }
 
@@ -53,17 +52,15 @@ namespace Utilities
         /// <param name="sheetname">The name of the worksheet to iterate if there are any.
         /// If this is null then the first sheet will be read.</param>
         /// <returns>A DataTable with contents from the file.</returns>
-        public static bool Read(this DataTable table, string path, bool hasHeaders = true, string sheetname = null)
+        public static DataTable Read(this DataTable table, string path, bool hasHeaders = true, string sheetname = null)
         {
             string ext = Path.GetExtension(path);
-            if (ext == ".csv")
-                return table.ReadCsv(path, hasHeaders, true);
-            else if (ext == ".xlsx")
+            if (ext == ".xlsx")
                 return table.ReadXlsx(path, sheetname, hasHeaders);
-            else if (ext == ".xls")
+            if (ext == ".csv" || ext == ".tsv")
+                return table.ReadCsv(path, hasHeaders, true, ext == ".csv" ? "," : "\t");
+            if (ext == ".xls")
                 return table.ReadXls(path, sheetname, hasHeaders);
-            else if (ext == ".tsv")
-                return table.ReadCsv(path, hasHeaders, true, "\t");
             throw new NotSupportedException("File extension type not supported: '" + ext + "'");
         }
 
@@ -77,7 +74,7 @@ namespace Utilities
         /// <param name="sheetname">The name of the worksheet to iterate if there are any.
         /// If this is null then the first sheet will be read.</param>
         /// <returns>A DataTable with contents from the file.</returns>
-        public static bool Read(this DataTable table, string path, string sheetname, bool hasHeaders = true)
+        public static DataTable Read(this DataTable table, string path, string sheetname, bool hasHeaders = true)
         {
             return table.Read(path, hasHeaders, sheetname);
         }
@@ -92,19 +89,13 @@ namespace Utilities
         /// If this is true then the columns are named based on the first line.</param>
         /// <param name="sheetname">The name of the worksheet to iterate if there are any.
         /// If this is null then the first sheet will be read.</param>
-        /// <returns>True if the file was read, or null if there was an error.</returns>
-        public static bool Read<T>(this ICollection<T> list, string path, bool hasHeaders = true, string sheetname = null) where T : class, new()
+        /// <returns>A list with data from the file.</returns>
+        public static ICollection<T> Read<T>(this ICollection<T> list, string path, bool hasHeaders = true, string sheetname = null) where T : class, new()
         {
-            try {
-                foreach (T obj in IO.Foreach<T>(path, hasHeaders, sheetname)) {
-                    list.Add(obj);
-                }
-                return true;
+            foreach (T obj in IO.Foreach<T>(path, hasHeaders, sheetname)) {
+                list.Add(obj);
             }
-            catch (Exception ex) {
-                Console.Error.WriteLine("Error Read<T>({0}): {1}", path ?? "null", ex.Message);
-            }
-            return false;
+            return list;
         }
 
         /// <summary>
@@ -117,8 +108,8 @@ namespace Utilities
         /// If this is true then the columns are named based on the first line.</param>
         /// <param name="sheetname">The name of the worksheet to iterate if there are any.
         /// If this is null then the first sheet will be read.</param>
-        /// <returns>True if the file was read, or null if there was an error.</returns>
-        public static bool Read<T>(this ICollection<T> list, string path, string sheetname, bool hasHeaders = true) where T : class, new()
+        /// <returns>A list with data from the file.</returns>
+        public static ICollection<T> Read<T>(this ICollection<T> list, string path, string sheetname, bool hasHeaders = true) where T : class, new()
         {
             return list.Read(path, hasHeaders, sheetname);
         }
@@ -136,7 +127,8 @@ namespace Utilities
         public static List<T> Read<T>(string path, bool hasHeaders = true, string sheetname = null) where T : class, new()
         {
             List<T> list = new List<T>();
-            return list.Read<T>(path, hasHeaders, sheetname) ? list : null;
+            list.Read<T>(path, hasHeaders, sheetname);
+            return list;
         }
 
         /// <summary>
@@ -147,11 +139,7 @@ namespace Utilities
         /// <returns>A DataTable with contents from the file, or null on error.</returns>
         public static DataTable Read(string path, bool hasHeaders = true)
         {
-            DataTable table = new DataTable();
-            if (table.Read(path, hasHeaders))
-                return table;
-            table.Dispose();
-            return null;
+            return new DataTable().Read(path, hasHeaders);
         }
 
         /// <summary>
@@ -163,14 +151,12 @@ namespace Utilities
         public static IEnumerable<string[]> Foreach(string path, bool hasHeaders = true)
         {
             string ext = Path.GetExtension(path);
-            if (ext == ".csv")
-                return CsvForeach(path, hasHeaders, true);
-            else if (ext == ".xlsx")
+            if (ext == ".xlsx")
                 return XlsxForeach(path, null, hasHeaders);
-            else if (ext == ".xls")
+            if (ext == ".csv" || ext == ".tsv")
+                return CsvForeach(path, hasHeaders, true, ext == ".csv" ? "," : "\t");
+            if (ext == ".xls")
                 return XlsForeach(path, null, hasHeaders);
-            else if (ext == ".tsv")
-                return FileForeach(path, '\t', hasHeaders);
             throw new NotSupportedException("File extension type not supported: '" + ext + "'");
         }
 
@@ -188,14 +174,12 @@ namespace Utilities
         public static IEnumerable<T> Foreach<T>(string path, Func<string[], T> constructor, bool hasHeaders = true, string sheetname = null)
         {
             string ext = Path.GetExtension(path);
-            if (ext == ".csv")
-                return CsvForeach<T>(path, constructor, hasHeaders, true);
-            else if (ext == ".xlsx")
+            if (ext == ".xlsx")
                 return XlsxForeach<T>(path, constructor, sheetname, hasHeaders);
-            else if (ext == ".xls")
+            if (ext == ".csv" || ext == ".tsv")
+                return CsvForeach<T>(path, constructor, hasHeaders, true, ext == ".csv" ? "," : "\t");
+            if (ext == ".xls")
                 return XlsForeach<T>(path, constructor, sheetname, hasHeaders);
-            else if (ext == ".tsv")
-                return FileForeach<T>(path, constructor, '\t', hasHeaders);
             throw new NotSupportedException("File extension type not supported: '" + ext + "'");
         }
 
@@ -356,24 +340,18 @@ namespace Utilities
         /// <param name="delim">The character separating each column of each line.</param>
         /// <param name="hasHeaders">Determines if the file has headers. 
         /// If this is true then the columns are named based on the first line.</param>
-        /// <returns>True if the file was read succesfully, or false otherwise.</returns>
-        public static bool ReadFile(this ICollection<string[]> list, string path, char delim = ',', bool hasHeaders = true)
+        /// <returns>A list with data from the file.</returns>
+        public static ICollection<string[]> ReadFile(this ICollection<string[]> list, string path, char delim = ',', bool hasHeaders = true)
         {
-            try {
-                using (TextReader reader = Util.TextReader(new FileInfo(path))) {
-                    IEnumerable<string[]> lines = FileForeach(reader, delim, false);
-                    if (hasHeaders)
-                        lines = lines.Skip(1);
-                    foreach (string[] line in lines) {
-                        list.Add(line);
-                    }
+            using (TextReader reader = Util.TextReader(new FileInfo(path))) {
+                IEnumerable<string[]> lines = FileForeach(reader, delim, false);
+                if (hasHeaders)
+                    lines = lines.Skip(1);
+                foreach (string[] line in lines) {
+                    list.Add(line);
                 }
-                return true;
             }
-            catch (Exception ex) {
-                Console.Error.WriteLine("Error ReadFile({0}): {1}", path ?? "", ex.Message);
-            }
-            return false;
+            return list;
         }
 
         /// <summary>
@@ -384,20 +362,14 @@ namespace Utilities
         /// <param name="delim">The character separating each column of each line.</param>
         /// <param name="hasHeaders">Determines if the file has headers. 
         /// If this is true then the columns are named based on the first line.</param>
-        /// <returns>True if the file was read succesfully, or false otherwise.</returns>
-        public static bool ReadFile<T>(this ICollection<T> list, string path, char delim = ',', bool hasHeaders = true) where T : class, new()
+        /// <returns>A list with data from the file.</returns>
+        public static ICollection<T> ReadFile<T>(this ICollection<T> list, string path, char delim = ',', bool hasHeaders = true) where T : class, new()
         {
-            try {
-                IEnumerable<T> lines = FileForeach<T>(path, delim, hasHeaders);
-                foreach (T line in lines) {
-                    list.Add(line);
-                }
-                return true;
+            IEnumerable<T> lines = FileForeach<T>(path, delim, hasHeaders);
+            foreach (T line in lines) {
+                list.Add(line);
             }
-            catch (Exception ex) {
-                Console.Error.WriteLine("Error ReadFile({0}): {1}", path ?? "", ex.Message);
-            }
-            return false;
+            return list;
         }
 
         /// <summary>
@@ -408,38 +380,31 @@ namespace Utilities
         /// <param name="delim">The character separating each column of each line.</param>
         /// <param name="hasHeaders">Determines if the file has headers. 
         /// If this is true then the columns are named based on the first line.</param>
-        /// <returns>True if the file was read successfully, or falseo therwise.</returns>
-        public static bool ReadFile(this DataTable table, string path, char delim = ',', bool hasHeaders = true)
+        /// <returns>A DataTable with data from the file.</returns>
+        public static DataTable ReadFile(this DataTable table, string path, char delim = ',', bool hasHeaders = true)
         {
-            try {
-                using (TextReader reader = Util.TextReader(new FileInfo(path))) {
-                    IEnumerable<string[]> lines = FileForeach(reader, delim, hasHeaders);
-                    //add columns
-                    if (hasHeaders) {
-                        string[] line = lines.First();
-                        lines = lines.Skip(1);
-                        for (int i = 0; i < line.Length; i++) {
-                            string header = line[i];
-                            if (string.IsNullOrEmpty(header))
-                                header = new string(' ', i + 1);
-                            table.Columns.Add(header);
-                        }
+            using (TextReader reader = Util.TextReader(new FileInfo(path))) {
+                IEnumerable<string[]> lines = FileForeach(reader, delim, hasHeaders);
+                //add columns
+                if (hasHeaders) {
+                    string[] line = lines.First();
+                    lines = lines.Skip(1);
+                    for (int i = 0; i < line.Length; i++) {
+                        string header = line[i];
+                        if (string.IsNullOrEmpty(header))
+                            header = new string(' ', i + 1);
+                        table.Columns.Add(header);
                     }
-                    //add rows
-                    foreach (string[] line in lines) {
-                        for (int i = table.Columns.Count; i < line.Length; i++) {
-                            table.Columns.Add(new string(' ', i + 1));
-                        }
-                        table.Rows.Add(line);
-                    }
-                    table.Trim();
-                    return true;
                 }
+                //add rows
+                foreach (string[] line in lines) {
+                    for (int i = table.Columns.Count; i < line.Length; i++) {
+                        table.Columns.Add(new string(' ', i + 1));
+                    }
+                    table.Rows.Add(line);
+                }
+                return table.Trim();
             }
-            catch (Exception ex) {
-                Console.Error.WriteLine("Error ReadFile({0}): {1}", path ?? "", ex.Message);
-            }
-            return false;
         }
         #endregion //Delimited
 
@@ -452,35 +417,26 @@ namespace Utilities
         /// <param name="printHeaders">Determines if the property names should be output as headers.</param>
         /// <param name="delim">The delimiter for the text.</param>
         /// <returns>True if the CSV file was written to, or false otherwise.</returns>
-        public static bool WriteCsv<T>(this IEnumerable<T> list, string path, bool printHeaders = true, string delim = ",") where T : class
+        public static void WriteCsv<T>(this IEnumerable<T> list, string path, bool printHeaders = true, string delim = ",") where T : class
         {
-            try {
-                using (TextWriter writer = new StreamWriter(path, false))
-                using (CsvWriter csv = new CsvWriter(writer)) {
-                    csv.Configuration.QuoteAllFields = true;
-                    csv.Configuration.Delimiter = delim;
-                    PropertyInfo[] props =
-                                typeof(T).GetProperties(BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance);
-                    if (printHeaders) {
-                        foreach (string header in props.Select(prop => prop.Name)) {
-                            csv.WriteField(header);
-                        }
-                        csv.NextRecord();
+            using (TextWriter writer = new StreamWriter(path, false))
+            using (CsvWriter csv = new CsvWriter(writer)) {
+                csv.Configuration.QuoteAllFields = true;
+                csv.Configuration.Delimiter = delim;
+                PropertyInfo[] props = typeof(T).GetProperties(FLAGS);
+                if (printHeaders) {
+                    foreach (string header in props.Select(prop => prop.Name)) {
+                        csv.WriteField(header);
                     }
-                    foreach (T row in list) {
-                        for (int i = 0; i < props.Length; i++) {
-                            csv.WriteField(props[i].GetValue(row));
-                        }
-                        csv.NextRecord();
-                    }
+                    csv.NextRecord();
                 }
-                return true;
+                foreach (T row in list) {
+                    for (int i = 0; i < props.Length; i++) {
+                        csv.WriteField(props[i].GetValue(row));
+                    }
+                    csv.NextRecord();
+                }
             }
-            catch (Exception ex) {
-                Console.Error.WriteLine("Error WriteCsv({0}): {1}", path ?? "null", ex.Message);
-            }
-            return false;
-
         }
 
         /// <summary>
@@ -491,32 +447,25 @@ namespace Utilities
         /// <param name="hasHeaders">Determines if the column names should be output.</param>
         /// <param name="delim">The delimiter for the text.</param>
         /// <returns>True if the CSV file was written to, or false otherwise.</returns>
-        public static bool WriteCsv(this DataTable table, string path, bool hasHeaders = true, string delim = ",")
+        public static void WriteCsv(this DataTable table, string path, bool hasHeaders = true, string delim = ",")
         {
-            try {
-                using (StreamWriter sr = new StreamWriter(path, false))
-                using (CsvWriter csv = new CsvWriter(sr)) {
-                    csv.Configuration.Delimiter = delim;
-                    csv.Configuration.QuoteAllFields = true;
-                    if (hasHeaders) {
-                        foreach (DataColumn column in table.Columns) {
-                            csv.WriteField(column.ColumnName);
-                        }
-                        csv.NextRecord();
+            using (StreamWriter sr = new StreamWriter(path, false))
+            using (CsvWriter csv = new CsvWriter(sr)) {
+                csv.Configuration.Delimiter = delim;
+                csv.Configuration.QuoteAllFields = true;
+                if (hasHeaders) {
+                    foreach (DataColumn column in table.Columns) {
+                        csv.WriteField(column.ColumnName);
                     }
-                    foreach (DataRow row in table.Rows) {
-                        for (int i = 0; i < table.Columns.Count; i++) {
-                            csv.WriteField(row[i].ToString());
-                        }
-                        csv.NextRecord();
-                    }
+                    csv.NextRecord();
                 }
-                return true;
+                foreach (DataRow row in table.Rows) {
+                    for (int i = 0; i < table.Columns.Count; i++) {
+                        csv.WriteField(row[i].ToString());
+                    }
+                    csv.NextRecord();
+                }
             }
-            catch (Exception ex) {
-                Console.Error.WriteLine("Error WriteCsv({0}): {1}", path ?? "null", ex.Message);
-            }
-            return false;
         }
 
         /// <summary>
@@ -526,19 +475,13 @@ namespace Utilities
         /// <param name="path">The path of the CSV file.</param>
         /// <param name="ignoreBlankLines">Determines if blank lines should be skipped.</param>
         /// <param name="delim">The delimiter of the file.</param>
-        /// <returns>True on success, or false otherwise.</returns>
-        public static bool ReadCsv(this ICollection<string[]> list, string path, bool ignoreBlankLines = true, string delim = ",")
+        /// <returns>A list with data from the file.</returns>
+        public static ICollection<string[]> ReadCsv(this ICollection<string[]> list, string path, bool ignoreBlankLines = true, string delim = ",")
         {
-            try {
-                foreach (string[] line in CsvForeach(path, false, ignoreBlankLines, delim)) {
-                    list.Add(line);
-                }
-                return true;
+            foreach (string[] line in CsvForeach(path, false, ignoreBlankLines, delim)) {
+                list.Add(line);
             }
-            catch (Exception ex) {
-                Console.Error.WriteLine("Error ReadCsv({0}): {1}", path ?? "null", ex.Message);
-            }
-            return false;
+            return list;
         }
 
         /// <summary>
@@ -551,19 +494,13 @@ namespace Utilities
         /// <param name="path">The path of the CSV file.</param>
         /// <param name="ignoreBlankLines">Determines if blank lines should be skipped.</param>
         /// <param name="delim">The delimiter of the file.</param>
-        /// <returns>True on success, or false otherwise.</returns>
-        public static bool ReadCsv<T>(this ICollection<T> list, string path, bool hasHeaders = true, bool ignoreBlankLines = true, string delim = ",") where T : class, new()
+        /// <returns>A list with data from the file.</returns>
+        public static ICollection<T> ReadCsv<T>(this ICollection<T> list, string path, bool hasHeaders = true, bool ignoreBlankLines = true, string delim = ",") where T : class, new()
         {
-            try {
-                foreach (T line in CsvForeach<T>(path, hasHeaders, ignoreBlankLines, delim)) {
-                    list.Add(line);
-                }
-                return true;
+            foreach (T line in CsvForeach<T>(path, hasHeaders, ignoreBlankLines, delim)) {
+                list.Add(line);
             }
-            catch (Exception ex) {
-                Console.Error.WriteLine("Error ReadCsv({0}): {1}", path ?? "null", ex.Message);
-            }
-            return false;
+            return list;
         }
 
         /// <summary>
@@ -575,36 +512,29 @@ namespace Utilities
         /// If this is true then the columns are named based on the first line.</param>
         /// <param name="ignoreBlankLines">Determines if blank lines should be skipped.</param>
         /// <param name="delim">The delimter of the file.</param>
-        /// <returns>True on success, or false otherwise.</returns>
-        public static bool ReadCsv(this DataTable table, string path, bool hasHeaders = true, bool ignoreBlankLines = true, string delim = ",")
+        /// <returns>A DataTable with data from the file.</returns>
+        public static DataTable ReadCsv(this DataTable table, string path, bool hasHeaders = true, bool ignoreBlankLines = true, string delim = ",")
         {
-            try {
-                IEnumerable<string[]> lines = CsvForeach(path, false, ignoreBlankLines, delim);
-                string[] headers = lines.First();
-                lines = lines.Skip(1);
-                if (headers != null && table.Columns.Count == 0) {
-                    for (int i = 0; i < headers.Length; i++) {
-                        string columnName = headers[i];
-                        if (hasHeaders) {
-                            table.Columns.Add(columnName.Length == 0 ? new string(' ', i) : columnName);
-                        }
-                        else
-                            table.Columns.Add(new string(' ', i));
+            IEnumerable<string[]> lines = CsvForeach(path, false, ignoreBlankLines, delim);
+            string[] headers = lines.First();
+            lines = lines.Skip(1);
+            if (headers != null && table.Columns.Count == 0) {
+                for (int i = 0; i < headers.Length; i++) {
+                    string columnName = headers[i];
+                    if (hasHeaders) {
+                        table.Columns.Add(columnName.Length == 0 ? new string(' ', i) : columnName);
                     }
-                }
-                foreach (string[] line in lines) {
-                    for (int i = table.Columns.Count; i < line.Length; i++) {
+                    else
                         table.Columns.Add(new string(' ', i));
-                    }
-                    table.Rows.Add(line);
                 }
-                table.Trim();
-                return true;
             }
-            catch (Exception ex) {
-                Console.Error.WriteLine("Error ReadCsv({0}): {1}", path ?? "null", ex.Message);
+            foreach (string[] line in lines) {
+                for (int i = table.Columns.Count; i < line.Length; i++) {
+                    table.Columns.Add(new string(' ', i));
+                }
+                table.Rows.Add(line);
             }
-            return false;
+            return table.Trim();
         }
 
         /// <summary>
@@ -682,7 +612,7 @@ namespace Utilities
         public static IEnumerable<T> CsvForeach<T>(string path, bool hasHeaders = true, bool ignoreBlankLines = true, string delim = ",") where T : class, new()
         {
             using (TextReader reader = Util.TextReader(new FileInfo(path))) {
-                return CsvForeach<T>(path, hasHeaders, ignoreBlankLines, delim);
+                return CsvForeach<T>(reader, hasHeaders, ignoreBlankLines, delim);
             }
         }
 
@@ -829,19 +759,13 @@ namespace Utilities
         /// <param name="path">The path of the Excel file.</param>
         /// <param name="hasHeaders">Determines if the file has headers. 
         /// If this is true then the columns are named based on the first line.</param>
-        /// <returns>The Dataset with data from the file.</returns>
-        public static bool ReadXls<T>(this ICollection<T> list, string path, string sheetname = null, bool hasHeaders = true) where T : class, new()
+        /// <returns>A List with data from the file.</returns>
+        public static ICollection<T> ReadXls<T>(this ICollection<T> list, string path, string sheetname = null, bool hasHeaders = true) where T : class, new()
         {
-            try {
-                foreach (T obj in XlsForeach<T>(path, sheetname, hasHeaders)) {
-                    list.Add(obj);
-                }
-                return true;
+            foreach (T obj in XlsForeach<T>(path, sheetname, hasHeaders)) {
+                list.Add(obj);
             }
-            catch (Exception ex) {
-                Console.Error.WriteLine("Error ReadXls({0}): {1}", path ?? "null", ex.Message);
-            }
-            return false;
+            return list;
         }
 
         /// <summary>
@@ -852,26 +776,70 @@ namespace Utilities
         /// <param name="sheetName"></param>
         /// <param name="hasHeaders">Determines if the file has headers. 
         /// If this is true then the columns are named based on the first line.</param>
-        /// <returns>True on success, or false otherwise.</returns>
-        public static bool ReadXls(this DataTable dt, string path, string sheetName = null, bool hasHeaders = true)
+        /// <returns>A DataTable with data from the file.</returns>
+        public static DataTable ReadXls(this DataTable dt, string path, string sheetName = null, bool hasHeaders = true)
         {
-            try {
-                // parses as the correct type
-                //string connStr = @"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + path + "; Jet OLEDB:Engine Type = 5; Extended Properties =\"Excel 8.0;\"";
-                // handles column data of multiple types better
-                string connStr = "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + path
-                    + @";Extended Properties=""Excel 8.0;IMEX=1;HDR=NO;TypeGuessRows=0;ImportMixedTypes=Text""";
-                using (OleDbConnection conn = new OleDbConnection(connStr))
-                using (OleDbCommand cmd = new OleDbCommand())
-                using (OleDbDataAdapter oda = new OleDbDataAdapter()) {
-                    conn.Open();
-                    if (sheetName == null) {
-                        DataTable dtExcelSchema = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
-                        if (dtExcelSchema.Rows.Count == 0)
-                            return false;
-                        sheetName = dtExcelSchema.Rows[0]["TABLE_NAME"].ToString();
+            // parses as the correct type
+            //string connStr = @"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + path + "; Jet OLEDB:Engine Type = 5; Extended Properties =\"Excel 8.0;\"";
+            // handles column data of multiple types better
+            string connStr = "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + path
+                + @";Extended Properties=""Excel 8.0;IMEX=1;HDR=NO;TypeGuessRows=0;ImportMixedTypes=Text""";
+            using (OleDbConnection conn = new OleDbConnection(connStr))
+            using (OleDbCommand cmd = new OleDbCommand())
+            using (OleDbDataAdapter oda = new OleDbDataAdapter()) {
+                conn.Open();
+                if (sheetName == null) {
+                    DataTable dtExcelSchema = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
+                    if (dtExcelSchema.Rows.Count == 0)
+                        throw new InvalidDataException(path);
+                    sheetName = dtExcelSchema.Rows[0]["TABLE_NAME"].ToString();
+                }
+                dt.TableName = sheetName;
+                cmd.Connection = conn;
+                cmd.CommandText = "SELECT * FROM [" + sheetName + "]";
+                oda.SelectCommand = cmd;
+                oda.Fill(dt);
+                dt.TableName = sheetName;
+                if (hasHeaders && dt.Rows.Count > 0) {
+                    DataRow row = dt.Rows[0];
+                    for (int c = 0; c < dt.Columns.Count; c++) {
+                        string colName = row[c].ToString();
+                        if (string.IsNullOrWhiteSpace(colName)) {
+                            dt.Columns[c].ColumnName = new string(' ', c + 1);
+                        }
+                        else
+                            dt.Columns[c].ColumnName = row[c].ToString();
                     }
-                    dt.TableName = sheetName;
+                    dt.Rows.RemoveAt(0);
+                }
+                return dt.Trim().TrimColumns();
+            }
+        }
+
+        /// <summary>
+        /// Reads an XLS Excel file into a DataSet where each sheet is a DataTable.
+        /// </summary>
+        /// <param name="dataset">The DataSet to append data to.</param>
+        /// <param name="path">The path of the Excel file.</param>
+        /// <param name="hasHeaders">Determines if the file has headers. 
+        /// If this is true then the columns are named based on the first line.</param>
+        /// <returns>A DataSet with data from the file.</returns>
+        public static DataSet ReadXls(this DataSet dataset, string path, bool hasHeaders = true)
+        {
+            // parses as the correct type
+            //string connStr = @"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + path + "; Jet OLEDB:Engine Type = 5; Extended Properties =\"Excel 8.0;\"";
+            // handles column data of multiple types better
+            string connStr = "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + path
+                + @";Extended Properties=""Excel 8.0;IMEX=1;HDR=NO;TypeGuessRows=0;ImportMixedTypes=Text""";
+            using (OleDbConnection conn = new OleDbConnection(connStr))
+            using (OleDbCommand cmd = new OleDbCommand())
+            using (OleDbDataAdapter oda = new OleDbDataAdapter()) {
+                cmd.Connection = conn;
+                conn.Open();
+                DataTable dtExcelSchema = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
+                for (int i = 0; i < dtExcelSchema.Rows.Count; i++) {
+                    string sheetName = dtExcelSchema.Rows[i]["TABLE_NAME"].ToString();
+                    DataTable dt = new DataTable(sheetName);
                     cmd.Connection = conn;
                     cmd.CommandText = "SELECT * FROM [" + sheetName + "]";
                     oda.SelectCommand = cmd;
@@ -889,75 +857,16 @@ namespace Utilities
                         }
                         dt.Rows.RemoveAt(0);
                     }
-                    dt.Trim();
-                    dt.TrimColumns();
-                    return true;
+                    dataset.Tables.Add(dt);
                 }
             }
-            catch (Exception ex) {
-                Console.Error.WriteLine("Error ReadXls({0}): {1}", path ?? "null", ex.Message);
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Reads an XLS Excel file into a DataSet where each sheet is a DataTable.
-        /// </summary>
-        /// <param name="dataset">The DataSet to append data to.</param>
-        /// <param name="path">The path of the Excel file.</param>
-        /// <param name="hasHeaders">Determines if the file has headers. 
-        /// If this is true then the columns are named based on the first line.</param>
-        /// <returns>True on success, or false otherwise.</returns>
-        public static bool ReadXls(this DataSet dataset, string path, bool hasHeaders = true)
-        {
-            string sheetName = null;
-            try {
-                // parses as the correct type
-                //string connStr = @"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + path + "; Jet OLEDB:Engine Type = 5; Extended Properties =\"Excel 8.0;\"";
-                // handles column data of multiple types better
-                string connStr = "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + path
-                    + @";Extended Properties=""Excel 8.0;IMEX=1;HDR=NO;TypeGuessRows=0;ImportMixedTypes=Text""";
-                using (OleDbConnection conn = new OleDbConnection(connStr))
-                using (OleDbCommand cmd = new OleDbCommand())
-                using (OleDbDataAdapter oda = new OleDbDataAdapter()) {
-                    cmd.Connection = conn;
-                    conn.Open();
-                    DataTable dtExcelSchema = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
-                    for (int i = 0; i < dtExcelSchema.Rows.Count; i++) {
-                        sheetName = dtExcelSchema.Rows[i]["TABLE_NAME"].ToString();
-                        DataTable dt = new DataTable(sheetName);
-                        cmd.Connection = conn;
-                        cmd.CommandText = "SELECT * FROM [" + sheetName + "]";
-                        oda.SelectCommand = cmd;
-                        oda.Fill(dt);
-                        dt.TableName = sheetName;
-                        if (hasHeaders && dt.Rows.Count > 0) {
-                            DataRow row = dt.Rows[0];
-                            for (int c = 0; c < dt.Columns.Count; c++) {
-                                string colName = row[c].ToString();
-                                if (string.IsNullOrWhiteSpace(colName)) {
-                                    dt.Columns[c].ColumnName = new string(' ', c + 1);
-                                }
-                                else
-                                    dt.Columns[c].ColumnName = row[c].ToString();
-                            }
-                            dt.Rows.RemoveAt(0);
-                        }
-                        dataset.Tables.Add(dt);
-                    }
-                }
-                //trim useless far-right side columns if there's no headers
-                if (!hasHeaders) {
-                    foreach (DataTable table in dataset.Tables) {
-                        table.TrimColumns();
-                    }
+            //trim useless far-right side columns if there's no headers
+            if (!hasHeaders) {
+                foreach (DataTable table in dataset.Tables) {
+                    table.TrimColumns();
                 }
             }
-            catch (Exception ex) {
-                Console.Error.WriteLine("Error ReadXls({0}): {1}", path ?? "null", ex.Message);
-                return false;
-            }
-            return true;
+            return dataset;
         }
         #endregion
 
@@ -972,10 +881,8 @@ namespace Utilities
         /// <returns>The iterable rows in the file.</returns>
         public static IEnumerable<string[]> XlsxForeach(string path, string sheetname = null, bool includeHeaders = true)
         {
-            using (Excel.Spreadsheet ss = new Excel.Spreadsheet(path)) {
-                Excel.Worksheet worksheet = sheetname == null ? ss[0] : ss[sheetname];
-                if (worksheet == null)
-                    throw new Exception(string.Format("Invalid Worksheet '{0}'", sheetname ?? "null"));
+            using (Spreadsheet ss = new Spreadsheet(path)) {
+                Worksheet worksheet = sheetname == null ? ss[0] : ss[sheetname];
                 IEnumerable<string[]> rows = worksheet.AsEnumerable();
                 if (includeHeaders)
                     rows = rows.Skip(1);
@@ -996,10 +903,8 @@ namespace Utilities
         /// <returns>The iterable rows in the file.</returns>
         public static IEnumerable<T> XlsxForeach<T>(string path, string sheetname = null, bool hasHeaders = true) where T : class, new()
         {
-            using (Excel.Spreadsheet ss = new Excel.Spreadsheet(path)) {
-                Excel.Worksheet worksheet = sheetname == null ? ss[0] : ss[sheetname];
-                if (worksheet == null)
-                    throw new Exception(string.Format("Invalid Worksheet '{0}'", sheetname ?? "null"));
+            using (Spreadsheet ss = new Spreadsheet(path)) {
+                Worksheet worksheet = sheetname == null ? ss[0] : ss[sheetname];
                 foreach (T obj in worksheet.AsEnumerable<T>(hasHeaders)) {
                     yield return obj;
                 }
@@ -1019,9 +924,7 @@ namespace Utilities
         public static IEnumerable<T> XlsxForeach<T>(string path, Func<string[], T> constructor, string sheetname = null, bool hasHeaders = true)
         {
             using (Excel.Spreadsheet ss = new Excel.Spreadsheet(path)) {
-                Excel.Worksheet worksheet = sheetname == null ? ss[0] : ss[sheetname];
-                if (worksheet == null)
-                    throw new Exception(string.Format("Invalid Worksheet '{0}'", sheetname ?? "null"));
+                Worksheet worksheet = sheetname == null ? ss[0] : ss[sheetname];
                 IEnumerable<string[]> rows = worksheet.AsEnumerable();
                 if (hasHeaders)
                     rows = rows.Skip(1);
@@ -1039,21 +942,14 @@ namespace Utilities
         /// <param name="sheetname">The name of the sheet in the file to read.
         /// If this is null then the first sheet will be iterated.</param>
         /// <param name="includeHeaders">Determines if the columns should be included.</param>
-        /// <returns>True if successful, or false if something went wrong.</returns>
-        public static bool ReadXlsx(this ICollection<string[]> list, string path, string sheetname = null, bool includeHeaders = true)
+        /// <returns>A list with data from the file.</returns>
+        public static ICollection<string[]> ReadXlsx(this ICollection<string[]> list, string path, string sheetname = null, bool includeHeaders = true)
         {
-            try {
-                IEnumerable<string[]> lines = XlsxForeach(path, sheetname, includeHeaders);
-                foreach (string[] line in lines) {
-                    list.Add(line);
-                }
-                return true;
+            IEnumerable<string[]> lines = XlsxForeach(path, sheetname, includeHeaders);
+            foreach (string[] line in lines) {
+                list.Add(line);
             }
-            catch (Exception ex) {
-                string sheetStr = sheetname == null ? "" : "[" + sheetname + "]";
-                Console.Error.WriteLine("Error ReadXlsx({0}){1}: {2}", path ?? "null", sheetStr, ex.Message);
-            }
-            return false;
+            return list;
         }
 
         /// <summary>
@@ -1062,21 +958,14 @@ namespace Utilities
         /// <param name="ds">The DataSet to store the data in.</param>
         /// <param name="path">Name of file to be written.</param>
         /// <param name="hasHeaders">Determines if the columns should be written.</param>
-        /// <returns>True if successful, false if something went wrong.</returns>
-        public static bool ReadXlsx(this DataSet ds, string path, bool hasHeaders = true)
+        /// <returns>A DataSet with data from the file.</returns>
+        public static DataSet ReadXlsx(this DataSet ds, string path, bool hasHeaders = true)
         {
-            try {
-                using (Excel.Spreadsheet ss = new Excel.Spreadsheet(path)) {
-                    if (!ss.IsOpen)
-                        return false;
-                    ss.ToDataSet(ds);
-                }
-                return true;
+            using (Spreadsheet ss = new Spreadsheet(path)) {
+                if (!ss.IsOpen)
+                    throw new IOException(path);
+                return ss.ToDataSet(ds);
             }
-            catch (Exception ex) {
-                Console.Error.WriteLine("Error ReadXlsx({0}): {1}", path ?? "null", ex.Message);
-            }
-            return false;
         }
 
         /// <summary>
@@ -1085,22 +974,15 @@ namespace Utilities
         /// <param name="dt">The DataTable to store the data in.</param>
         /// <param name="path">Name of file to be written.</param>
         /// <param name="hasHeaders">Determines if the columns should be written.</param>
-        /// <returns>True if successful, false if something went wrong.</returns>
-        public static bool ReadXlsx(this DataTable dt, string path, string sheetname = null, bool hasHeaders = true)
+        /// <returns>A DataTable with data from the file.</returns>
+        public static DataTable ReadXlsx(this DataTable dt, string path, string sheetname = null, bool hasHeaders = true)
         {
-            try {
-                using (Excel.Spreadsheet ss = new Excel.Spreadsheet(path)) {
-                    if (!ss.IsOpen)
-                        return false;
-                    Excel.Worksheet worksheet = sheetname == null ? ss[0] : ss[sheetname];
-                    worksheet.ToDataTable(dt, hasHeaders);
-                }
-                return true;
+            using (Spreadsheet ss = new Spreadsheet(path)) {
+                if (!ss.IsOpen)
+                    throw new IOException(path);
+                Worksheet worksheet = sheetname == null ? ss[0] : ss[sheetname];
+                return worksheet.ToDataTable(dt, hasHeaders);
             }
-            catch (Exception ex) {
-                Console.Error.WriteLine("Error ReadXlsx({0}): {1}", path ?? "null", ex.Message);
-            }
-            return false;
         }
 
         /// <summary>
@@ -1113,10 +995,9 @@ namespace Utilities
         /// <param name="autofilter">Determines if auto-filtering will be enabled. Filters allow sorting and filtering by column.</param>
         /// <param name="autoformat">Determines if auto-formatting will be enabled. 
         /// Strings values will be converted into basic types in order to remove the green arrow in Excel.</param>
-        /// <returns>True if successful, false if something went wrong.</returns>
-        public static bool WriteXlsx<T>(this IEnumerable<T> list, string path, bool hasHeaders = true, bool autofilter = true, bool autoformat = true)
+        public static void WriteXlsx<T>(this IEnumerable<T> list, string path, bool hasHeaders = true, bool autofilter = true, bool autoformat = true)
         {
-            return WriteXlsx((ss) => ss[0].Load(list), path, hasHeaders, autofilter, autoformat);
+            WriteXlsx((ss) => ss[0].Load(list), path, hasHeaders, autofilter, autoformat);
         }
 
         /// <summary>
@@ -1128,10 +1009,9 @@ namespace Utilities
         /// <param name="autofilter">Determines if auto-filtering will be enabled. Filters allow sorting and filtering by column.</param>
         /// <param name="autoformat">Determines if auto-formatting will be enabled. 
         /// Strings values will be converted into basic types in order to remove the green arrow in Excel.</param>
-        /// <returns>True if successful, false if something went wrong.</returns>
-        public static bool WriteXlsx(this DataTable dt, string path, bool hasHeaders = true, bool autofilter = true, bool autoformat = true)
+        public static void WriteXlsx(this DataTable dt, string path, bool hasHeaders = true, bool autofilter = true, bool autoformat = true)
         {
-            return WriteXlsx((ss) => ss[0].Load(dt, hasHeaders), path, hasHeaders, autofilter, autoformat);
+            WriteXlsx((ss) => ss[0].Load(dt, hasHeaders), path, hasHeaders, autofilter, autoformat);
         }
 
         /// <summary>
@@ -1143,10 +1023,9 @@ namespace Utilities
         /// <param name="autofilter">Determines if auto-filtering will be enabled. Filters allow sorting and filtering by column.</param>
         /// <param name="autoformat">Determines if auto-formatting will be enabled. 
         /// Strings values will be converted into basic types in order to remove the green arrow in Excel.</param>
-        /// <returns>True if successful, false if something went wrong.</returns>
-        public static bool WriteXlsx(this DataSet ds, string path, bool hasHeaders = true, bool autofilter = true, bool autoformat = true)
+        public static void WriteXlsx(this DataSet ds, string path, bool hasHeaders = true, bool autofilter = true, bool autoformat = true)
         {
-            return WriteXlsx((ss) => ss.Load(ds), path, hasHeaders, autofilter, autoformat);
+            WriteXlsx((ss) => ss.Load(ds), path, hasHeaders, autofilter, autoformat);
         }
 
         /// <summary>
@@ -1158,33 +1037,24 @@ namespace Utilities
         /// <param name="autofilter">Determines if auto-filtering will be enabled. Filters allow sorting and filtering by column.</param>
         /// <param name="autoformat">Determines if auto-formatting will be enabled. 
         /// Strings values will be converted into basic types in order to remove the green arrow in Excel.</param>
-        /// <returns>True if successful, false if something went wrong.</returns>
-        private static bool WriteXlsx(Action<Excel.Spreadsheet> action, string path, bool hasHeaders, bool autofilter, bool autoformat)
+        private static void WriteXlsx(Action<Spreadsheet> action, string path, bool hasHeaders, bool autofilter, bool autoformat)
         {
-            try {
-                FileInfo fi = new FileInfo(path);
-                if (fi.Exists)
-                    fi.Delete();
-                using (Excel.Spreadsheet ss = new Excel.Spreadsheet(path)) {
-                    if (!ss.IsOpen)
-                        return false;
-                    action(ss);
-                    if (autofilter)
-                        ss.AutoFilter = true;
-                    if (autoformat)
-                        ss.AutoFormat();
-                    if (hasHeaders)
-                        ss.FreezePanes();
-                    ss.AutoFit();
-                    ss.BestFit = true;
-                    ss.Save();
-                }
-                return true;
+            FileInfo fi = new FileInfo(path);
+            if (fi.Exists)
+                fi.Delete();
+            using (Spreadsheet ss = new Spreadsheet(path)) {
+                if (!ss.IsOpen)
+                    throw new IOException(path);
+                action(ss);
+                if (autofilter)
+                    ss.AutoFilter = true;
+                if (autoformat)
+                    ss.AutoFormat();
+                if (hasHeaders)
+                    ss.FreezePanes();
+                ss.AutoFit();
+                ss.Save();
             }
-            catch (Exception ex) {
-                Console.Error.WriteLine("Error WriteXlsx({0}): {1}{2}", path ?? "null", ex.Message, ex.InnerException == null ? "" : "\n " + ex.InnerException);
-            }
-            return false;
         }
         #endregion
 
@@ -1195,27 +1065,17 @@ namespace Utilities
         /// <param name="inpath">The path of the input file.</param>
         /// <param name="outpath">The path to move the file to.</param>
         /// <param name="overwrite">Determines if the file should be overwritten if it already exists.</param>
-        /// <returns>True if the file was moved successfully, or false on error.</returns>
-        public static bool Move(string inpath, string outpath, bool overwrite = true)
+        public static void Move(string inpath, string outpath, bool overwrite = true)
         {
-            try {
-                FileInfo fi = new FileInfo(inpath);
-                if (!fi.Exists) {
-                    Console.Error.WriteLine("Error IO.Move({0}, {1}): File doesn't exist.", inpath ?? "null", outpath ?? "null");
-                    return false;
-                }
-                FileInfo fo = new FileInfo(outpath);
-                if (fo.Equals(fi))
-                    return true;
-                if (overwrite)
-                    File.Delete(outpath);
-                fi.MoveTo(outpath);
-                return true;
-            }
-            catch (Exception ex) {
-                Console.Error.WriteLine("Error IO.Move({0}, {1}): {2}", inpath ?? "null", outpath ?? "null", ex.Message);
-            }
-            return false;
+            FileInfo fi = new FileInfo(inpath);
+            if (!fi.Exists)
+                throw new FileNotFoundException(inpath);
+            FileInfo fo = new FileInfo(outpath);
+            if (fo.Equals(fi))
+                return;
+            if (overwrite)
+                File.Delete(outpath);
+            fi.MoveTo(outpath);
         }
 
         /// <summary>
@@ -1237,19 +1097,14 @@ namespace Utilities
         /// <returns>True if the file is available with the given file access. False otherwise.</returns>
         public static bool IsAvailable(FileInfo path, FileAccess access = FileAccess.Read)
         {
-            FileStream stream = null;
             try {
-                //check if File is accessible
-                stream = path.Open(FileMode.Open, access, FileShare.None);
+                FileStream stream = path.Open(FileMode.Open, access, FileShare.None);
+                stream.Close();
             }
             catch (IOException) {
                 return false; //not accessible
             }
-            finally {
-                if (stream != null)
-                    stream.Close();
-            }
-            return true; //file is available
+            return true;
         }
 
         /// <summary>

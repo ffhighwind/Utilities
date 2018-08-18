@@ -18,12 +18,12 @@ namespace Utilities
         private readonly string[] propertyNames;
         private readonly Type[] types;
         private readonly BitArray allowNull;
-        private object current;
+        private object current = null;
         private bool active = true;
         private const BindingFlags defaultFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly;
 
         /// <summary>
-        /// Creates a new ObjectReader instance for reading the supplied data
+        /// Creates a new ObjectReader instance for reading the supplied data.
         /// </summary>
         /// <param name="type">The expected Type of the information to be read</param>
         /// <param name="source">The sequence of objects to represent</param>
@@ -31,8 +31,7 @@ namespace Utilities
         public GenericDataReader(IEnumerable<T> source, BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly, params string[] members)
         {
             pinfos = typeof(T).GetProperties(flags);
-            this.enumerator = source.GetEnumerator();
-            this.current = null;
+            enumerator = source.GetEnumerator();
             propertyNames = new string[pinfos.Length];
             types = new Type[pinfos.Length];
             allowNull = new BitArray(pinfos.Length);
@@ -46,12 +45,13 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Creates a new ObjectReader instance for reading the supplied data
+        /// Creates a new ObjectReader instance for reading the supplied data.
         /// </summary>
         /// <param name="type">The expected Type of the information to be read</param>
         /// <param name="source">The sequence of objects to represent</param>
         /// <param name="members">The members that should be exposed to the reader</param>
-        public GenericDataReader(IEnumerable<T> source, params string[] members) : this(source, defaultFlags, members) { }
+        public GenericDataReader(IEnumerable<T> source, params string[] members) 
+            : this(source, defaultFlags, members) { }
 
         public override int Depth {
             get { throw new NotImplementedException(); }
@@ -63,20 +63,20 @@ namespace Utilities
             DataTable table = new DataTable {
                 Columns =
                 {
-                    {"ColumnOrdinal", typeof(int)},
-                    {"ColumnName", typeof(string)},
-                    {"DataType", typeof(Type)},
-                    {"ColumnSize", typeof(int)},
-                    {"AllowDBNull", typeof(bool)}
+                    { "ColumnOrdinal", typeof(int) },
+                    { "ColumnName", typeof(string) },
+                    { "DataType", typeof(Type) },
+                    { "ColumnSize", typeof(int) },
+                    { "AllowDBNull", typeof(bool) }
                 }
             };
             object[] rowData = new object[5];
             for (int i = 0; i < propertyNames.Length; i++) {
                 rowData[0] = i;
                 rowData[1] = propertyNames[i];
-                rowData[2] = types == null ? typeof(object) : types[i];
+                rowData[2] = types[i];
                 rowData[3] = -1;
-                rowData[4] = allowNull == null ? true : allowNull[i];
+                rowData[4] = allowNull[i];
                 table.Rows.Add(rowData);
             }
             return table;
@@ -102,16 +102,13 @@ namespace Utilities
         public override bool Read()
         {
             if (active) {
-                var tmp = enumerator;
-                if (tmp != null && tmp.MoveNext()) {
-                    current = tmp.Current;
+                if (enumerator != null && enumerator.MoveNext()) {
+                    current = enumerator.Current;
                     return true;
                 }
-                else {
-                    active = false;
-                }
+                active = false;
+                current = null;
             }
-            current = null;
             return false;
         }
 
@@ -130,9 +127,9 @@ namespace Utilities
         {
             active = false;
             current = null;
-            enumerator = null;
             if (enumerator is IDisposable tmp)
                 tmp.Dispose();
+            enumerator = null;
         }
 
         public override int FieldCount {
@@ -145,103 +142,103 @@ namespace Utilities
             }
         }
 
-        public override bool GetBoolean(int i)
+        public override bool GetBoolean(int ordinal)
         {
-            return (bool) this[i];
+            return (bool) this[ordinal];
         }
 
-        public override byte GetByte(int i)
+        public override byte GetByte(int ordinal)
         {
-            return (byte) this[i];
+            return (byte) this[ordinal];
         }
 
-        public override long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
+        public override long GetBytes(int ordinal, long dataOffset, byte[] buffer, int bufferOffset, int length)
         {
-            byte[] s = (byte[]) this[i];
-            int available = s.Length - (int) fieldOffset;
+            byte[] s = (byte[]) this[ordinal];
+            int available = s.Length - (int) dataOffset;
             if (available <= 0)
                 return 0;
 
             int count = Math.Min(length, available);
-            Buffer.BlockCopy(s, (int) fieldOffset, buffer, bufferoffset, count);
+            Buffer.BlockCopy(s, (int) dataOffset, buffer, bufferOffset, count);
             return count;
         }
 
-        public override char GetChar(int i)
+        public override char GetChar(int ordinal)
         {
-            return (char) this[i];
+            return (char) this[ordinal];
         }
 
-        public override long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
+        public override long GetChars(int ordinal, long dataOffset, char[] buffer, int bufferOffset, int length)
         {
-            string s = (string) this[i];
-            int available = s.Length - (int) fieldoffset;
+            string s = (string) this[ordinal];
+            int available = s.Length - (int) dataOffset;
             if (available <= 0)
                 return 0;
 
             int count = Math.Min(length, available);
-            s.CopyTo((int) fieldoffset, buffer, bufferoffset, count);
+            s.CopyTo((int) dataOffset, buffer, bufferOffset, count);
             return count;
         }
 
-        protected override DbDataReader GetDbDataReader(int i)
+        protected override DbDataReader GetDbDataReader(int ordinal)
         {
             throw new NotSupportedException();
         }
 
-        public override string GetDataTypeName(int i)
+        public override string GetDataTypeName(int ordinal)
         {
-            return types[i].Name;
+            return types[ordinal].Name;
         }
 
-        public override DateTime GetDateTime(int i)
+        public override DateTime GetDateTime(int ordinal)
         {
-            return (DateTime) this[i];
+            return (DateTime) this[ordinal];
         }
 
-        public override decimal GetDecimal(int i)
+        public override decimal GetDecimal(int ordinal)
         {
-            return (decimal) this[i];
+            return (decimal) this[ordinal];
         }
 
-        public override double GetDouble(int i)
+        public override double GetDouble(int ordinal)
         {
-            return (double) this[i];
+            return (double) this[ordinal];
         }
 
-        public override Type GetFieldType(int i)
+        public override Type GetFieldType(int ordinal)
         {
-            return types[i];
+            return types[ordinal];
         }
 
-        public override float GetFloat(int i)
+        public override float GetFloat(int ordinal)
         {
-            return (float) this[i];
+            return (float) this[ordinal];
         }
 
-        public override Guid GetGuid(int i)
+        public override Guid GetGuid(int ordinal)
         {
-            return (Guid) this[i];
+            return (Guid) this[ordinal];
         }
 
-        public override short GetInt16(int i)
+        public override short GetInt16(int ordinal)
         {
-            return (short) this[i];
+            return (short) this[ordinal];
         }
 
-        public override int GetInt32(int i)
+        public override int GetInt32(int ordinal)
         {
-            return (int) this[i];
+            return (int) this[ordinal];
         }
 
-        public override long GetInt64(int i)
+        public override long GetInt64(int ordinal)
         {
-            return (long) this[i];
+            return (long) this[ordinal];
         }
 
-        public override string GetName(int i)
+        public override string GetName(int ordinal)
         {
-            return propertyNames[i];
+            return propertyNames[ordinal];
         }
 
         public override int GetOrdinal(string name)
@@ -249,14 +246,14 @@ namespace Utilities
             return Array.IndexOf(propertyNames, name);
         }
 
-        public override string GetString(int i)
+        public override string GetString(int ordinal)
         {
-            return (string) this[i];
+            return (string) this[ordinal];
         }
 
-        public override object GetValue(int i)
+        public override object GetValue(int ordinal)
         {
-            return this[i];
+            return this[ordinal];
         }
 
         public override IEnumerator GetEnumerator() => new DbEnumerator(this);
@@ -268,9 +265,9 @@ namespace Utilities
             return propertyNames.Length;
         }
 
-        public override bool IsDBNull(int i)
+        public override bool IsDBNull(int ordinal)
         {
-            return this[i] is DBNull;
+            return this[ordinal] == DBNull.Value;
         }
 
         public override object this[string name] {
@@ -278,9 +275,6 @@ namespace Utilities
 
         }
 
-        /// <summary>
-        /// Gets the value of the current object in the member specified
-        /// </summary>
         public override object this[int i] {
             get { return pinfos[i].GetValue(current) ?? DBNull.Value; }
         }

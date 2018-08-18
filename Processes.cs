@@ -34,7 +34,6 @@ namespace Utilities
             return null; //EXIT_FAILURE
         }
 
-
         /// <summary>
         /// Executes a command from the command-line and asynchronously.
         /// </summary>
@@ -74,30 +73,20 @@ namespace Utilities
         {
             if (!IsAdministrator) {
                 try {
-                    string arg = string.Empty;
-                    if (args == null)
-                        arg = string.Empty;
-                    else {
-                        for (int i = 0; i < args.Length; i++) {
-                            arg = "\"" + args[i] + "\" ";
-                        }
-                    }
-                    var info = new ProcessStartInfo(
+                    ProcessStartInfo info = new ProcessStartInfo(
                         Assembly.GetEntryAssembly().Location, args == null ? "" : "\"" + string.Join("\" \"", args) + "\"") {
                         Verb = "runas", // indicates to elevate privileges
                     };
-
-                    var process = new Process {
+                    Process process = new Process {
                         EnableRaisingEvents = true, // enable WaitForExit()
                         StartInfo = info
                     };
-
                     if (process.Start())
                         process.WaitForExit(); // sleep calling process thread until evoked process exit
                     System.Environment.Exit(process.ExitCode);
                 }
                 catch (Exception ex) {
-                    Console.Error.WriteLine("Error RunAsAdmin: " + ex.Message);
+                    Console.Error.WriteLine("Error ForceAdmin: " + ex.Message);
                 }
                 System.Environment.Exit(1);
             }
@@ -127,18 +116,16 @@ namespace Utilities
         {
             List<string> expanded = new List<string>();
             foreach (string path in paths) {
-                if (skipIfStartsWith.Contains(path[0]))
-                    continue;
-                else if (File.Exists(path))
-                    expanded.Add(path);
-                else if (Directory.Exists(path)) {
-                    if (includeDirs) {
+                if (!skipIfStartsWith.Contains(path[0])) {
+                    if (File.Exists(path))
                         expanded.Add(path);
-                        continue;
+                    else if (Directory.Exists(path)) {
+                        if (includeDirs)
+                            expanded.Add(path);
                     }
+                    else
+                        expanded.AddRange(ExpandPath(path, includeDirs, expandEnvVars));
                 }
-                else
-                    expanded.AddRange(ExpandPath(path, includeDirs, expandEnvVars));
             }
             return expanded;
         }

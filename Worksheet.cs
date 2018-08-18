@@ -14,7 +14,7 @@ namespace Utilities.Excel
     public class Worksheet
     {
         private const int MAX_DATEONLY_ROWS_COUNT = 15;
-        private const string currencySymbols = "$£¥€¢";
+        private const string CURRENCY_SYMBOLS = "$£¥€¢";
         //private const string currencySymbols = "$¥₤€£฿₿₵¢₡₫₲₱₽₮₩₸₳ℳ₹؋₼﷼₪₭₴";
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace Utilities.Excel
         /// </summary>
         public void FreezePanes()
         {
-            this.Data.View.FreezePanes(2, 1);
+            Data.View.FreezePanes(2, 1);
         }
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace Utilities.Excel
         /// <param name="rows">The rows to freeze (0-Rows).</param>
         public void FreezePanes(int rows, int cols)
         {
-            this.Data.View.FreezePanes(rows + 1, cols + 1);
+            Data.View.FreezePanes(rows + 1, cols + 1);
         }
 
         /// <summary>
@@ -336,12 +336,8 @@ namespace Utilities.Excel
         /// The name of the Worksheet.
         /// </summary>
         public string Name {
-            get {
-                return Data.Name;
-            }
-            set {
-                Data.Name = value;
-            }
+            get => Data.Name;
+            set => Data.Name = value;
         }
 
         /// <summary>
@@ -397,20 +393,10 @@ namespace Utilities.Excel
         /// <summary>
         /// Resizes the columns to fit the data. Cells with wrapped text and formulas are not counted for this.
         /// </summary>
-        public void AutoFit()
+        /// <param name="minimumWidth">The minimum width of all columns.</param>
+        public void AutoFit(double minimumWidth = 0)
         {
-            Data.Cells.AutoFitColumns(0);
-        }
-
-        /// <summary>
-        /// Hint to Excel to constantly resize the columns so that they fit the data.
-        /// </summary>
-        public bool BestFit {
-            set {
-                for (int col = 1; col <= Data.Dimension.Columns; col++) {
-                    Data.Column(col).BestFit = value;
-                }
-            }
+            Data.Cells.AutoFitColumns(minimumWidth);
         }
 
         /// <summary>
@@ -435,48 +421,32 @@ namespace Utilities.Excel
         /// Auto-filtering for all columns in the Worksheet. This allows sorting and filtering of data.
         /// </summary>
         public bool AutoFilter {
-            get {
-                return Data.Cells[Data.Dimension.Address].AutoFilter;
-            }
-            set {
-                Data.Cells[Data.Dimension.Address].AutoFilter = value;
-            }
+            get => Data.Cells[Data.Dimension.Address].AutoFilter;
+            set => Data.Cells[Data.Dimension.Address].AutoFilter = value;
         }
 
         /// <summary>
         /// Text wrapping to all cells in the Worksheet. This can be used with AutoFit for best results.
         /// </summary>
         public bool WrapText {
-            get {
-                return Data.Cells[Data.Dimension.Address].Style.WrapText;
-            }
-            set {
-                Data.Cells[Data.Dimension.Address].Style.WrapText = value;
-            }
+            get => Data.Cells[Data.Dimension.Address].Style.WrapText;
+            set => Data.Cells[Data.Dimension.Address].Style.WrapText = value;
         }
 
         /// <summary>
         /// Determines if the Worksheet is hidden.
         /// </summary>
         public bool Hidden {
-            get {
-                return Data.Hidden != eWorkSheetHidden.Visible;
-            }
-            set {
-                Data.Hidden = value ? eWorkSheetHidden.Visible : eWorkSheetHidden.Hidden;
-            }
+            get => Data.Hidden != eWorkSheetHidden.Visible;
+            set => Data.Hidden = value ? eWorkSheetHidden.Visible : eWorkSheetHidden.Hidden;
         }
 
         /// <summary>
         /// Color for the Worksheet tab.
         /// </summary>
         public System.Drawing.Color TabColor {
-            get {
-                return Data.TabColor;
-            }
-            set {
-                Data.TabColor = value;
-            }
+            get => Data.TabColor;
+            set => Data.TabColor = value;
         }
 
         /// <summary>
@@ -599,7 +569,7 @@ namespace Utilities.Excel
                         while (i < numfmt.Length && numfmt[i] != ']')
                             i++;
                     }
-                    else if (ch == '%' || currencySymbols.Contains(ch))
+                    else if (ch == '%' || CURRENCY_SYMBOLS.Contains(ch))
                         isDecimal = true;
                     //else if (ch == '@')
                     //    return typeof(string);
@@ -624,11 +594,10 @@ namespace Utilities.Excel
         /// <returns>The modified DataTable.</returns>
         public DataTable ToDataTable(DataTable table, bool hasHeaders = true)
         {
-            int maxRow = Rows + 1;
-            int maxCol = Columns + 1;
+            int maxRow = Rows;
+            int maxCol = Columns;
             if (table.Columns.Count == 0) {
-                string[] headers = new string[maxCol];
-                for (int col = 1; col < maxCol; col++) {
+                for (int col = 1; col <= maxCol; col++) {
                     Type ty = ColumnType(col);
                     string header = hasHeaders ? Data.Cells[1, col].Value?.ToString() : "Column" + col;
                     table.Columns.Add(header ?? new string(' ', col), ty);
@@ -637,30 +606,29 @@ namespace Utilities.Excel
             else if (table.Columns.Count != Columns)
                 return null;
 
-            for (int row = hasHeaders ? 2 : 1; row < maxRow; row++) {
+            List<Type> colTypes = table.Columns.Cast<DataColumn>().Select(col => col.DataType).ToList();
+            for (int row = hasHeaders ? 2 : 1; row <= maxRow; row++) {
                 DataRow newRow = table.NewRow();
                 for (int col = 1; col < maxCol; col++) {
-                    Type colType = table.Columns[col - 1].DataType;
-                    if (Data.Cells[row, col].Value == null)
-                        continue;// newRow[col - 1] = DBNull.Value;
-                    else if (colType == typeof(string))
-                        newRow[col - 1] = Data.Cells[row, col].Value.ToString();
-                    else {
+                    Type colType = colTypes[col];
+                    ExcelRangeBase cell = Data.Cells[row, col];
+                    if (colType == typeof(string))
+                        newRow[col] = cell.Text;
+                    else if(cell.Value != null) {
                         try {
-                            if (Data.Cells[row, col].Value == null)
-                                continue;
-                            else if (colType.IsIntegral())
-                                newRow[col - 1] = Data.Cells[row, col].GetValue<long>();
+                            if (colType.IsIntegral())
+                                newRow[col - 1] = cell.GetValue<long>();
                             else if (colType.IsFloatingPoint())
-                                newRow[col - 1] = Data.Cells[row, col].GetValue<decimal>();
+                                newRow[col - 1] = cell.GetValue<decimal>();
                             else if (colType == typeof(DateTime) || colType == typeof(DateTimeOffset))
-                                newRow[col - 1] = Data.Cells[row, col].GetValue<DateTime>();
+                                newRow[col - 1] = cell.GetValue<DateTime>();
                             else if (colType == typeof(TimeSpan))
-                                newRow[col - 1] = Data.Cells[row, col].GetValue<TimeSpan>();
+                                newRow[col - 1] = cell.GetValue<TimeSpan>();
                             else
-                                newRow[col - 1] = Data.Cells[row, col].Value;
+                                newRow[col - 1] = cell.Value;
                         }
-                        catch { }
+                        catch { //ignore
+                        }
                     }
                 }
                 table.Rows.Add(newRow);
@@ -777,8 +745,7 @@ namespace Utilities.Excel
         /// <returns>The result of the string being parsed.</returns>
         private static object Parse(ExcelRange cell)
         {
-            string str = cell.Value as string;
-            if (str == null)
+            if (!(cell.Value is string str))
                 return null;
             string str2 = str.Trim();
             if (str2.Length == 0)
@@ -794,7 +761,7 @@ namespace Utilities.Excel
                     }
                     return str;
                 }
-                if (currencySymbols.Contains(last)) {
+                if (CURRENCY_SYMBOLS.Contains(last)) {
                     if (Decimal.TryParse(str.Substring(0, str.Length - 1), out decimal d)) {
                         cell.Style.Numberformat.Format = "0.00" + last;
                         return d;
@@ -838,7 +805,7 @@ namespace Utilities.Excel
                     return ival;
                 }
             }
-            else if (currencySymbols.Contains(c)) {
+            else if (CURRENCY_SYMBOLS.Contains(c)) {
                 if (Decimal.TryParse(str.Substring(1), out decimal d)) {
                     cell.Style.Numberformat.Format = c + "0.00";
                     return d;

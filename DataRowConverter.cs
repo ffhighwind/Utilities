@@ -35,21 +35,20 @@ namespace Utilities
 
         public static DataRowConverter<T> Create(DataRow row)
         {
-            PropertyInfo[] pinfos = typeof(T).GetProperties(flags);
-            return new DataRowConverter<T>(row, pinfos);
+            return new DataRowConverter<T>(row, typeof(T).GetProperties(flags));
         }
 
         public static DataRowConverter<T> Create(DataTable table, bool matchnames = true)
         {
-            PropertyInfo[] pinfos = typeof(T).GetProperties(flags);
-            if (matchnames && pinfos.Length == table.Columns.Count) {
+            PropertyInfo[] props = typeof(T).GetProperties(flags);
+            if (matchnames && props.Length == table.Columns.Count) {
                 for (int col = 0; col < table.Columns.Count; col++) {
-                    if (pinfos[col].Name != table.Columns[col].ColumnName) {
-                        return new DataRowNameConverter(table, pinfos);
+                    if (props[col].Name != table.Columns[col].ColumnName) {
+                        return new DataRowNameConverter(table, props);
                     }
                 }
             }
-            return new DataRowConverter<T>(table, pinfos);
+            return new DataRowConverter<T>(table, props);
         }
 
         public IEnumerable<T> Convert(DataTable table)
@@ -77,7 +76,7 @@ namespace Utilities
 
         private class DataRowNameConverter : DataRowConverter<T>
         {
-            private int[] drIndexes;
+            private readonly int[] drIndexes;
 
             public DataRowNameConverter(DataTable table, PropertyInfo[] pinfos)
             {

@@ -47,11 +47,8 @@ namespace Utilities
                 if (double.TryParse(diffstr, out diff))
                     diff = -(diff + 6 + (IsDaylightSavings ? 1 : 0));
             }
-            else {
-                if (timezone == null)
-                    throw new ArgumentNullException("timezone");
+            else
                 throw new InvalidTimeZoneException(timezone + " is not a valid timezone.");
-            }
             return diff;
         }
 
@@ -76,7 +73,7 @@ namespace Utilities
                     break;
                 default:
                     if (mstdiff < -13 || mstdiff > 24)
-                        throw new ArgumentOutOfRangeException("mstdiff", "Value must be between -12 and 24");
+                        throw new ArgumentOutOfRangeException(nameof(mstdiff), "Value must be between -12 and 24");
                     int utcdiff = ((mstdiff + 24 + 6 + (IsDaylightSavings ? 1 : 0)) % 24) - 12;
                     timezone = string.Format("UTC{0}", utcdiff);
                     break;

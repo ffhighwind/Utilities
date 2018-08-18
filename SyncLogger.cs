@@ -7,7 +7,7 @@ namespace Utilities.Log
     public class SyncLogger : ILogger
     {
         private readonly Object l = new object();
-        private Logger logger = new Logger();
+        private readonly Logger logger = new Logger();
 
         public SyncLogger() { }
 
@@ -19,7 +19,7 @@ namespace Utilities.Log
         public static SyncLogger Instance { get; } = new SyncLogger(Console.Error);
 
         public LogStyle DefaultStyle {
-            get { return logger.DefaultStyle; }
+            get => logger.DefaultStyle;
             set {
                 lock (l) {
                     logger.DefaultStyle = value;
@@ -28,7 +28,7 @@ namespace Utilities.Log
         }
 
         public LogAction CustomStyle {
-            get { return logger.CustomStyle; }
+            get => logger.CustomStyle;
             set {
                 lock (l) {
                     logger.CustomStyle = value;
