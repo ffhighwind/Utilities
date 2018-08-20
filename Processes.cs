@@ -15,23 +15,24 @@ namespace Utilities
         /// </summary>
         /// <param name="path">The path of the executable.</param>
         /// <param name="args">The arguments to pass to the executable.</param>
+        /// <param name="redirectOutput">Determines if output should be redirected.
+        /// This enables reading from the process's standard input and error.</param>
+        /// <param name="maxWaitMillis">The maximum number of milliseconds to wait. Negative numbers mean infinite.</param>
         /// <param name="showWindow">Determines if the console window is shown.</param>
-        /// <param name="redirectOutput"></param>
-        /// <param name="maxWaitMilis">The maximum number of miliseconds to wait. Negative numbers mean infinite.</param>
         /// <returns>The process that ran the command or null on error.</returns>
-        public static Process Exec(string path, string args = "", bool showWindow = false, bool redirectOutput = false, int maxWaitMilis = -1)
+        public static Process Exec(string path, string args = "", bool redirectOutput = false, int maxWaitMillis = -1, bool showWindow = false)
         {
             try {
-                Process proc = ExecAsync(path, args, showWindow, redirectOutput);
+                Process proc = ExecAsync(path, args, redirectOutput, showWindow);
                 if (proc != null) {
-                    proc.WaitForExit(maxWaitMilis);
+                    proc.WaitForExit(maxWaitMillis);
                     return proc;
                 }
             }
             catch (Exception ex) {
                 Console.Error.WriteLine(ex.Message);
             }
-            return null; //EXIT_FAILURE
+            return null; // EXIT_FAILURE
         }
 
         /// <summary>
@@ -39,30 +40,26 @@ namespace Utilities
         /// </summary>
         /// <param name="path">The path of the executable.</param>
         /// <param name="args">The arguments to pass to the executable.</param>
+        /// <param name="redirectOutput">Determines if output should be redirected.
+        /// This enables reading from the process's standard input and error.</param>
         /// <param name="showWindow">Determines if the console window is shown.</param>
-        /// <param name="redirectOutput"></param>
-        /// <returns>The process that ran the command or null on error.</returns>
-        public static Process ExecAsync(string path, string args = "", bool showWindow = false, bool redirectOutput = false)
+        /// <returns>The process that ran the command.</returns>
+        public static Process ExecAsync(string path, string args = "", bool redirectOutput = false, bool showWindow = false)
         {
-            try {
-                ProcessStartInfo proc = new ProcessStartInfo();
-                if (!showWindow) {
-                    proc.WindowStyle = ProcessWindowStyle.Hidden;
-                    proc.CreateNoWindow = !showWindow;
-                }
-                proc.UseShellExecute = false;
-                proc.RedirectStandardOutput = redirectOutput; //allows you to read from the process's stdoutput
-                proc.FileName = path;
-                proc.Arguments = args;
-                //proc.FileName = @"C:\Windows\System32\cmd.exe";
-                //proc.Arguments = "/C " + command; // /C terminates the process when it's done executing the command
-                //proc.WorkingDirectory = Directory.GetCurrentDirectory();
-                return Process.Start(proc);
+            ProcessStartInfo proc = new ProcessStartInfo();
+            if (!showWindow) {
+                proc.WindowStyle = ProcessWindowStyle.Hidden;
+                proc.CreateNoWindow = true;
             }
-            catch (Exception ex) {
-                Console.Error.WriteLine(ex.Message);
-                return null;
-            }
+            proc.UseShellExecute = false;
+            proc.RedirectStandardOutput = redirectOutput; // allows you to read from the process's stdoutput
+            proc.RedirectStandardError = redirectOutput;
+            proc.FileName = path;
+            proc.Arguments = args;
+            ////proc.FileName = @"C:\Windows\System32\cmd.exe";
+            ////proc.Arguments = "/C " + command; // /C terminates the process when it's done executing the command
+            ////proc.WorkingDirectory = Directory.GetCurrentDirectory();
+            return Process.Start(proc);
         }
 
         /// <summary>
@@ -72,39 +69,29 @@ namespace Utilities
         public static void ForceAdmin(string[] args = null)
         {
             if (!IsAdministrator) {
-                try {
-                    ProcessStartInfo info = new ProcessStartInfo(
-                        Assembly.GetEntryAssembly().Location, args == null ? "" : "\"" + string.Join("\" \"", args) + "\"") {
-                        Verb = "runas", // indicates to elevate privileges
-                    };
-                    Process process = new Process {
-                        EnableRaisingEvents = true, // enable WaitForExit()
-                        StartInfo = info
-                    };
-                    if (process.Start())
-                        process.WaitForExit(); // sleep calling process thread until evoked process exit
-                    System.Environment.Exit(process.ExitCode);
-                }
-                catch (Exception ex) {
-                    Console.Error.WriteLine("Error ForceAdmin: " + ex.Message);
-                }
-                System.Environment.Exit(1);
+                ProcessStartInfo info = new ProcessStartInfo(
+                    Assembly.GetEntryAssembly().Location, args == null ? "" : "\"" + string.Join("\" \"", args) + "\"") {
+                    Verb = "runas", // indicates to elevate privileges
+                };
+                Process process = new Process {
+                    EnableRaisingEvents = true, // enable WaitForExit()
+                    StartInfo = info
+                };
+                if (process.Start())
+                    process.WaitForExit(); // sleep calling process thread until evoked process exit
+                System.Environment.Exit(process.ExitCode);
             }
         }
 
         /// <summary>
         /// Determines if the current process is an Administrator.
         /// </summary>
-        public static bool IsAdministrator {
-            get {
-                return (new WindowsPrincipal(WindowsIdentity.GetCurrent()))
-                          .IsInRole(WindowsBuiltInRole.Administrator);
-            }
-        }
+        public static bool IsAdministrator => new WindowsPrincipal(WindowsIdentity.GetCurrent())
+            .IsInRole(WindowsBuiltInRole.Administrator);
 
         #region Arguments
         /// <summary>
-        /// Expands the wildcards (? and *) and environment variables (%var%) in a list of paths. 
+        /// Expands the wildcards (? and *) and environment variables (%var%) in a list of paths.
         /// Paths to files and directories that match the search pattern will be returned including paths that are skipped.
         /// </summary>
         /// <param name="paths">The paths to expand.</param>
@@ -131,18 +118,17 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Expands the wildcards (? and *) and environment variables (%var%) in a path. 
+        /// Expands the wildcards (? and *) and environment variables (%var%) in a path.
         /// Paths that match the search pattern will be returned.
         /// </summary>
         /// <param name="path">The path to expand. This can include wildcards (* ?) and environment variables (%var%).</param>
-        /// <param name="skipIfStartsWith">If an argument starts with any of these characters then it will not be expanded.</param>
         /// <param name="includeDirs">Determines if directories matching the search pattern</param>
         /// <param name="expandEnvVars">Determines if environment variables should be expanded (%var)%.</param>
         /// <returns>The paths of file system entries that match the search pattern.</returns>
         public static List<string> ExpandPath(string path, bool includeDirs = true, bool expandEnvVars = true)
         {
             string envExpanded = expandEnvVars ? Environment.ExpandEnvironmentVariables(path) : path;
-            //skip initial slashes in case it's a network drive.
+            // skip initial slashes in case it's a network drive.
             string[] pathParts = SplitPath(envExpanded);
             List<DirectoryInfo> dirs = GetDirectories(pathParts);
             string pattern = pathParts.Last();
@@ -167,10 +153,10 @@ namespace Utilities
             return results;
         }
 
-        private static char[] dirSeparators = new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
+        private static readonly char[] DirSeparators = new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
 
         /// <summary>
-        /// Splits a path by the '\'. Special case for network drives that start with '\\'.
+        /// Splits a path by directory separators \ and / so that they can be iterated. Network drives starting with \\ are split after these characters.
         /// </summary>
         /// <param name="path">The path to split.</param>
         /// <returns>An array of path parts.</returns>
@@ -182,26 +168,28 @@ namespace Utilities
                 List<string> pathParts = new List<string>();
                 int indexOfSep;
                 if (path.Length > 1 && (path[1] == Path.DirectorySeparatorChar || path[1] == Path.AltDirectorySeparatorChar)) {
-                    indexOfSep = path.IndexOfAny(dirSeparators, 2);
+                    indexOfSep = path.IndexOfAny(DirSeparators, 2);
                     if (indexOfSep > 2)
-                        indexOfSep = path.IndexOfAny(dirSeparators, indexOfSep + 1);
+                        indexOfSep = path.IndexOfAny(DirSeparators, indexOfSep + 1);
                 }
                 else
-                    indexOfSep = path.IndexOfAny(dirSeparators, 1);
+                    indexOfSep = path.IndexOfAny(DirSeparators, 1);
                 if (indexOfSep > 0) {
                     pathParts.Add(path.Substring(0, indexOfSep));
-                    pathParts.AddRange(path.Substring(indexOfSep + 1).Split(dirSeparators));
+                    pathParts.AddRange(path.Substring(indexOfSep + 1).Split(DirSeparators));
                     return pathParts.ToArray();
                 }
                 else
                     return new string[] { path };
             }
-            return path.Split(dirSeparators);
+            return path.Split(DirSeparators);
         }
 
         /// <summary>
-        /// Gets a list of directories matching a search pattern.
+        /// Gets a List of directories matching a search pattern.
         /// </summary>
+        /// <param name="pathParts">The path parts returned by <see cref="SplitPath"/>.</param>
+        /// <returns>A List of directories matching the search pattern.</returns>
         private static List<DirectoryInfo> GetDirectories(string[] pathParts)
         {
             List<DirectoryInfo> infos = new List<DirectoryInfo>();
@@ -215,8 +203,12 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Recursively gets a list of directories matching a search pattern.
+        /// Recursively gets a List of directories matching a search pattern.
         /// </summary>
+        /// <param name="dir">The directory to match from.</param>
+        /// <param name="pathParts">The path parts returned by <see cref="SplitPath"/></param>
+        /// <param name="index">The index into path parts.</param>
+        /// <param name="infos">The directories to append to.</param>
         private static void GetDirectories(DirectoryInfo dir, string[] pathParts, int index, List<DirectoryInfo> infos)
         {
             if (index < pathParts.Length - 1) {

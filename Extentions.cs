@@ -8,17 +8,20 @@ using System.Text;
 
 namespace Utilities
 {
+    /// <summary>
+    /// Extensions utility class.
+    /// </summary>
     public static class Extensions
     {
         #region DataTable Sort/Distinct
         /// <summary>
-        /// Removes duplicate rows from a DataTable.
+        /// Removes duplicate rows from a <see cref="DataTable"/>.
         /// </summary>
-        /// <param name="table">The DataTable to remove duplicates from.</param>
-        /// <returns>The rows with duplicates removed.</returns>
+        /// <param name="table">The <see cref="DataTable"/> to remove duplicates from.</param>
+        /// <returns>The <see cref="DataTable"/>.</returns>
         public static DataTable Distinct(this DataTable table)
         {
-            List<object[]> result = table.AsEnumerable().Distinct(DataRowEqualityComparer<DataRow>.Default).Select(row => row.ItemArray).ToList();
+            List<object[]> result = table.AsEnumerable().Distinct(DataRowEqualityComparer.Default).Select(row => row.ItemArray).ToList();
             table.Clear();
             foreach (object[] objs in result)
                 table.Rows.Add(objs);
@@ -26,11 +29,11 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Removes duplicate rows from a DataTable.
+        /// Removes duplicate rows from a <see cref="DataTable"/>.
         /// </summary>
-        /// <param name="table">The DataTable to remove duplicates from.</param>
+        /// <param name="table">The <see cref="DataTable"/> to remove duplicates from.</param>
         /// <param name="columns">The columns to select on.</param>
-        /// <returns>The datatable with duplicates removed.</returns>
+        /// <returns>The <see cref="DataTable"/>.</returns>
         public static DataTable Distinct(this DataTable table, params string[] columns)
         {
             int[] columnIndexes = table.Columns.Cast<DataColumn>().AsEnumerable().Where(col => columns.Contains(col.ColumnName)).Select(col => col.Ordinal).ToArray();
@@ -38,14 +41,14 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Removes duplicate rows from a DataTable.
+        /// Removes duplicate rows from a <see cref="DataTable"/>.
         /// </summary>
-        /// <param name="table">The DataTable to remove duplicates from.</param>
+        /// <param name="table">The <see cref="DataTable"/> to remove duplicates from.</param>
         /// <param name="columns">The columns to select on.</param>
-        /// <returns>The datatable with duplicates removed.</returns>
+        /// <returns>The <see cref="DataTable"/>.</returns>
         public static DataTable Distinct(this DataTable table, params int[] columns)
         {
-            List<object[]> rows = table.AsEnumerable().Distinct(DataRowEqualityComparer<DataRow>.Create(columns)).Select(row => row.ItemArray).ToList();
+            List<object[]> rows = table.AsEnumerable().Distinct(DataRowEqualityComparer.Create(columns)).Select(row => row.ItemArray).ToList();
             table.Clear();
             foreach (object[] row in rows) {
                 table.Rows.Add(row);
@@ -54,30 +57,32 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Sorts a DataTable.
+        /// Sorts a <see cref="DataTable"/>.
         /// </summary>
-        /// <param name="table">The DataTable to sort.</param>
-        /// <returns>The sorted rows.</returns>
+        /// <param name="table">The <see cref="DataTable"/> to sort.</param>
+        /// <returns>The <see cref="DataTable"/>.</returns>
         public static DataTable Sort(this DataTable table)
         {
             return Sort(table, 0);
         }
 
         /// <summary>
-        /// Sorts a DataTable.
+        /// Sorts a <see cref="DataTable"/>.
         /// </summary>
-        /// <param name="table">The DataTable to sort.</param>
-        /// <returns>The sorted rows.</returns>
+        /// <param name="table">The <see cref="DataTable"/> to sort.</param>
+        /// <returns>The <see cref="DataTable"/>.</returns>
         public static DataTable SortDescending(this DataTable table)
         {
             return SortDescending(table, 0);
         }
 
         /// <summary>
-        /// Sorts rows in a DataTable.
+        /// Sorts a <see cref="DataTable"/>.
         /// </summary>
-        /// <param name="table">The DataTable to sort.</param>
-        /// <returns>The sorted rows.</returns>
+        /// <param name="table">The <see cref="DataTable"/> to sort.</param>
+        /// <param name="column">The first column index to sort by.</param>
+        /// <param name="columns">The next columns indexes to sort by.</param>
+        /// <returns>The <see cref="DataTable"/>.</returns>
         public static DataTable Sort(this DataTable table, int column, params int[] columns)
         {
             List<object[]> rows = table.AsEnumerable().Select(row => row.ItemArray).OrderBy(row => row[column]).ToList();
@@ -91,10 +96,12 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Sorts rows in a DataTable.
+        /// Sorts a <see cref="DataTable"/>.
         /// </summary>
-        /// <param name="table">The DataTable to sort.</param>
-        /// <returns>The sorted rows.</returns>
+        /// <param name="table">The <see cref="DataTable"/> to sort.</param>
+        /// <param name="column">The first column name to sort by.</param>
+        /// <param name="columns">The next column names to sort by.</param>
+        /// <returns>The <see cref="DataTable"/>.</returns>
         public static DataTable Sort(this DataTable table, string column, params string[] columns)
         {
             int index = table.Columns[column].Ordinal;
@@ -110,10 +117,12 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Sorts rows in a DataTable.
+        /// Sorts a <see cref="DataTable"/>.
         /// </summary>
-        /// <param name="table">The DataTable to sort.</param>
-        /// <returns>The sorted rows.</returns>
+        /// <param name="table">The <see cref="DataTable"/> to sort.</param>
+        /// <param name="column">The first column index to sort by.</param>
+        /// <param name="columns">The next columns indexes to sort by.</param>
+        /// <returns>The <see cref="DataTable"/>.</returns>
         public static DataTable SortDescending(this DataTable table, int column, params int[] columns)
         {
             List<object[]> rows = table.AsEnumerable().Select(row => row.ItemArray).OrderByDescending(row => row[column]).ToList();
@@ -127,10 +136,12 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Sorts rows in a DataTable.
+        /// Sorts a <see cref="DataTable"/>.
         /// </summary>
-        /// <param name="table">The DataTable to sort.</param>
-        /// <returns>The sorted rows.</returns>
+        /// <param name="table">The <see cref="DataTable"/> to sort.</param>
+        /// <param name="column">The first column name to sort by.</param>
+        /// <param name="columns">The next column names to sort by.</param>
+        /// <returns>The <see cref="DataTable"/>.</returns>
         public static DataTable SortDescending(this DataTable table, string column, params string[] columns)
         {
             int index = table.Columns[column].Ordinal;
@@ -148,35 +159,35 @@ namespace Utilities
 
         #region DataTable/Enumerable/Collection
         /// <summary>
-        /// Iterates a list and performs an action for each element.
+        /// Enumerates an <see cref="IEnumerable{T}"/> and performs an <see cref="Action"/> for each element.
         /// </summary>
-        /// <typeparam name="T">The Type of object in the list.</typeparam>
-        /// <param name="enumeration">The enumerable list.</param>
-        /// <param name="action">The action to perform.</param>
-        public static void ForEach<T>(this IEnumerable<T> enumeration, Action<T> action)
+        /// <typeparam name="T">The <see cref="Type"/> of object in the <see cref="IEnumerable{T}"/>.</typeparam>
+        /// <param name="list">The <see cref="IEnumerable{T}"/>.</param>
+        /// <param name="action">The <see cref="Action"/>.</param>
+        public static void ForEach<T>(this IEnumerable<T> list, Action<T> action)
         {
-            foreach (T item in enumeration) {
+            foreach (T item in list) {
                 action(item);
             }
         }
 
         /// <summary>
-        /// Determines if the enumerable list has at least some number of elements.
+        /// Determines if an <see cref="IEnumerable{T}"/> has at least a certain number of elements.
         /// </summary>
-        /// <typeparam name="T">Tye type of the enumerable list.</typeparam>
-        /// <param name="list">The enumerable list of objects.</param>
-        /// <param name="count">The minimum number of elements in the enumerable list.</param>
-        /// <returns>True if there is at least the specified number of elements in the list. False otherwise.</returns>
+        /// <typeparam name="T">The <see cref="Type"/> of object in the <see cref="IEnumerable{T}"/>.</typeparam>
+        /// <param name="list">The <see cref="IEnumerable{T}"/> of objects.</param>
+        /// <param name="count">The minimum number of elements in the <see cref="IEnumerable{T}"/>.</param>
+        /// <returns>True if there is at least the specified number of elements in the <see cref="IEnumerable{T}"/>. False otherwise.</returns>
         public static bool CountAtLeast<T>(this IEnumerable<T> list, int count)
         {
             return count >= 1 && list.Skip(count - 1).Any();
         }
 
         /// <summary>
-        /// Trims the rightmost empty columns from the DataTable.
+        /// Trims the rightmost empty columns from a <see cref="DataTable"/>.
         /// </summary>
-        /// <param name="table">The DataTable to trim.</param>
-        /// <returns>The trimmed DataTable.</returns>
+        /// <param name="table">The <see cref="DataTable"/> to trim.</param>
+        /// <returns>The <see cref="DataTable"/>.</returns>
         public static DataTable TrimColumns(this DataTable table)
         {
             int rows = table.Rows.Count;
@@ -201,10 +212,10 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Trims the empty rows at the end of each DataTable in the DataSet.
+        /// Trims the empty rows at the end of each <see cref="DataTable"/> in a <see cref="DataSet"/>.
         /// </summary>
-        /// <param name="dataset">The DataSet to trim.</param>
-        /// <returns>The trimmed DataSet.</returns>
+        /// <param name="dataset">The <see cref="DataSet"/> to trim.</param>
+        /// <returns>The <see cref="DataSet"/>.</returns>
         public static DataSet Trim(this DataSet dataset)
         {
             foreach (DataTable table in dataset.Tables) {
@@ -214,10 +225,10 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Trims the empty rows at the end of the DataTable.
+        /// Trims the empty rows at the end of a <see cref="DataTable"/>.
         /// </summary>
-        /// <param name="table">The DataTable to trim.</param>
-        /// <returns>The trimmed DataTable.</returns>
+        /// <param name="table">The <see cref="DataTable"/> to trim.</param>
+        /// <returns>The <see cref="DataTable"/>.</returns>
         public static DataTable Trim(this DataTable table)
         {
             int cols = table.Columns.Count;
@@ -235,63 +246,65 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Converts the Enumerable list to a DataTable.
+        /// Converts a <see cref="IEnumerable{T}"/> to a <see cref="DataTable"/>.
         /// </summary>
-        /// <typeparam name="T">The Type of the collection.</typeparam>
-        /// <param name="dataTable">The DataTable to modify.</param>
-        /// <param name="list">The list to read data from.</param>
-        /// <returns>The modified DataTable.</returns>
-        public static DataTable ToDataTable<T>(this IEnumerable<T> list, DataTable dataTable) where T : class
+        /// <typeparam name="T">The <see cref="Type"/> of the <see cref="IEnumerable{T}"/>.</typeparam>
+        /// <param name="list">The <see cref="IEnumerable{T}"/> to read from.</param>
+        /// <param name="table">The <see cref="DataTable"/> to modify.</param>
+        /// <returns>The <see cref="DataTable"/>.</returns>
+        public static DataTable ToDataTable<T>(this IEnumerable<T> list, DataTable table) where T : class
         {
             PropertyInfo[] properties = typeof(T).GetProperties();
             foreach (PropertyInfo info in properties) {
-                if (!dataTable.Columns.Contains(info.Name)) {
+                if (!table.Columns.Contains(info.Name)) {
                     Type ty = Nullable.GetUnderlyingType(info.PropertyType) ?? info.PropertyType;
                     if (ty == typeof(char))
                         ty = typeof(string);
-                    dataTable.Columns.Add(new DataColumn(info.Name, ty));
+                    table.Columns.Add(new DataColumn(info.Name, ty));
                 }
             }
             foreach (T entity in list) {
-                DataRow row = dataTable.NewRow();
+                DataRow row = table.NewRow();
                 for (int i = 0; i < properties.Length; i++) {
                     row[properties[i].Name] = properties[i].GetValue(entity) ?? DBNull.Value;
                 }
-                dataTable.Rows.Add(row);
+                table.Rows.Add(row);
             }
-            return dataTable;
+            return table;
         }
 
         /// <summary>
-        /// Converts an Enumerable list to a DataTable.
+        /// Converts an <see cref="IEnumerable{T}"/> to a <see cref="DataTable"/>.
         /// </summary>
-        /// <typeparam name="T">The Type of elements in the list.</typeparam>
-        /// <param name="list">The list of elements to convert to a DataTable.</param>
-        /// <returns>The DataTable containing the data from the list.</returns>
+        /// <typeparam name="T">The <see cref="Type"/> in the <see cref="IEnumerable{T}"/>.</typeparam>
+        /// <param name="list">The <see cref="IEnumerable{T}"/> to convert to a <see cref="DataTable"/>.</param>
+        /// <returns>A <see cref="DataTable"/> with data from the <see cref="IEnumerable{T}"/>.</returns>
         public static DataTable ToDataTable<T>(this IEnumerable<T> list) where T : class
         {
             return list.ToDataTable(new DataTable());
         }
 
         /// <summary>
-        /// Converts the Datatable to a List. 
+        /// Converts a <see cref="DataTable"/> to a <see cref="List{T}"/>.
         /// </summary>
-        /// <param name="dataTable">The DataTable to convert to a List.</param>
-        /// <returns>A list with strings from the DataTable.</returns>
-        public static List<string[]> ToList(this DataTable dataTable)
+        /// <param name="table">The <see cref="DataTable"/> to convert to a <see cref="List{T}"/>.</param>
+        /// <returns>A <see cref="List{T}"/> of strings from the <see cref="DataTable"/>.</returns>
+        public static List<string[]> ToList(this DataTable table)
         {
-            return dataTable.ToList(new List<string[]>());
+            return table.ToList(new List<string[]>());
         }
 
         /// <summary>
-        /// Converts the Datatable to a List. 
+        /// Converts a <see cref="DataTable"/> to an <see cref="ICollection{T}"/>.
         /// </summary>
-        /// <param name="dataTable">The DataTable to convert to a List.</param>
-        /// <returns>True if successful, or false otherwise.</returns>
-        public static T ToList<T>(this DataTable dataTable, T list) where T : ICollection<string[]>
+        /// <typeparam name="T">The <see cref="Type"/> in the <see cref="ICollection{T}"/>.</typeparam>
+        /// <param name="table">The <see cref="DataTable"/> to convert to an <see cref="ICollection{T}"/>.</param>
+        /// <param name="list">The <see cref="ICollection{T}"/> to fill with data from the <see cref="DataTable"/>.</param>
+        /// <returns>An <see cref="ICollection{T}"/> with strings from the <see cref="DataTable"/>.</returns>
+        public static T ToList<T>(this DataTable table, T list) where T : ICollection<string[]>
         {
-            int cols = dataTable.Columns.Count;
-            foreach (DataRow row in dataTable.Rows) {
+            int cols = table.Columns.Count;
+            foreach (DataRow row in table.Rows) {
                 string[] strs = new string[cols];
                 for (int col = 0; col < cols; col++) {
                     strs[col] = row[col] == DBNull.Value ? null : row[col].ToString();
@@ -302,49 +315,43 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Converts the Datatable to a List. 
-        /// This assumes that the Type T has public properties with identical names of the columns in the DataTable.
+        /// Converts a <see cref="DataTable"/> to a <see cref="List{T}"/>.
+        /// This assumes that the <see cref="Type"/> T has public properties with identical names of the columns in the <see cref="DataTable"/>.
         /// </summary>
-        /// <typeparam name="T">The Type to convert the datatable to.</typeparam>
-        /// <param name="dataTable">The DataTable to convert to a List.</param>
-        /// <returns>A list with values from the DataTable.</returns>
-        public static List<T> ToList<T>(this DataTable dataTable) where T : class, new()
+        /// <typeparam name="T">The <see cref="Type"/> in the <see cref="List{T}"/>.</typeparam>
+        /// <param name="table">The <see cref="DataTable"/> to convert to a <see cref="List{T}"/>.</param>
+        /// <returns>A <see cref="List{T}"/> with values from the <see cref="DataTable"/>.</returns>
+        public static List<T> ToList<T>(this DataTable table) where T : class, new()
         {
             List<T> list = new List<T>();
-            if (!dataTable.ToList<T>(list))
-                list = null;
+            table.ToList<T>(list);
             return list;
         }
 
         /// <summary>
-        /// Converts the Datatable to a Collection.. 
-        /// This assumes that the Type T has public properties with identical names of the columns in the DataTable.
+        /// Converts a <see cref="DataTable"/> to an <see cref="ICollection{T}"/>.
+        /// This assumes that the <see cref="Type"/> T has public properties with identical names of the columns in the <see cref="DataTable"/>.
         /// </summary>
-        /// <typeparam name="T">The Type to convert the DataRows into.</typeparam>
-        /// <param name="dataTable">The DataTable to convert to a Collection.</param>
-        /// <param name="list">True if successful, or false otherwise.</param>
-        public static bool ToList<T>(this DataTable dataTable, ICollection<T> list) where T : class, new()
+        /// <typeparam name="T">The <see cref="Type"/> in the <see cref="ICollection{T}"/>.</typeparam>
+        /// <param name="table">The <see cref="DataTable"/> to convert to an <see cref="ICollection{T}"/>.</param>
+        /// <param name="list">The <see cref="ICollection{T}"/> to fill with data from the <see cref="DataTable"/>.</param>
+        /// <returns>The <see cref="ICollection{T}"/>.</returns>
+        public static ICollection<T> ToList<T>(this DataTable table, ICollection<T> list) where T : class, new()
         {
-            try {
-                DataRowConverter<T> converter = DataRowConverter<T>.Create(dataTable);
-                foreach (T obj in converter.Convert(dataTable)) {
-                    list.Add(obj);
-                }
-                return true;
+            DataRowConverter<T> converter = DataRowConverter<T>.Create(table);
+            foreach (T obj in converter.Convert(table)) {
+                list.Add(obj);
             }
-            catch (Exception ex) {
-                Console.Error.WriteLine("Error ToList: " + ex.Message);
-            }
-            return false;
+            return list;
         }
         #endregion //DataTable/List
 
         #region Type
         /// <summary>
-        /// Converts the Type to its nullable equivilent.
+        /// Converts a <see cref="Type"/> to its <see cref="Nullable{T}"/> equivalent.
         /// </summary>
-        /// <param name="t">The type to convert to nullable.</param>
-        /// <returns>The nullable equivilent of the type.</returns>
+        /// <param name="t">The <see cref="Type"/> to convert to <see cref="Nullable{T}"/>.</param>
+        /// <returns>The <see cref="Nullable{T}"/> equivalent of the <see cref="Type"/>.</returns>
         public static Type AsNullable(this Type t)
         {
             Type returnType = t;
@@ -355,23 +362,24 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Determines if the Type is nullable.
+        /// Determines if a <see cref="Type"/> is <see cref="Nullable{T}"/>.
         /// </summary>
-        /// <param name="type">The type to determine if it is nullable.</param>
-        /// <returns>True if the type is nullable. False otherwise.</returns>
+        /// <param name="type">The <see cref="Type"/> to determine if it is <see cref="Nullable{T}"/>.</param>
+        /// <returns>True if the <see cref="Type"/> is <see cref="Nullable{T}"/>. False otherwise.</returns>
         public static bool IsNullable(this Type type)
         {
-            return (type == typeof(string) ||
-                    type.IsArray ||
-                    (type.IsGenericType &&
-                     type.GetGenericTypeDefinition().Equals(typeof(Nullable<>))));
+            return
+                type == typeof(string)
+                || type.IsArray
+                || (type.IsGenericType
+                    && type.GetGenericTypeDefinition().Equals(typeof(Nullable<>)));
         }
 
         private static readonly HashSet<Type> NumericTypes = new HashSet<Type>
         {
-            typeof(float), typeof(double),  typeof(decimal),
-            typeof(long), typeof(short),   typeof(sbyte),
-            typeof(byte), typeof(ulong),   typeof(ushort),
+            typeof(float), typeof(double), typeof(decimal),
+            typeof(long), typeof(short), typeof(sbyte),
+            typeof(byte), typeof(ulong), typeof(ushort),
             typeof(uint), typeof(int)
         };
 
@@ -388,39 +396,39 @@ namespace Utilities
         };
 
         /// <summary>
-        /// Determines if the Type is a floating-point numeric type.
+        /// Determines if a <see cref="Type"/> is an integral numeric type.
         /// </summary>
-        /// <param name="o">The Type to check.</param>
-        /// <returns>True if the Type is a floating-point type, false otherwise.</returns>
-        public static bool IsIntegral(this Type myType)
+        /// <param name="ty">The <see cref="Type"/> to check.</param>
+        /// <returns>True if the <see cref="Type"/> is an integral type. False otherwise.</returns>
+        public static bool IsIntegral(this Type ty)
         {
-            return IntTypes.Contains(Nullable.GetUnderlyingType(myType) ?? myType);
+            return IntTypes.Contains(Nullable.GetUnderlyingType(ty) ?? ty);
         }
 
         /// <summary>
-        /// Determines if the Type is a floating-point numeric type.
+        /// Determines if a <see cref="Type"/> is a floating-point numeric type.
         /// </summary>
-        /// <param name="o">The Type to check.</param>
-        /// <returns>True if the Type is a floating-point type, false otherwise.</returns>
-        public static bool IsFloatingPoint(this Type myType)
+        /// <param name="ty">The <see cref="Type"/> to check.</param>
+        /// <returns>True if the <see cref="Type"/> is a floating-point type. False otherwise.</returns>
+        public static bool IsFloatingPoint(this Type ty)
         {
-            return FloatTypes.Contains(Nullable.GetUnderlyingType(myType) ?? myType);
+            return FloatTypes.Contains(Nullable.GetUnderlyingType(ty) ?? ty);
         }
 
         /// <summary>
-        /// Determines if the Type is numeric.
+        /// Determines if a <see cref="Type"/> is numeric.
         /// </summary>
-        /// <param name="o">The Type to check.</param>
-        /// <returns>True if the Type is numeric, false otherwise.</returns>
-        public static bool IsNumeric(this Type myType)
+        /// <param name="ty">The <see cref="Type"/> to check.</param>
+        /// <returns>True if the <see cref="Type"/> is numeric. False otherwise.</returns>
+        public static bool IsNumeric(this Type ty)
         {
-            return NumericTypes.Contains(Nullable.GetUnderlyingType(myType) ?? myType);
+            return NumericTypes.Contains(Nullable.GetUnderlyingType(ty) ?? ty);
         }
         #endregion //Type
 
         #region String/StringBuilder
         /// <summary>
-        /// Joins strings together with a separator betewen each of them.
+        /// Joins strings together with a separator between each of them.
         /// </summary>
         /// <param name="strings">The strings to join.</param>
         /// <param name="sep">The separator to join the strings with.</param>
@@ -442,22 +450,22 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Removes characters from the end of a StringBuilder.
+        /// Removes characters from the end of a <see cref="StringBuilder"/>.
         /// </summary>
-        /// <param name="sb">The StringBuilder to remove characters from.</param>
+        /// <param name="sb">The <see cref="StringBuilder"/> to remove characters from.</param>
         /// <param name="length">The number of characters to remove.</param>
-        /// <returns>The same StringBuilder with characters removed.</returns>
+        /// <returns>The <see cref="StringBuilder"/>.</returns>
         public static StringBuilder RemoveLast(this StringBuilder sb, int length = 1)
         {
             return sb.Remove(sb.Length - length, length);
         }
 
         /// <summary>
-        /// Removes characters from the end of a string.
+        /// Removes characters from the end of a <see cref="string"/>.
         /// </summary>
-        /// <param name="str">The string to remove characters from.</param>
+        /// <param name="str">The <see cref="string"/> to remove characters from.</param>
         /// <param name="length">The number of characters to remove.</param>
-        /// <returns>A new string with characters removed.</returns>
+        /// <returns>A new <see cref="string"/> with characters removed.</returns>
         public static string RemoveLast(this string str, int length = 1)
         {
             return str.Remove(str.Length - length, length);
@@ -466,23 +474,23 @@ namespace Utilities
 
         #region Print
         /// <summary>
-        /// Prints the contents of a DataTable to the console.
+        /// Prints a <see cref="DataTable"/> to <see cref="Console.Out"/>.
         /// </summary>
-        /// <param name="table">The datatable to print.</param>
+        /// <param name="table">The <see cref="DataTable"/> to print.</param>
         /// <param name="printRowNumbers">Determines if row numbers are printed before each row.</param>
-        /// <param name="columnsToPrint">Determines which columns are printed by index and their order. Empty means all columns are printed.</param>
+        /// <param name="columnsToPrint">Determines which columns are printed and their order. Empty means all columns are printed.</param>
         public static void Print(this DataTable table, bool printRowNumbers = false, params int[] columnsToPrint)
         {
             Print(table, -1, printRowNumbers, columnsToPrint);
         }
 
         /// <summary>
-        /// Prints the contents of a DataTable to the console.
+        /// Prints a <see cref="DataTable"/> to <see cref="Console.Out"/>.
         /// </summary>
-        /// <param name="table">The datatable to print.</param>
+        /// <param name="table">The <see cref="DataTable"/> to print.</param>
         /// <param name="maxRows">The maximum number of rows.</param>
         /// <param name="printRowNumbers">Determines if row numbers are printed before each row.</param>
-        /// <param name="columnsToPrint">Determines which columns are printed by index and their order. Empty means all columns are printed.</param>
+        /// <param name="columnsToPrint">Determines which columns are printed and their order. Empty means all columns are printed.</param>
         public static void Print(this DataTable table, int maxRows, bool printRowNumbers = false, params int[] columnsToPrint)
         {
             if (table.Columns.Count == 0)
@@ -509,10 +517,10 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Prints the contents of an enumerable collection to the console.
+        /// Prints an <see cref="IEnumerable{T}"/> to <see cref="Console.Out"/>.
         /// </summary>
-        /// <typeparam name="T">The type of object stored in the enumerable collection.</typeparam>
-        /// <param name="list">The enumerable collection to print.</param>
+        /// <typeparam name="T">The <see cref="Type"/> of object stored in the <see cref="IEnumerable{T}"/>.</typeparam>
+        /// <param name="list">The <see cref="IEnumerable{T}"/> to print.</param>
         /// <param name="printRowNumbers">Determines if row numbers should be printed before each row.</param>
         public static void Print<T>(this IEnumerable<T> list, bool printRowNumbers = false)
         {
@@ -520,29 +528,32 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Prints the contents of an enumerable collection to the console.
+        /// Prints an <see cref="IEnumerable{T}"/> to <see cref="Console.Out"/>.
         /// </summary>
-        /// <typeparam name="T">The type of object stored in the enumerable collection.</typeparam>
-        /// <param name="list">The enumerable collection to print.</param>
-        /// <param name="tostringT">A method that returns the ToString() representation for type T.</param>
+        /// <typeparam name="T">The <see cref="Type"/> of object stored in the <see cref="IEnumerable{T}"/>.</typeparam>
+        /// <param name="list">The <see cref="IEnumerable{T}"/> to print.</param>
+        /// <param name="tostringT">A method that returns the <see cref="string"/> representation for <see cref="Type"/> T.</param>
         /// <param name="printRowNumbers">Determines if row numbers should be printed before each row.</param>
         public static void Print<T>(this IEnumerable<T> list, Func<T, string> tostringT, bool printRowNumbers = false)
         {
-            if (!list.Any())
-                return;
-            int i = 1;
-            foreach (T item in list) {
-                if (printRowNumbers) {
-                    Console.Write("{0} ", i.ToString());
+            if (printRowNumbers) {
+                int i = 1;
+                foreach (T item in list) {
+                    Console.WriteLine("{0} {2}", i, tostringT(item));
                     i++;
                 }
-                Console.WriteLine(tostringT(item));
+            }
+            else {
+                foreach (T item in list) {
+                    Console.WriteLine(tostringT(item));
+                }
             }
         }
 
         /// <summary>
-        /// Prints the contents of an object to the console.
+        /// Prints an object to a <see cref="TextWriter"/>.
         /// </summary>
+        /// <param name="writer">The <see cref="TextWriter"/> to write to.</param>
         /// <param name="obj">The object to print.</param>
         public static void Print(this TextWriter writer, object obj)
         {
@@ -552,23 +563,23 @@ namespace Utilities
 
         #region DateTime/DateTimeOffset
         /// <summary>
-        /// Determines if a time is between start/end or equal to start. 
+        /// Determines if a <see cref="DateTime"/> is between start/end or equal to start.
         /// Start must be less than or equal to end or the result is always false.
         /// </summary>
-        /// <param name="time">The time being compared.</param>
-        /// <param name="start">The start time.</param>
-        /// <param name="end">The end time.</param>
-        /// <returns>True if the time is between start/end or equal to start, or false otherwise.</returns>
+        /// <param name="time">The <see cref="DateTime"/> being compared.</param>
+        /// <param name="start">The start <see cref="DateTime"/>.</param>
+        /// <param name="end">The end <see cref="DateTime"/>.</param>
+        /// <returns>True if the <see cref="DateTime"/> is between start/end or equal to start. False otherwise.</returns>
         public static bool IsBetween(this DateTime time, DateTime start, DateTime end)
         {
             return time >= start && time < end;
         }
 
         /// <summary>
-        /// Converts the DateTimeOffset to a DateTime.
+        /// Converts a <see cref="DateTimeOffset"/> to a <see cref="DateTime"/>.
         /// </summary>
-        /// <param name="dateTimeOff">The DateTimeOffset to convert.</param>
-        /// <returns>The DateTime value of the DateTimeOffset.</returns>
+        /// <param name="dateTimeOff">The <see cref="DateTimeOffset"/> to convert.</param>
+        /// <returns>The <see cref="DateTime"/> value of the <see cref="DateTimeOffset"/>.</returns>
         public static DateTime ToDateTime(this DateTimeOffset dateTimeOff)
         {
             if (dateTimeOff.Offset.Equals(TimeSpan.Zero))

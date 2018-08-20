@@ -10,11 +10,14 @@ using Dapper;
 
 namespace Utilities
 {
+    /// <summary>
+    /// Database utilities class.
+    /// </summary>
     public static class DB
     {
-        private const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance;
-        private const SqlBulkCopyOptions bulkCopyOptions = SqlBulkCopyOptions.FireTriggers | SqlBulkCopyOptions.UseInternalTransaction | SqlBulkCopyOptions.TableLock;
-        private static readonly SqlBulkCopyColumnMapping[] emptyColumnMappings = Array.Empty<SqlBulkCopyColumnMapping>();
+        private const BindingFlags DefaultBindingFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance;
+        private const SqlBulkCopyOptions BulkCopyOptions = SqlBulkCopyOptions.FireTriggers | SqlBulkCopyOptions.UseInternalTransaction | SqlBulkCopyOptions.TableLock;
+        private static readonly SqlBulkCopyColumnMapping[] EmptyColumnMappings = Array.Empty<SqlBulkCopyColumnMapping>();
 
         /// <summary>
         /// Creates a connection string based on the server/database.
@@ -28,7 +31,7 @@ namespace Utilities
         /// <returns>The connection string builder or null if the connection failed.</returns>
         public static SqlConnectionStringBuilder ConnString(string server, string database, string username, string password, bool testConnection = false, int timeoutSecs = 15)
         {
-            //SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder("Integrated Security=SSPI;");
+            ////SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder("Integrated Security=SSPI;");
             SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder {
                 DataSource = server,
                 InitialCatalog = database,
@@ -79,10 +82,10 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Returns a DataTable with schema information of an SQL table.
+        /// Returns a DataTable with schema information of an SQL table returned by a select command.
         /// </summary>
         /// <param name="conn">The database connection.</param>
-        /// <param name="tablename">The name of the table.</param>
+        /// <param name="selectCmd">The select command.</param>
         /// <returns>A DataTable with the schema information of an SQL table, or null on error.</returns>
         public static SchemaTable SelectSchema(SqlConnection conn, string selectCmd)
         {
@@ -163,7 +166,7 @@ namespace Utilities
                     e = ex;
                 }
             }
-            throw e ?? new InvalidOperationException("maxRetries: " + maxRetries);
+            throw e ?? new ArgumentOutOfRangeException("maxRetries: " + maxRetries);
         }
 
         /// <summary>
@@ -190,7 +193,7 @@ namespace Utilities
                     e = ex;
                 }
             }
-            throw e ?? new InvalidOperationException("maxRetries: " + maxRetries);
+            throw e ?? new ArgumentOutOfRangeException("maxRetries: " + maxRetries);
         }
 
         /// <summary>
@@ -219,7 +222,7 @@ namespace Utilities
                     e = ex;
                 }
             }
-            throw e ?? new InvalidOperationException("maxRetries: " + maxRetries);
+            throw e ?? new ArgumentOutOfRangeException("maxRetries: " + maxRetries);
         }
 
         /// <summary>
@@ -227,7 +230,7 @@ namespace Utilities
         /// </summary>
         /// <typeparam name="T">The type of object in the collection.</typeparam>
         /// <param name="conn">The database connection.</param>
-        /// <param name="tablename"></param>
+        /// <param name="tablename">The name of the database table to upload data to.</param>
         /// <param name="list">The List to upload.</param>
         /// <param name="columns">The column names.</param>
         public static void BulkUpload<T>(SqlConnection conn, string tablename, IEnumerable<T> list, params string[] columns) where T : class
@@ -261,7 +264,7 @@ namespace Utilities
         public static void BulkInsert<T>(SqlConnection conn, string tablename, IEnumerable<T> list, int timeoutSecs = 0, params SqlBulkCopyColumnMapping[] mappings) where T : class
         {
             using (GenericDataReader<T> reader = new GenericDataReader<T>(list))
-            using (SqlBulkCopy bulkCpy = new SqlBulkCopy(conn, bulkCopyOptions, null)) {
+            using (SqlBulkCopy bulkCpy = new SqlBulkCopy(conn, BulkCopyOptions, null)) {
                 bulkCpy.DestinationTableName = tablename;
                 bulkCpy.BulkCopyTimeout = timeoutSecs;
                 if (mappings.Length == 0)
@@ -277,7 +280,7 @@ namespace Utilities
         private static SqlBulkCopyColumnMapping[] CreateMappings(params string[] columns)
         {
             if (columns.Length == 0)
-                return emptyColumnMappings;
+                return EmptyColumnMappings;
 
             SqlBulkCopyColumnMapping[] mappings = new SqlBulkCopyColumnMapping[columns.Length];
             for (int i = 0; i < columns.Length; i++) {
@@ -288,7 +291,7 @@ namespace Utilities
 
         private static SqlBulkCopyColumnMapping[] CreateMappings<T>()
         {
-            PropertyInfo[] pinfos = typeof(T).GetProperties(bindingFlags);
+            PropertyInfo[] pinfos = typeof(T).GetProperties(DefaultBindingFlags);
             SqlBulkCopyColumnMapping[] mappings = new SqlBulkCopyColumnMapping[pinfos.Length];
             for (int i = 0; i < pinfos.Length; i++) {
                 mappings[i] = new SqlBulkCopyColumnMapping(pinfos[i].Name, pinfos[i].Name);
@@ -311,11 +314,10 @@ namespace Utilities
         /// <param name="conn">The database connection.</param>
         /// <param name="table">The DataTable to upload.</param>
         /// <param name="timeoutSecs">The maximum timeout in seconds for the command. A value of 0 means no timeout.</param>
-        /// <param name="options">The bulk copy options. If you do not wish to lock the database table then you will need to change this.</param>
         /// <param name="mappings">The column mappings. If no mappings are given then all columns are mapped.</param>
         public static void BulkInsert(SqlConnection conn, DataTable table, int timeoutSecs = 0, params SqlBulkCopyColumnMapping[] mappings)
         {
-            using (SqlBulkCopy bulkCpy = new SqlBulkCopy(conn, bulkCopyOptions, null)) {
+            using (SqlBulkCopy bulkCpy = new SqlBulkCopy(conn, BulkCopyOptions, null)) {
                 bulkCpy.DestinationTableName = table.TableName;
                 bulkCpy.BulkCopyTimeout = timeoutSecs;
                 if (mappings.Length == 0)
@@ -336,8 +338,8 @@ namespace Utilities
         /// <param name="tablename">The name of the database table to upload data to.</param>
         /// <param name="list">The List to upload.</param>
         /// <param name="timeoutSecs">The maximum timeout in seconds for the command. A value of 0 means no timeout.</param>
-        /// <param name="mappings">The column mappings.</param>
         /// <param name="update">Determines if duplicate rows should be updated.</param>
+        /// <param name="mappings">The column mappings.</param>
         public static void BulkUpsert<T>(SqlConnection conn, string tablename, IEnumerable<T> list, int timeoutSecs = 0, bool update = true, params SqlBulkCopyColumnMapping[] mappings) where T : class
         {
             if (!list.Any())
@@ -355,8 +357,8 @@ namespace Utilities
         /// <param name="conn">The database connection.</param>
         /// <param name="table">The DataTable to upload.</param>
         /// <param name="timeoutSecs">The maximum timeout in seconds for the command. A value of 0 means no timeout.</param>
-        /// <param name="mappings">The column mappings.</param>
         /// <param name="update">Determines if duplicate rows should be updated.</param>
+        /// <param name="mappings">The column mappings.</param>
         public static void BulkUpsert(SqlConnection conn, DataTable table, int timeoutSecs = 0, bool update = true, params SqlBulkCopyColumnMapping[] mappings)
         {
             if (table.Rows.Count == 0)
@@ -382,7 +384,7 @@ namespace Utilities
         /// Inserts and optionally updates rows in a database.
         /// </summary>
         /// <param name="conn">The database connection.</param>
-        /// <param name="tablename"></param>
+        /// <param name="tablename">The name of the database table to upload data to.</param>
         /// <param name="writeAction">A function for bulk uploading to the temporary table.</param>
         /// <param name="timeoutSecs">The maximum timeout in seconds for the command. A value of 0 means no timeout.</param>
         /// <param name="update">Determines if duplicate rows should be updated.</param>
@@ -502,7 +504,7 @@ namespace Utilities
         /// it doesn't copy the constraints/indexes.
         /// </summary>
         /// <param name="conn">The database connection.</param>
-        /// <param name="tableName">The name of the table to query.</param>
+        /// <param name="tableName">The name of the table to create a clone script of.</param>
         /// <param name="newTableName">The name of the table to create. If this is null then the same name is used.</param>
         /// <returns>The SQL command to create a table with the name and schema of the input DataTable.</returns>
         public static string CloneTableScript(SqlConnection conn, string tableName, string newTableName = null)
@@ -511,11 +513,12 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Creates a command string that can be used to generate a table. This is imperfect 
+        /// Creates a command string that can be used to generate a table. This is imperfect
         /// as it creates an nvarchar in all cases for strings (never nchar(n)/varchar). It also
         /// doesn't copy the constraints/indexes.
         /// </summary>
         /// <param name="table">The table representation to create a command string from.</param>
+        /// <param name="tableName">The name of the table to create. If null then the DataTable's name will be used.</param>
         /// <returns>The SQL command to create a table with the name and schema of the input DataTable.</returns>
         public static string CreateTableScript(DataTable table, string tableName = null)
         {
@@ -538,13 +541,14 @@ namespace Utilities
                     throw new InvalidOperationException("CreateTableString: invalid type '" + table.Columns[i].DataType.ToString() + "'");
 
                 if (table.Columns[i].AutoIncrement) {
-                    sql.AppendFormat(" IDENTITY({0},{1})",
+                    sql.AppendFormat(
+                        " IDENTITY({0},{1})",
                         table.Columns[i].AutoIncrementSeed,
                         table.Columns[i].AutoIncrementStep);
                 }
                 else {
-                    // DataColumns will add a blank DefaultValue for any AutoIncrement column. 
-                    // We only want to create an ALTER statement for those columns that are not set to AutoIncrement. 
+                    // DataColumns will add a blank DefaultValue for any AutoIncrement column.
+                    // We only want to create an ALTER statement for those columns that are not set to AutoIncrement.
                     DefaultValue(tableName, table.Columns[i], data.IsNumeric, alterSql);
                 }
                 if (!table.Columns[i].AllowDBNull)
@@ -554,7 +558,8 @@ namespace Utilities
             sql.Remove(sql.Length - 1, 1);
 
             if (table.PrimaryKey.Length > 0) {
-                sql.AppendFormat(",\n\tCONSTRAINT PK_{0} PRIMARY KEY ({1})",
+                sql.AppendFormat(
+                    ",\n\tCONSTRAINT PK_{0} PRIMARY KEY ({1})",
                     tableName,
                     string.Join(",", table.PrimaryKey.Select(col => col.ColumnName)));
             }
@@ -578,31 +583,32 @@ namespace Utilities
         }
 
         private static Dictionary<Type, DefaultData> usesDefault = new Dictionary<Type, DefaultData>() {
-            { typeof(bool) , new DefaultData("bit", false, true) },
-            { typeof(char) , new DefaultData("nchar(1)", false, false) },
-            { typeof(byte) , new DefaultData("tinyint", false, true) },
-            { typeof(sbyte) , new DefaultData("tinyint", false, true) },
-            { typeof(short) , new DefaultData("smallint", false, true) },
-            { typeof(ushort) , new DefaultData("smallint", false, true) },
-            { typeof(int) , new DefaultData("int", false, true) },
-            { typeof(uint) , new DefaultData("int", false, true) },
-            { typeof(long) , new DefaultData("bigint", false, true) },
-            { typeof(ulong) , new DefaultData("bigint", false, true) },
-            { typeof(float) , new DefaultData("float", false, true) },
-            { typeof(double) , new DefaultData("float", false, true) },
-            { typeof(decimal) , new DefaultData("decimal(18, 6)", false, true) },
-            { typeof(DateTime) , new DefaultData("datetime2", false, false, false) },
-            { typeof(DateTimeOffset) , new DefaultData("datetimeoffset", false, false, false) },
+            { typeof(bool), new DefaultData("bit", false, true) },
+            { typeof(char), new DefaultData("nchar(1)", false, false) },
+            { typeof(byte), new DefaultData("tinyint", false, true) },
+            { typeof(sbyte), new DefaultData("tinyint", false, true) },
+            { typeof(short), new DefaultData("smallint", false, true) },
+            { typeof(ushort), new DefaultData("smallint", false, true) },
+            { typeof(int), new DefaultData("int", false, true) },
+            { typeof(uint), new DefaultData("int", false, true) },
+            { typeof(long), new DefaultData("bigint", false, true) },
+            { typeof(ulong), new DefaultData("bigint", false, true) },
+            { typeof(float), new DefaultData("float", false, true) },
+            { typeof(double), new DefaultData("float", false, true) },
+            { typeof(decimal), new DefaultData("decimal(18, 6)", false, true) },
+            { typeof(DateTime), new DefaultData("datetime2", false, false, false) },
+            { typeof(DateTimeOffset), new DefaultData("datetimeoffset", false, false, false) },
             { typeof(byte[]), new DefaultData("varbinary({0})", true, false, false) },
-            { typeof(TimeSpan) , new DefaultData("time", false, false, false) },
-            { typeof(string) , new DefaultData("nvarchar({0})", true, false, true) },
+            { typeof(TimeSpan), new DefaultData("time", false, false, false) },
+            { typeof(string), new DefaultData("nvarchar({0})", true, false, true) },
         };
 
         private static void DefaultValue(string tablename, DataColumn col, bool isNumeric, StringBuilder alterSql)
         {
             if (!col.AutoIncrement && col.DefaultValue != null) {
                 string defaultVal = col.DefaultValue.ToString();
-                alterSql.AppendFormat("\nALTER TABLE {0} ADD CONSTRAINT [DF_{0}_{1}]  DEFAULT ({2}) FOR [{1}];",
+                alterSql.AppendFormat(
+                    "\nALTER TABLE {0} ADD CONSTRAINT [DF_{0}_{1}]  DEFAULT ({2}) FOR [{1}];",
                     tablename,
                     col.ColumnName,
                     isNumeric ? defaultVal : "'" + defaultVal + "'");
@@ -613,7 +619,8 @@ namespace Utilities
                 try {
                     System.Xml.XmlDocument xml = new System.Xml.XmlDocument();
                     xml.LoadXml(col.Caption);
-                    alterSql.AppendFormat("\nALTER TABLE {0} ADD CONSTRAINT [DF_{0}_{1}]  DEFAULT ({2}) FOR [{1}];",
+                    alterSql.AppendFormat(
+                        "\nALTER TABLE {0} ADD CONSTRAINT [DF_{0}_{1}]  DEFAULT ({2}) FOR [{1}];",
                         tablename,
                         col.ColumnName,
                         xml.GetElementsByTagName("defaultValue")[0].InnerText);
@@ -649,7 +656,7 @@ namespace Utilities
                 // ANSI SQL way.  Works in PostgreSQL, MSSQL, MySQL.
                 return 1 == conn.ExecuteScalar<int>(
 @"IF EXISTS (
-    SELECT 1 FROM INFORMATION_SCHEMA.TABLES 
+    SELECT 1 FROM INFORMATION_SCHEMA.TABLES
     WHERE TABLE_NAME = @tablename
 )
 SELECT 1 ELSE SELECT 0", new { tablename = tablename });
@@ -670,8 +677,8 @@ SELECT 1 ELSE SELECT 0", new { tablename = tablename });
         /// Removes duplicate rows from a database.
         /// </summary>
         /// <param name="conn">The database connection.</param>
-        /// <param name="table">The name of the table to remove duplicates from.</param>
-        /// <param name="distinctColumns">The columns to select on to check for duplicates. 
+        /// <param name="tablename">The name of the table to remove duplicates from.</param>
+        /// <param name="distinctColumns">The columns to select on to check for duplicates.
         /// If no columns are input them all columns are used.</param>
         /// <returns>The number of rows affected by the query.</returns>
         public static int RemoveDuplicates(SqlConnection conn, string tablename, params string[] distinctColumns)
@@ -697,7 +704,8 @@ END", new { tablename = tablename, columns = distinctColumns.Length > 0 ? string
         private static void PrintError(Exception ex, string methodName, SqlConnection conn, string tablename = null)
         {
             string arg = string.Format("{0}.{1}{2}", conn.DataSource ?? "null", conn.Database ?? "null", tablename == null ? "" : "." + tablename);
-            Console.Error.WriteLine("Error {0}{1}: {2}\n{3}{4}",
+            Console.Error.WriteLine(
+                "Error {0}{1}: {2}\n{3}{4}",
                 methodName ?? "null",
                 arg == null ? "" : "(" + arg + ")",
                 ex.GetType().ToString(),

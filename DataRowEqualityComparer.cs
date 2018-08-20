@@ -4,11 +4,14 @@ using System.Linq;
 
 namespace Utilities
 {
-    public class DataRowEqualityComparer<T> : IEqualityComparer<T> where T : DataRow
+    /// <summary>
+    /// DataRow IEqualityComparer.
+    /// </summary>
+    public class DataRowEqualityComparer : IEqualityComparer<DataRow>
     {
-        public static DataRowEqualityComparer<T> Default { get; } = new DataRowEqualityComparer<T>();
+        public static DataRowEqualityComparer Default { get; } = new DataRowEqualityComparer();
 
-        public static DataRowEqualityComparer<T> Create(DataTable table, params string[] columnNames)
+        public static DataRowEqualityComparer Create(DataTable table, params string[] columnNames)
         {
             if (columnNames.Length == 0)
                 return Default;
@@ -18,17 +21,17 @@ namespace Utilities
             return new DataRowEqualityComparerAll(colIndexes);
         }
 
-        public static DataRowEqualityComparer<T> Create(params int[] columnIndexes)
+        public static DataRowEqualityComparer Create(params int[] columnIndexes)
         {
             return new DataRowEqualityComparerAll(columnIndexes);
         }
 
-        int IEqualityComparer<T>.GetHashCode(T obj)
+        int IEqualityComparer<DataRow>.GetHashCode(DataRow obj)
         {
             return GetHashCode(obj);
         }
 
-        public static int GetHashCode(T obj)
+        public static int GetHashCode(DataRow obj)
         {
             int hashcode = 0;
             for (int i = 0; i < obj.ItemArray.Length; i++) {
@@ -37,7 +40,7 @@ namespace Utilities
             return hashcode;
         }
 
-        bool IEqualityComparer<T>.Equals(T x, T y)
+        bool IEqualityComparer<DataRow>.Equals(DataRow x, DataRow y)
         {
             bool result = x.ItemArray.Length == y.ItemArray.Length;
             if (result) {
@@ -50,7 +53,7 @@ namespace Utilities
             return result;
         }
 
-        private class DataRowEqualityComparerAll : DataRowEqualityComparer<T>, IEqualityComparer<T>
+        private class DataRowEqualityComparerAll : DataRowEqualityComparer, IEqualityComparer<DataRow>
         {
             private readonly int[] columnIndexes;
             public DataRowEqualityComparerAll(params int[] columnIndexes)
@@ -58,7 +61,7 @@ namespace Utilities
                 this.columnIndexes = columnIndexes;
             }
 
-            int IEqualityComparer<T>.GetHashCode(T obj)
+            int IEqualityComparer<DataRow>.GetHashCode(DataRow obj)
             {
                 int hashcode = 0;
                 for (int i = 0; i < columnIndexes.Length; i++) {
@@ -67,7 +70,7 @@ namespace Utilities
                 return hashcode;
             }
 
-            bool IEqualityComparer<T>.Equals(T x, T y)
+            bool IEqualityComparer<DataRow>.Equals(DataRow x, DataRow y)
             {
                 bool result = x.ItemArray.Length == y.ItemArray.Length;
                 if (result) {

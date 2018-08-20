@@ -6,7 +6,7 @@ namespace Utilities.Log
 {
     public class SyncLogger : ILogger
     {
-        private readonly Object l = new object();
+        private readonly object l = new object();
         private readonly Logger logger = new Logger();
 
         public SyncLogger() { }
@@ -138,7 +138,7 @@ namespace Utilities.Log
 
         public void Flush()
         {
-            //pointless -- flush is automatic
+            // pointless -- flush is automatic
         }
 
         public static int Line([CallerLineNumber] int lineNumber = 0)

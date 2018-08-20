@@ -8,9 +8,9 @@ namespace Utilities
 {
     public class DataRowConverter<T> where T : new()
     {
-        protected Func<object, object>[] converters;
-        protected PropertyInfo[] pinfos;
-        protected const BindingFlags flags = BindingFlags.Public | BindingFlags.SetProperty | BindingFlags.GetProperty | BindingFlags.Instance;
+        private Func<object, object>[] converters;
+        private PropertyInfo[] pinfos;
+        private const BindingFlags DefaultBindingFlags = BindingFlags.Public | BindingFlags.SetProperty | BindingFlags.GetProperty | BindingFlags.Instance;
 
         private DataRowConverter() { }
 
@@ -19,7 +19,7 @@ namespace Utilities
             this.pinfos = pinfos;
             converters = new Func<object, object>[row.ItemArray.Length];
             for (int i = 0; i < row.ItemArray.Length; i++) {
-                var conv = Util.Converter(row.ItemArray[i].GetType(), pinfos[i].PropertyType);
+                Func<object, object> conv = Util.Converter(row.ItemArray[i].GetType(), pinfos[i].PropertyType);
                 converters[i] = (inp) => { return inp == DBNull.Value ? null : conv(inp); };
             }
         }
@@ -35,12 +35,12 @@ namespace Utilities
 
         public static DataRowConverter<T> Create(DataRow row)
         {
-            return new DataRowConverter<T>(row, typeof(T).GetProperties(flags));
+            return new DataRowConverter<T>(row, typeof(T).GetProperties(DefaultBindingFlags));
         }
 
         public static DataRowConverter<T> Create(DataTable table, bool matchnames = true)
         {
-            PropertyInfo[] props = typeof(T).GetProperties(flags);
+            PropertyInfo[] props = typeof(T).GetProperties(DefaultBindingFlags);
             if (matchnames && props.Length == table.Columns.Count) {
                 for (int col = 0; col < table.Columns.Count; col++) {
                     if (props[col].Name != table.Columns[col].ColumnName) {
@@ -76,7 +76,7 @@ namespace Utilities
 
         private class DataRowNameConverter : DataRowConverter<T>
         {
-            private readonly int[] drIndexes;
+            private readonly int[] dataRowIndexes;
 
             public DataRowNameConverter(DataTable table, PropertyInfo[] pinfos)
             {
@@ -84,12 +84,12 @@ namespace Utilities
                 IEnumerable<string> columnNames = columns.Select(col => col.ColumnName);
                 this.pinfos = pinfos.Where(prop => columnNames.Contains(prop.Name)).ToArray();
                 converters = new Func<object, object>[pinfos.Length];
-                drIndexes = new int[pinfos.Length];
+                dataRowIndexes = new int[pinfos.Length];
                 for (int i = 0; i < pinfos.Length; i++) {
                     for (int col = 0; col < columns.Count; col++) {
                         if (columns[col].ColumnName == this.pinfos[i].Name) {
-                            drIndexes[i] = columns[col].Ordinal;
-                            converters[i] = Util.Converter(this.pinfos[i].PropertyType, columns[drIndexes[i]].GetType());
+                            dataRowIndexes[i] = columns[col].Ordinal;
+                            converters[i] = Util.Converter(this.pinfos[i].PropertyType, columns[dataRowIndexes[i]].GetType());
                             break;
                         }
                     }
@@ -100,7 +100,7 @@ namespace Utilities
             {
                 T obj = new T();
                 for (int i = 0; i < converters.Length; i++) {
-                    pinfos[i].SetValue(obj, converters[i](row[drIndexes[i]]));
+                    pinfos[i].SetValue(obj, converters[i](row[dataRowIndexes[i]]));
                 }
                 return obj;
             }

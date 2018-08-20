@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
-using System.Collections.Generic;
 
 namespace Utilities.Log
 {
@@ -24,22 +24,27 @@ namespace Utilities.Log
         TextWriter Add(string path);
         bool Add(TextWriter writer);
         bool Remove(TextWriter writer);
-        void Log(string message, LogAction logAction,
+        void Log(
+            string message,
+            LogAction logAction,
             [CallerMemberName] string methodName = "",
             [CallerFilePath] string filePath = "",
             [CallerLineNumber] int lineNumber = 0);
 
-        void Log(string message,
+        void Log(
+            string message,
             [CallerMemberName] string methodName = "",
             [CallerFilePath] string filePath = "",
             [CallerLineNumber] int lineNumber = 0);
 
-        void Log(LogStyle style,
+        void Log(
+            LogStyle style,
             [CallerMemberName] string methodName = "",
             [CallerFilePath] string filePath = "",
             [CallerLineNumber] int lineNumber = 0);
 
-        void Log(string message,
+        void Log(
+            string message,
             LogStyle style,
             [CallerMemberName] string methodName = "",
             [CallerFilePath] string filePath = "",
@@ -55,27 +60,23 @@ namespace Utilities.Log
 
     public class Logger : ILogger
     {
-        protected LogAction customStyle = _P.Log_CustomDefault;
-        protected List<TextWriter> writers = new List<TextWriter>();
-        protected LogAction[] LogStyleActions;
+        protected List<TextWriter> Writers { get; set; } = new List<TextWriter>();
+        protected LogAction[] LogStyleActions { get; set; }
 
-        public Logger() { _Initialize(); }
-
-        public Logger(TextWriter writer)
-        {
-            _Initialize();
-            Add(writer);
-        }
-
-        private void _Initialize()
+        public Logger()
         {
             LogStyleActions = new LogAction[] {
-                _P.Log_MessageOnly,
-                _P.Log_MethodFileLine,
-                _P.Log_DateTime,
-                _P.Log_DateTimeMethodFileLine,
-                customStyle,
+                Log_MessageOnly,
+                Log_MethodFileLine,
+                Log_DateTime,
+                Log_DateTimeMethodFileLine,
+                Log_CustomDefault,
             };
+        }
+
+        public Logger(TextWriter writer) : this()
+        {
+            Add(writer);
         }
 
         public static Logger Instance { get; } = new Logger(Console.Error);
@@ -83,7 +84,7 @@ namespace Utilities.Log
 
         public LogAction CustomStyle {
             get => LogStyleActions[(int) LogStyle.Custom];
-            set => LogStyleActions[(int) LogStyle.Custom] = value ?? customStyle;
+            set => LogStyleActions[(int) LogStyle.Custom] = value ?? Log_CustomDefault;
         }
 
         public TextWriter Add()
@@ -106,7 +107,7 @@ namespace Utilities.Log
         {
             if (writer != null) {
                 writer.Flush();
-                writers.Add(writer);
+                Writers.Add(writer);
                 return true;
             }
             return false;
@@ -114,10 +115,11 @@ namespace Utilities.Log
 
         public bool Remove(TextWriter writer)
         {
-            return writer != null && writers.Remove(writer);
+            return writer != null && Writers.Remove(writer);
         }
 
-        public void Log(string message,
+        public void Log(
+            string message,
             [CallerMemberName] string methodName = "",
             [CallerFilePath] string filePath = "",
             [CallerLineNumber] int lineNumber = 0)
@@ -125,7 +127,8 @@ namespace Utilities.Log
             Log(message, LogStyleActions[(int) DefaultStyle], methodName, filePath, lineNumber);
         }
 
-        public void Log(LogStyle style,
+        public void Log(
+            LogStyle style,
             [CallerMemberName] string methodName = "",
             [CallerFilePath] string filePath = "",
             [CallerLineNumber] int lineNumber = 0)
@@ -133,7 +136,8 @@ namespace Utilities.Log
             Log(null, LogStyleActions[(int) style], methodName, filePath, lineNumber);
         }
 
-        public void Log(string message,
+        public void Log(
+            string message,
             LogStyle style,
             [CallerMemberName] string methodName = "",
             [CallerFilePath] string filePath = "",
@@ -144,28 +148,28 @@ namespace Utilities.Log
 
         public void Write(string message)
         {
-            foreach (var writer in writers) {
+            foreach (TextWriter writer in Writers) {
                 writer.Write(message);
             }
         }
 
         public void WriteLine()
         {
-            foreach (var writer in writers) {
+            foreach (TextWriter writer in Writers) {
                 writer.WriteLine();
             }
         }
 
         public void WriteLine(string message)
         {
-            foreach (var writer in writers) {
+            foreach (TextWriter writer in Writers) {
                 writer.WriteLine(message);
             }
         }
 
         public void PrintStackTrace(string message)
         {
-            foreach (var writer in writers) {
+            foreach (TextWriter writer in Writers) {
                 writer.WriteLine(message);
                 writer.WriteLine(System.Environment.StackTrace);
             }
@@ -173,21 +177,21 @@ namespace Utilities.Log
 
         public void PrintStackTrace()
         {
-            foreach (var writer in writers) {
+            foreach (TextWriter writer in Writers) {
                 writer.WriteLine(System.Environment.StackTrace);
             }
         }
 
         public void Flush()
         {
-            foreach (var writer in writers) {
+            foreach (TextWriter writer in Writers) {
                 writer.Flush();
             }
         }
 
         public void FlushAsync()
         {
-            foreach (var writer in writers) {
+            foreach (TextWriter writer in Writers) {
                 writer.FlushAsync();
             }
         }
@@ -207,13 +211,11 @@ namespace Utilities.Log
             return methodName;
         }
 
-        public static string StackTrace {
-            get { return System.Environment.StackTrace; }
-        }
+        public static string StackTrace => System.Environment.StackTrace;
 
         public void Log(string message, LogAction logAction, [CallerMemberName] string methodName = "", [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0)
         {
-            foreach (var writer in writers) {
+            foreach (TextWriter writer in Writers) {
                 logAction(writer, message, methodName, filePath, lineNumber);
             }
         }
@@ -236,57 +238,64 @@ namespace Utilities.Log
         */
 
         #region Private Data
-        private static class _P
-        {
-            public static void Log_MessageOnly(TextWriter writer, string message,
+        private static void Log_MessageOnly(
+            TextWriter writer,
+            string message,
             [CallerMemberName] string methodName = "",
             [CallerFilePath] string filePath = "",
             [CallerLineNumber] int lineNumber = 0)
-            {
-                if (message != null) {
-                    writer.WriteLine(message);
-                }
+        {
+            if (message != null) {
+                writer.WriteLine(message);
             }
-
-            public static void Log_MethodFileLine(TextWriter writer, string message,
-                [CallerMemberName] string methodName = "",
-                [CallerFilePath] string filePath = "",
-                [CallerLineNumber] int lineNumber = 0)
-            {
-                writer.WriteLine("{0}({1}:{2})}", methodName, Path.GetFileName(filePath), lineNumber);
-                if (message != null && message.Length > 0) {
-                    writer.WriteLine(message);
-                }
-            }
-
-            public static void Log_DateTime(TextWriter writer, string message,
-                [CallerMemberName] string methodName = "",
-                [CallerFilePath] string filePath = "",
-                [CallerLineNumber] int lineNumber = 0)
-            {
-                writer.WriteLine(DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss"));
-                if (message != null && message.Length > 0) {
-                    writer.WriteLine(message);
-                }
-            }
-
-            public static void Log_DateTimeMethodFileLine(TextWriter writer, string message,
-                [CallerMemberName] string methodName = "",
-                [CallerFilePath] string filePath = "",
-                [CallerLineNumber] int lineNumber = 0)
-            {
-                writer.WriteLine("[{0,-19}] {1}({2}:{3})}", DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss"), methodName, Path.GetFileName(filePath), lineNumber);
-                if (message != null && message.Length > 0) {
-                    writer.WriteLine(message);
-                }
-            }
-
-            public static void Log_CustomDefault(TextWriter writer, string message,
-                [CallerMemberName] string methodName = "",
-                [CallerFilePath] string filePath = "",
-                [CallerLineNumber] int lineNumber = 0)
-            { }
         }
+
+        private static void Log_MethodFileLine(
+            TextWriter writer,
+            string message,
+            [CallerMemberName] string methodName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0)
+        {
+            writer.WriteLine("{0}({1}:{2})}", methodName, Path.GetFileName(filePath), lineNumber);
+            if (message != null && message.Length > 0) {
+                writer.WriteLine(message);
+            }
+        }
+
+        private static void Log_DateTime(
+            TextWriter writer,
+            string message,
+            [CallerMemberName] string methodName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0)
+        {
+            writer.WriteLine(DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss"));
+            if (message != null && message.Length > 0) {
+                writer.WriteLine(message);
+            }
+        }
+
+        private static void Log_DateTimeMethodFileLine(
+            TextWriter writer,
+            string message,
+            [CallerMemberName] string methodName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0)
+        {
+            writer.WriteLine("[{0,-19}] {1}({2}:{3})}", DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss"), methodName, Path.GetFileName(filePath), lineNumber);
+            if (message != null && message.Length > 0) {
+                writer.WriteLine(message);
+            }
+        }
+
+        private static void Log_CustomDefault(
+            TextWriter writer,
+            string message,
+            [CallerMemberName] string methodName = "",
+            [CallerFilePath] string filePath = "",
+            [CallerLineNumber] int lineNumber = 0)
+        { }
         #endregion
     }
 }

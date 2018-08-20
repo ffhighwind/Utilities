@@ -12,15 +12,16 @@ namespace Utilities
     /// <source> https://weblogs.asp.net/jongalloway/encrypting-passwords-in-a-net-app-config-file </source>
     public static class Security
     {
-        private static readonly Encoding encoding = Encoding.Unicode;
-        private static readonly byte[] entropy = Encoding.Unicode.GetBytes("TY2JY+hhs[R7y+v_");
+        private static readonly Encoding Unicode = Encoding.Unicode;
+        private static readonly byte[] Entropy = Encoding.Unicode.GetBytes("TY2JY+hhs[R7y+v_");
 
         /// <summary>
         /// Encrypts data such as passwords using Windows DPAPI.
         /// </summary>
         /// <param name="input">The string containing the data to encrypt.</param>
-        /// <param name="scope">CurrentUser means that the data can only be decrypted if the user is logged in. 
-        /// LocalMachine means that any user on the machine can decrypt the data.</param>
+        /// <param name="scope">The <see cref="DataProtectionScope"/> for encryption. <see cref="DataProtectionScope.CurrentUser"/>
+        /// means that the data can only be decrypted if the user is logged in.
+        /// <see cref="DataProtectionScope.LocalMachine"/> means that any user on the machine can decrypt the data.</param>
         /// <returns>The encrypted data.</returns>
         public static string Encrypt(SecureString input, DataProtectionScope scope = DataProtectionScope.CurrentUser)
         {
@@ -31,14 +32,15 @@ namespace Utilities
         /// Encrypts data such as passwords using Windows DPAPI.
         /// </summary>
         /// <param name="input">The string containing the data to encrypt.</param>
-        /// <param name="scope">CurrentUser means that the data can only be decrypted if the user is logged in. 
-        /// LocalMachine means that any user on the machine can decrypt the data.</param>
+        /// <param name="scope">The <see cref="DataProtectionScope"/> for encryption. <see cref="DataProtectionScope.CurrentUser"/>
+        /// means that the data can only be decrypted if the user is logged in.
+        /// <see cref="DataProtectionScope.LocalMachine"/> means that any user on the machine can decrypt the data.</param>
         /// <returns>The encrypted data.</returns>
         public static string Encrypt(string input, DataProtectionScope scope = DataProtectionScope.CurrentUser)
         {
             byte[] encryptedData = ProtectedData.Protect(
-                encoding.GetBytes(input),
-                entropy,
+                Unicode.GetBytes(input),
+                Entropy,
                 scope);
             return Convert.ToBase64String(encryptedData);
         }
@@ -47,17 +49,18 @@ namespace Utilities
         /// Decrypts data such as passwords using the Windows DPAPI.
         /// </summary>
         /// <param name="encryptedData">The data to decrypt.</param>
-        /// <param name="scope">CurrentUser means that the data can only be decrypted if the user is logged in. 
-        /// LocalMachine means that any user on the machine can decrypt the data.</param>
-        /// <returns>The decrypted data.</returns>
+        /// <param name="scope">The <see cref="DataProtectionScope"/> for encryption. <see cref="DataProtectionScope.CurrentUser"/>
+        /// means that the data can only be decrypted if the user is logged in.
+        /// <see cref="DataProtectionScope.LocalMachine"/> means that any user on the machine can decrypt the data.</param>
+        /// <returns>The decrypted <see cref="System.Security.SecureString"/>.</returns>
         public static string Decrypt(string encryptedData, DataProtectionScope scope = DataProtectionScope.CurrentUser)
         {
             try {
                 byte[] decryptedData = ProtectedData.Unprotect(
                     Convert.FromBase64String(encryptedData),
-                    entropy,
+                    Entropy,
                     scope);
-                return encoding.GetString(decryptedData);
+                return Unicode.GetString(decryptedData);
             }
             catch {
                 return null;
@@ -68,7 +71,7 @@ namespace Utilities
         /// Encrypts a string and makes it immutable. This ensures that the data is secure in memory from malicious processes.
         /// </summary>
         /// <param name="input">The string to encrypt.</param>
-        /// <returns>An encrypted immutable SecureString.</returns>
+        /// <returns>An encrypted and immutable <see cref="System.Security.SecureString"/>.</returns>
         public static SecureString SecureString(string input)
         {
             SecureString result = new SecureString();
@@ -80,10 +83,10 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Decrypts a SecureString.
+        /// Decrypts a <see cref="System.Security.SecureString"/>.
         /// </summary>
-        /// <param name="input">The SecureString to decrypt.</param>
-        /// <returns></returns>
+        /// <param name="input">The <see cref="System.Security.SecureString"/> to decrypt.</param>
+        /// <returns>The decrypted representation of the input <see cref="System.Security.SecureString"/>.</returns>
         public static string UnsecureString(this SecureString input)
         {
             IntPtr ptr = Marshal.SecureStringToBSTR(input);
@@ -91,13 +94,13 @@ namespace Utilities
                 return Marshal.PtrToStringBSTR(ptr);
             }
             catch {
-                Marshal.ZeroFreeBSTR(ptr); //FAILED TO DECRYPT! Zero out the data and free it.
+                Marshal.ZeroFreeBSTR(ptr); // FAILED TO DECRYPT! Zero out the data and free it.
             }
             return null;
         }
 
         /// <summary>
-        /// Geneates an encrypted section in the app.config file. This should only be used once before deployment.
+        /// Generates an encrypted section in the app.config file. This should only be used once before deployment.
         /// </summary>
         /// <param name="sectionKey">The section to encrypt.</param>
         public static void EncryptConfig(string sectionKey = "configuration")

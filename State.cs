@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Utilities
 {
@@ -28,7 +25,6 @@ namespace Utilities
 
         public static double GetMSTDiff(string timezone)
         {
-            
             double diff = 0;
             if (timezone == "MST" || timezone == "MT" || timezone == "MDT")
                 diff = 0;

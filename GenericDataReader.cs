@@ -1,16 +1,18 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Reflection;
-using System.Data.Common;
-using System.Collections;
 
 namespace Utilities
 {
     /// <summary>
-    /// https://github.com/mgravell/fast-member/blob/master/FastMember/ObjectReader.cs
+    /// Generic DbDataReader for use with ADO.NET SQL select commands.
+    /// <see href="https://github.com/mgravell/fast-member/blob/master/FastMember/ObjectReader.cs"/>
     /// </summary>
+    /// <typeparam name="T">The class type to read data into.</typeparam>
     public class GenericDataReader<T> : DbDataReader where T : class
     {
         private IEnumerator enumerator;
@@ -20,17 +22,19 @@ namespace Utilities
         private readonly BitArray allowNull;
         private object current = null;
         private bool active = true;
-        private const BindingFlags defaultFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly;
+        private const BindingFlags DefaultBindingFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly;
 
         /// <summary>
-        /// Creates a new ObjectReader instance for reading the supplied data.
+        /// Initializes a new instance of the <see cref="GenericDataReader{T}"/> class.
         /// </summary>
-        /// <param name="type">The expected Type of the information to be read</param>
-        /// <param name="source">The sequence of objects to represent</param>
-        /// <param name="members">The members that should be exposed to the reader</param>
+        /// <param name="source">The list of objects to read.</param>
+        /// <param name="flags">The BindingFlags for the type's properties.</param>
+        /// <param name="members">The property names that will be read. If this is empty then all properties will be read.</param>
         public GenericDataReader(IEnumerable<T> source, BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly, params string[] members)
         {
             pinfos = typeof(T).GetProperties(flags);
+            if (members.Length > 0)
+                pinfos = pinfos.Where(pinfo => members.Contains(pinfo.Name)).ToArray();
             enumerator = source.GetEnumerator();
             propertyNames = new string[pinfos.Length];
             types = new Type[pinfos.Length];
@@ -45,21 +49,17 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Creates a new ObjectReader instance for reading the supplied data.
+        /// Initializes a new instance of the <see cref="GenericDataReader{T}"/> class.
         /// </summary>
-        /// <param name="type">The expected Type of the information to be read</param>
-        /// <param name="source">The sequence of objects to represent</param>
-        /// <param name="members">The members that should be exposed to the reader</param>
-        public GenericDataReader(IEnumerable<T> source, params string[] members) 
-            : this(source, defaultFlags, members) { }
+        /// <param name="source">The list of objects to read.</param>
+        /// <param name="members">The property names that will be read. If this is empty then all properties will be read.</param>
+        public GenericDataReader(IEnumerable<T> source, params string[] members)
+            : this(source, DefaultBindingFlags, members) { }
 
-        public override int Depth {
-            get { throw new NotImplementedException(); }
-        }
+        public override int Depth => throw new NotImplementedException();
 
         public override DataTable GetSchemaTable()
         {
-            // these are the columns used by DataTable load
             DataTable table = new DataTable {
                 Columns =
                 {
@@ -87,11 +87,7 @@ namespace Utilities
             Shutdown();
         }
 
-        public override bool HasRows {
-            get {
-                return active;
-            }
-        }
+        public override bool HasRows => active;
 
         public override bool NextResult()
         {
@@ -112,9 +108,7 @@ namespace Utilities
             return false;
         }
 
-        public override int RecordsAffected {
-            get { return 0; }
-        }
+        public override int RecordsAffected => 0;
 
         protected override void Dispose(bool disposing)
         {
@@ -132,15 +126,9 @@ namespace Utilities
             enumerator = null;
         }
 
-        public override int FieldCount {
-            get { return propertyNames.Length; }
-        }
+        public override int FieldCount => propertyNames.Length;
 
-        public override bool IsClosed {
-            get {
-                return enumerator == null;
-            }
-        }
+        public override bool IsClosed => enumerator == null;
 
         public override bool GetBoolean(int ordinal)
         {
@@ -256,7 +244,10 @@ namespace Utilities
             return this[ordinal];
         }
 
-        public override IEnumerator GetEnumerator() => new DbEnumerator(this);
+        public override IEnumerator GetEnumerator()
+        {
+            return new DbEnumerator(this);
+        }
 
         public override int GetValues(object[] values)
         {
@@ -270,13 +261,8 @@ namespace Utilities
             return this[ordinal] == DBNull.Value;
         }
 
-        public override object this[string name] {
-            get { return pinfos.First(prop => prop.Name == name).GetValue(current) ?? DBNull.Value; }
+        public override object this[string name] => pinfos.First(prop => prop.Name == name).GetValue(current) ?? DBNull.Value;
 
-        }
-
-        public override object this[int i] {
-            get { return pinfos[i].GetValue(current) ?? DBNull.Value; }
-        }
+        public override object this[int i] => pinfos[i].GetValue(current) ?? DBNull.Value;
     }
 }

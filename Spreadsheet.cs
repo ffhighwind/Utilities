@@ -15,128 +15,121 @@ namespace Utilities.Excel
         private bool disposed = false;
 
         /// <summary>
-        /// Creates an empty Excel Spreadsheet. An exception will be thrown when trying 
-        /// to access data without Opening an Excel Spreadsheet.
+        /// Initializes a new instance of the <see cref="Spreadsheet"/> class.
         /// </summary>
         public Spreadsheet() { }
 
         /// <summary>
-        /// Opens or creates an Excel Spreadsheet.
+        /// Initializes a new instance of the <see cref="Spreadsheet"/> class. This opens the file if it exists.
         /// </summary>
-        /// <param name="path">The path of the Excel Spreadsheet.</param>
+        /// <param name="path">The path of the file.</param>
         public Spreadsheet(string path)
         {
             Open(path, null);
         }
 
         /// <summary>
-        /// Opens or creates an Excel Spreadsheet.
+        /// Initializes a new instance of the <see cref="Spreadsheet"/> class. This opens the file if it exists.
         /// </summary>
-        /// <param name="path">The path of the Excel Spreadsheet.</param>
-        /// <param name="password">The password to the Excel Spreadsheet.</param>
+        /// <param name="path">The path of the file.</param>
+        /// <param name="password">The password to the file.</param>
         public Spreadsheet(string path, string password)
         {
             Open(path, password);
         }
 
         /// <summary>
-        /// Reads a stream and constructs an Excel Spreadsheet from it.
+        /// Initializes a new instance of the <see cref="Spreadsheet"/> class.
         /// </summary>
-        /// <param name="stream">The stream containing the Excel data.</param>
+        /// <param name="stream">The <see cref="Stream"/> containing the data.</param>
         public Spreadsheet(Stream stream)
         {
             Open(stream, null);
         }
 
         /// <summary>
-        /// Reads a stream and constructs an Excel Spreadsheet from it.
+        /// Initializes a new instance of the <see cref="Spreadsheet"/> class.
         /// </summary>
-        /// <param name="stream">The stream containing the Excel data.</param>
-        /// <param name="password">The password to the Excel Spreadsheet.</param>
+        /// <param name="stream">The <see cref="Stream"/> containing the data.</param>
+        /// <param name="password">The password to the <see cref="Stream"/>.</param>
         public Spreadsheet(Stream stream, string password)
         {
             Open(stream, password);
         }
 
         /// <summary>
-        /// Opens or creates an Excel Spreadsheet.
+        /// Initializes a new instance of the <see cref="Spreadsheet"/> class. This opens the file if it exists.
         /// </summary>
-        /// <param name="path">The path of the Excel Spreadsheet.</param>
-        public bool Open(string path)
+        /// <param name="path">The path of the file.</param>
+        public void Open(string path)
         {
-            return Open(path, null);
+            Open(path, null);
         }
 
         /// <summary>
-        /// Opens or creates an Excel Spreadsheet.
+        /// Initializes a new instance of the <see cref="Spreadsheet"/> class. This opens the file if it exists.
         /// </summary>
-        /// <param name="path">The path of the Excel Spreadsheet.</param>
-        /// <param name="password">The password to the Excel Spreadsheet.</param>
-        public bool Open(string path, string password)
+        /// <param name="path">The path of the file.</param>
+        /// <param name="password">The password to the file.</param>
+        public void Open(string path, string password)
         {
             try {
                 FileInfo fi = new FileInfo(path);
                 if (Data != null) {
-                    if(Data.File.Equals(fi))
-                        return true;
+                    if (Data.File.Equals(fi))
+                        return;
                     Data.Dispose();
                     Data = null;
                 }
                 Data = new ExcelPackage(fi, password);
                 if (Data.Workbook.Worksheets.Count == 0)
                     Add();
-                return true;
             }
             catch (Exception ex) {
-                string msg = (path != null && !path.EndsWith(".xlsx")) ? "wrong file extension." : ex.Message;
-                Console.Error.WriteLine("Error Excel.Spreadsheet.Open({0}): {1}", path, msg);
+                if (path != null && !path.EndsWith(".xlsx"))
+                    throw new IOException("Invalid file extension: " + path);
+                throw ex;
             }
-            return false;
         }
 
         /// <summary>
-        /// Returns whether the Spreadsheet is currently open and usable.
+        /// Returns whether the <see cref="Spreadsheet"/> is currently open and usable.
         /// </summary>
         public bool IsOpen => Data != null;
 
         /// <summary>
-        /// Reads a stream and constructs an Excel Spreadsheet from it.
+        /// Reads a <see cref="Stream"/> and constructs a <see cref="Spreadsheet"/> from it.
         /// </summary>
-        /// <param name="stream">The stream containing the Excel data.</param>
-        /// <returns>True on success. False on failure.</returns>
-        public bool Open(Stream stream)
+        /// <param name="stream">The <see cref="Stream"/> containing the Excel data.</param>
+        public void Open(Stream stream)
         {
-            return Open(stream, null);
+            Open(stream, null);
         }
 
         /// <summary>
-        /// Reads a stream and constructs an Excel Spreadsheet from it.
+        /// Reads a <see cref="Stream"/> and constructs a <see cref="Spreadsheet"/> from it.
         /// </summary>
-        /// <param name="stream">The stream containing the Excel data.</param>
-        /// <param name="password">The password to the Excel Spreadsheet.</param>
-        /// <returns>True on success. False on failure.</returns>
-        public bool Open(Stream stream, string password)
+        /// <param name="stream">The <see cref="Stream"/> containing the data.</param>
+        /// <param name="password">The password to the <see cref="Spreadsheet"/>.</param>
+        public void Open(Stream stream, string password)
         {
-            try {
-                if (Data != null) {
-                    Data.Dispose();
-                    Data = null;
-                }
-                if (Data == null)
-                    Data = new ExcelPackage(stream, password);
-                if (Data != null && Data.Workbook.Worksheets.Count == 0)
-                    Add();
-                return Data != null;
+            if (Data != null) {
+                if (Data.Stream == stream)
+                    return;
+                Data.Dispose();
+                Data = null;
             }
-            catch (Exception ex) {
-                Console.Error.WriteLine("Error Spreadsheet.Open(Stream): " + ex.Message);
-            }
-            return false;
+            if (Data == null)
+                Data = new ExcelPackage(stream, password);
+            if (Data.Workbook.Worksheets.Count == 0)
+                Add();
         }
 
         /// <summary>
-        /// Clears all data in the Excel Spreadsheet.
+        /// Clears the <see cref="Spreadsheet"/>. This removes every <see cref="Worksheet"/> and creates a blank one unless otherwise specified.
         /// </summary>
+        /// <param name="removeAllSheets">Determines if every <see cref="Worksheet"/> is removed.
+        /// By default an empty <see cref="Worksheet"/> will be added to ensure that the file is valid.</param>
         public void Clear(bool removeAllSheets = false)
         {
             for (int i = Data.Workbook.Worksheets.Count - 1; i >= 0; i--) {
@@ -147,11 +140,11 @@ namespace Utilities.Excel
         }
 
         /// <summary>
-        /// Loads a DataSet into the Excel Spreadsheet.
+        /// Loads a <see cref="DataSet"/> into a <see cref="Spreadsheet"/>.
         /// </summary>
-        /// <param name="dataset">The DataSet to load.</param>
-        /// <param name="printHeaders">Determines if the first row of each DataTable includes headers.</param>
-        /// <param name="useTableNames">Determines if the DataTable names will be used for the sheet names.</param>
+        /// <param name="dataset">The <see cref="DataSet"/> to load.</param>
+        /// <param name="printHeaders">Determines if the first row of each <see cref="DataTable"/> includes headers.</param>
+        /// <param name="useTableNames">Determines if the <see cref="DataTable"/> names will be used for the <see cref="Worksheet"/> names.</param>
         public void Load(DataSet dataset, bool printHeaders = true, bool useTableNames = true)
         {
             for (int i = Data.Workbook.Worksheets.Count - 1; i >= 0; i--) {
@@ -166,11 +159,11 @@ namespace Utilities.Excel
         }
 
         /// <summary>
-        /// Loads a DataTable into the Excel Spreadsheet.
+        /// Loads a <see cref="DataTable"/> into a <see cref="Spreadsheet"/>.
         /// </summary>
-        /// <param name="table">The DataTable to load.</param>
-        /// <param name="printHeaders">Determines if the first row of the DataTable includes headers.</param>
-        /// <param name="useTableNames">Determines if the DataTable name will be used for the sheet name.</param>
+        /// <param name="table">The <see cref="DataTable"/> to load.</param>
+        /// <param name="printHeaders">Determines if the first row of the <see cref="DataTable"/> includes headers.</param>
+        /// <param name="useTableName">Determines if the <see cref="DataTable"/> name will be used for the <see cref="Worksheet"/> name.</param>
         public void Load(DataTable table, bool printHeaders = true, bool useTableName = true)
         {
             Clear();
@@ -180,65 +173,65 @@ namespace Utilities.Excel
         }
 
         /// <summary>
-        /// Loads a DataTable into the Excel Spreadsheet.
+        /// Loads an <see cref="IDataReader"/> into a <see cref="Spreadsheet"/>.
         /// </summary>
-        /// <param name="reader">The IDataReader to load.</param>
-        /// <param name="printHeaders">Determines if the first row of the IDataReader includes headers.</param>
-        /// <param name="sheetname">The name of the new Worksheet.</param>
-        public void Load(IDataReader reader, bool printHeaders = true, string sheetname = "Sheet1")
+        /// <param name="reader">The <see cref="IDataReader"/> to load.</param>
+        /// <param name="printHeaders">Determines if the first row of the <see cref="IDataReader"/> includes headers.</param>
+        /// <param name="sheetName">The name of the new <see cref="Worksheet"/>.</param>
+        public void Load(IDataReader reader, bool printHeaders = true, string sheetName = "Sheet1")
         {
             Clear();
             ExcelWorksheet ws = Data.Workbook.Worksheets.First();
-            ws.Name = sheetname;
+            ws.Name = sheetName;
             new Worksheet(ws).Load(reader, printHeaders);
         }
 
         /// <summary>
-        /// Loads an enumerable list of objects into the Excel Spreadsheet.
+        /// Loads an <see cref="IEnumerable{T}"/> of objects into a <see cref="Spreadsheet"/>.
         /// </summary>
-        /// <param name="list">The enumerable list to load.</param>
-        /// <param name="sheetname">The name of the new Worksheet.</param>
-        public void Load(IEnumerable<object[]> list, string sheetname = "Sheet1")
+        /// <param name="list">The <see cref="IEnumerable{T}"/> to load.</param>
+        /// <param name="sheetName">The name of the new <see cref="Worksheet"/>.</param>
+        public void Load(IEnumerable<object[]> list, string sheetName = "Sheet1")
         {
             Clear();
             ExcelWorksheet ws = Data.Workbook.Worksheets.First();
-            ws.Name = sheetname;
+            ws.Name = sheetName;
             new Worksheet(ws).Load(list);
         }
 
         /// <summary>
-        /// Loads an enumerable list into the Excel Spreadsheet.
+        /// Loads an <see cref="IEnumerable{T}"/> into a <see cref="Spreadsheet"/>.
         /// </summary>
-        /// <typeparam name="T">The type of objects in the enumerable list.</typeparam>
-        /// <param name="list">The enumerable list to load.</param>
-        /// <param name="sheetname">The name of the new Worksheet.</param>
-        public void Load<T>(IEnumerable<T> list, string sheetname = "Sheet1")
+        /// <typeparam name="T">The <see cref="Type"/> of objects in the <see cref="IEnumerable{T}"/>.</typeparam>
+        /// <param name="list">The <see cref="IEnumerable{T}"/> to load.</param>
+        /// <param name="sheetName">The name of the new <see cref="Worksheet"/>.</param>
+        public void Load<T>(IEnumerable<T> list, string sheetName = "Sheet1")
         {
             Clear();
             ExcelWorksheet ws = Data.Workbook.Worksheets.First();
-            ws.Name = sheetname;
+            ws.Name = sheetName;
             new Worksheet(ws).Load(list);
         }
 
         /// <summary>
-        /// Loads comma-separated text into the Excel Spreadsheet.
+        /// Loads comma-separated text into a <see cref="Spreadsheet"/>.
         /// </summary>
-        /// <param name="csvtext">The comma-separated text to load from.</param>
-        /// <param name="sheetname">The name of the new Worksheet.</param>
-        public void Load(string csvtext, string sheetname = "Sheet1")
+        /// <param name="csvText">The comma-separated text to load.</param>
+        /// <param name="sheetName">The name of the new <see cref="Worksheet"/>.</param>
+        public void Load(string csvText, string sheetName = "Sheet1")
         {
             Clear();
             ExcelWorksheet ws = Data.Workbook.Worksheets.First();
-            ws.Name = sheetname;
-            new Worksheet(ws).Load(csvtext);
+            ws.Name = sheetName;
+            new Worksheet(ws).Load(csvText);
         }
 
         /// <summary>
-        /// Reads the data from the Excel Spreadsheet into a DataSet.
+        /// Reads the data from the <see cref="Spreadsheet"/> into a <see cref="DataSet"/>.
         /// </summary>
-        /// <param name="dataset">The DataSet to modify.</param>
-        /// <param name="hasHeaders">Determines if the first rows of each sheet include headers.</param>
-        /// <returns>The modified DataSet.</returns>
+        /// <param name="dataset">The <see cref="DataSet"/> to modify.</param>
+        /// <param name="hasHeaders">Determines if the first rows of each <see cref="Worksheet"/> includes headers.</param>
+        /// <returns>The <see cref="DataSet"/>.</returns>
         public DataSet ToDataSet(DataSet dataset, bool hasHeaders = true)
         {
             for (int i = 0; i < Data.Workbook.Worksheets.Count; i++) {
@@ -250,10 +243,10 @@ namespace Utilities.Excel
         }
 
         /// <summary>
-        /// Creates a new DataSet from the Excel Spreadsheet.
+        /// Creates a <see cref="DataSet"/> from the <see cref="Spreadsheet"/>.
         /// </summary>
-        /// <param name="hasHeaders">Determines if the first rows of each sheet include headers.</param>
-        /// <returns>The modified DataSet.</returns>
+        /// <param name="hasHeaders">Determines if the first rows of each <see cref="Worksheet"/> includes headers.</param>
+        /// <returns>The <see cref="DataSet"/>.</returns>
         public DataSet ToDataSet(bool hasHeaders = true)
         {
             DataSet dataset = new DataSet();
@@ -261,12 +254,12 @@ namespace Utilities.Excel
         }
 
         /// <summary>
-        /// The number of Worksheets in the Excel Spreadsheet.
+        /// The <see cref="Worksheet"/> count in the <see cref="Spreadsheet"/>.
         /// </summary>
         public int Sheets => Data.Workbook.Worksheets.Count;
 
         /// <summary>
-        /// The number of Worksheets in the Excel Spreadsheet.
+        /// The Worksheets in the <see cref="Spreadsheet"/>.
         /// </summary>
         public IEnumerable<Worksheet> Worksheets {
             get {
@@ -276,7 +269,7 @@ namespace Utilities.Excel
         }
 
         /// <summary>
-        /// Auto-filtering for all columns in the Spreadsheet. This allows sorting and filtering of data.
+        /// Auto-filtering for all columns in the <see cref="Spreadsheet"/>. This allows sorting and filtering of data.
         /// </summary>
         public bool AutoFilter {
             set {
@@ -288,7 +281,7 @@ namespace Utilities.Excel
         }
 
         /// <summary>
-        /// Automatically formats string values to numbers, dates, timespans, currency, percentages, etc.
+        /// Converts all string values to numbers, dates, timespans, currencies, percentages, etc.
         /// </summary>
         public void AutoFormat()
         {
@@ -309,8 +302,9 @@ namespace Utilities.Excel
         }
 
         /// <summary>
-        /// Adds a new Worksheet to the Excel Spreadsheet.
+        /// Adds a new <see cref="Worksheet"/> to the <see cref="Spreadsheet"/>.
         /// </summary>
+        /// <returns>The <see cref="Worksheet"/>.</returns>
         public Worksheet Add()
         {
             for (int i = Data.Workbook.Worksheets.Count + 1; ; i++) {
@@ -322,29 +316,30 @@ namespace Utilities.Excel
         }
 
         /// <summary>
-        /// Adds a new Worksheet to the Excel Spreadsheet.
+        /// Adds a new <see cref="Worksheet"/> to the <see cref="Spreadsheet"/>.
         /// </summary>
-        /// <param name="sheetname">The name of the Worksheet to add.</param>
-        public Worksheet Add(string sheetname)
+        /// <param name="sheetName">The name of the <see cref="Worksheet"/> to add.</param>
+        /// <returns>The <see cref="Worksheet"/>.</returns>
+        public Worksheet Add(string sheetName)
         {
-            ExcelWorksheet ws = Data.Workbook.Worksheets.Add(sheetname);
+            ExcelWorksheet ws = Data.Workbook.Worksheets.Add(sheetName);
             ws.Cells["A1"].Value = "";
             return new Worksheet(ws);
         }
 
         /// <summary>
-        /// Removes a Worksheet from the Excel Spreadsheet.
+        /// Removes a <see cref="Worksheet"/> from the <see cref="Spreadsheet"/>.
         /// </summary>
-        /// <param name="sheetname">The name of the Worksheet to remove.</param>
-        public void Remove(string sheetname)
+        /// <param name="sheetName">The name of the <see cref="Worksheet"/> to remove.</param>
+        public void Remove(string sheetName)
         {
-            Data.Workbook.Worksheets.Delete(sheetname);
+            Data.Workbook.Worksheets.Delete(sheetName);
         }
 
         /// <summary>
-        /// Removes a Worksheet from the Excel Spreadsheet.
+        /// Removes a <see cref="Worksheet"/> from the <see cref="Spreadsheet"/>.
         /// </summary>
-        /// <param name="index">The index of the Worksheet to remove.</param>
+        /// <param name="index">The index of the <see cref="Worksheet"/> to remove.</param>
         public void Remove(int index)
         {
             if (Data.Compatibility.IsWorksheets1Based)
@@ -353,21 +348,17 @@ namespace Utilities.Excel
         }
 
         /// <summary>
-        /// Gets a Worksheet from the Excel Spreadsheet.
+        /// Gets a <see cref="Worksheet"/> from the <see cref="Spreadsheet"/>.
         /// </summary>
-        /// <param name="sheetname">The name of the Worksheet.</param>
-        /// <returns></returns>
-        public Worksheet this[string sheetname] {
-            get {
-                return new Worksheet(Data.Workbook.Worksheets[sheetname]);
-            }
-        }
+        /// <param name="sheetName">The name of the <see cref="Worksheet"/>.</param>
+        /// <returns>The <see cref="Worksheet"/>.</returns>
+        public Worksheet this[string sheetName] => new Worksheet(Data.Workbook.Worksheets[sheetName]);
 
         /// <summary>
         /// Gets a Worksheet from the Excel Spreadsheet.
         /// </summary>
         /// <param name="sheetIndex">The index of the Worksheet (base 0).</param>
-        /// <returns></returns>
+        /// <returns>The <see cref="Worksheet"/>.</returns>
         public Worksheet this[int sheetIndex] {
             get {
                 if (Data.Compatibility.IsWorksheets1Based)
@@ -377,7 +368,7 @@ namespace Utilities.Excel
         }
 
         /// <summary>
-        /// The FileInfo for the Excel Spreadsheet.
+        /// The <see cref="FileInfo"/> for the <see cref="Spreadsheet"/>.
         /// </summary>
         public FileInfo File {
             get => Data.File;
@@ -385,7 +376,7 @@ namespace Utilities.Excel
         }
 
         /// <summary>
-        /// Freezes the headers on all worksheets (locks them for visibility).
+        /// Freezes the top row on every <see cref="Worksheet"/> (locks it for visibility).
         /// </summary>
         public void FreezePanes()
         {
@@ -396,12 +387,12 @@ namespace Utilities.Excel
         }
 
         /// <summary>
-        /// Information about the Excel Spreadsheet.
+        /// Properties of the <see cref="Spreadsheet"/>.
         /// </summary>
         public OfficeProperties Properties => Data.Workbook.Properties;
 
         /// <summary>
-        /// The title of the Excel Spreadsheet.
+        /// The title of the <see cref="Spreadsheet"/>.
         /// </summary>
         public string Title {
             get => Data.Workbook.Properties.Title;
@@ -409,7 +400,7 @@ namespace Utilities.Excel
         }
 
         /// <summary>
-        /// The author of the Excel Spreadsheet.
+        /// The author of the <see cref="Spreadsheet"/>.
         /// </summary>
         public string Author {
             get => Data.Workbook.Properties.Author;
@@ -417,7 +408,7 @@ namespace Utilities.Excel
         }
 
         /// <summary>
-        /// The company name of the Excel Spreadsheet.
+        /// The company name of the <see cref="Spreadsheet"/>.
         /// </summary>
         public string Company {
             get => Data.Workbook.Properties.Company;
@@ -425,7 +416,7 @@ namespace Utilities.Excel
         }
 
         /// <summary>
-        /// Saves the Excel Spreadsheet.
+        /// Saves the <see cref="Spreadsheet"/>.
         /// </summary>
         public void Save()
         {
@@ -433,16 +424,16 @@ namespace Utilities.Excel
         }
 
         /// <summary>
-        /// Saves and encrypts the Excel Spreadsheet with a password.
+        /// Saves and encrypts the <see cref="Spreadsheet"/> with a password.
         /// </summary>
-        /// <param name="password">The password to the Excel Spreadsheet.</param>
+        /// <param name="password">The password to the <see cref="Spreadsheet"/>.</param>
         public void Save(string password)
         {
             Data.Save(password);
         }
 
         /// <summary>
-        /// Saves the Excel Spreadsheet.
+        /// Saves the <see cref="Spreadsheet"/>.
         /// </summary>
         /// <param name="path">The file to create.</param>
         public void SaveAs(string path)
@@ -451,17 +442,17 @@ namespace Utilities.Excel
         }
 
         /// <summary>
-        /// Saves and encrypts the Excel Spreadsheet with a password.
+        /// Saves and encrypts the <see cref="Spreadsheet"/> with a password.
         /// </summary>
         /// <param name="path">The file to create.</param>
-        /// <param name="password">The password to the Excel Spreadsheet.</param>
+        /// <param name="password">The password to the <see cref="Spreadsheet"/>.</param>
         public void SaveAs(string path, string password)
         {
             Data.SaveAs(new FileInfo(path), password);
         }
 
         /// <summary>
-        /// The EPPlus implementation of the Spreadsheet (Package).
+        /// The <see cref="ExcelPackage"/> representation of the <see cref="Spreadsheet"/>.
         /// </summary>
         public ExcelPackage Data { get; private set; } = null;
 
@@ -481,7 +472,7 @@ namespace Utilities.Excel
         }
 
         /// <summary>
-        /// Finalizes and destructs the object.
+        /// Finalizes an instance of the <see cref="Spreadsheet"/> class.
         /// </summary>
         ~Spreadsheet()
         {

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 namespace Utilities
@@ -10,7 +9,7 @@ namespace Utilities
     /// </summary>
     public static class WorkCalendar
     {
-        private const DayOfWeek WEEK_START = DayOfWeek.Monday;
+        private const DayOfWeek Monday = DayOfWeek.Monday;
 
         /// <summary>
         /// Gets the number of weeks in a given month/year. This is always 4 or 5.
@@ -18,14 +17,14 @@ namespace Utilities
         /// <param name="year">The year (1-9999).</param>
         /// <param name="month">The month (1-12).</param>
         /// <returns>The number of weeks in a given month/year (4 or 5).</returns>
-        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        /// <exception cref="ArgumentOutOfRangeException">Month an year must fall within their represented ranges.</exception>
         public static int WeeksInMonth(int year, int month)
         {
-            //return FirstDay(year, month, WEEK_START).AddDays(7 * 4).Month == month ? 5 : 4;
+            ////return FirstDay(year, month, WEEK_START).AddDays(7 * 4).Month == month ? 5 : 4;
             // checks if the start of the 5th week is in the same month
             DateTime day1 = new DateTime(year, month, 1);
-            int daysAdd = ((int) WEEK_START - (int) day1.DayOfWeek + 7) % 7 + 7 * 4;
-            //return day1.AddDays(daysAdd).Month == month ? 5 : 4;
+            int daysAdd = ((int) Monday - (int) day1.DayOfWeek + 7) % 7 + 7 * 4;
+            ////return day1.AddDays(daysAdd).Month == month ? 5 : 4;
             return daysAdd < DateTime.DaysInMonth(year, month) ? 5 : 4;
         }
 
@@ -93,7 +92,7 @@ namespace Utilities
         /// <returns>The start of the previous week.</returns>
         public static DateTime PreviousWeek()
         {
-            return PreviousDay(DateTime.Now.AddDays(-6), WEEK_START).Date;
+            return PreviousDay(DateTime.Now.AddDays(-6), Monday).Date;
         }
 
         /// <summary>
@@ -128,7 +127,7 @@ namespace Utilities
         public static DateTime WeekStart(int year, int month, int week)
         {
             DateTime day1 = new DateTime(year, month, 1);
-            int daysAdd = ((int) WEEK_START - (int) day1.DayOfWeek + 7) % 7 + 7 * (week - 1);
+            int daysAdd = ((int) Monday - (int) day1.DayOfWeek + 7) % 7 + 7 * (week - 1);
             return new DateTime(year, month, daysAdd + 1);
         }
 
@@ -242,7 +241,7 @@ namespace Utilities
 
         /// <summary>
         /// Determines if this date is a paid holiday:
-        /// These include: New Years, MLK Jr, Washington's Bday, Memorial Day, Independence Day, Labor Day, Columbus Day, Veterans Day, Thanksgiving, Christmas
+        /// These include: New Years, MLK Jr, Washington's birthday, Memorial Day, Independence Day, Labor Day, Columbus Day, Veterans Day, Thanksgiving, Christmas
         /// </summary>
         /// <param name="date">The date.</param>
         /// <returns>True if this date is a paid holiday, or false otherwise.</returns>
@@ -270,16 +269,16 @@ namespace Utilities
                         return dow == DayOfWeek.Monday;
                     // MLK Jr Day
                     return weekOfMonth == 3 && dow == DayOfWeek.Monday;
-                // case 2:
+                //// case 2:
                 //// President’s Day (3rd Monday in February)
-                //if (date.Month == 2 && isMonday && nthWeekDay == 3) return true;
-                // case 4:
+                ////if (date.Month == 2 && isMonday && nthWeekDay == 3) return true;
+                //// case 4:
                 //// Veteran’s Day (November 11, or preceding Friday/following Monday if weekend))
-                //if ((date.Month == 11 && date.Day == 10 && isFriday) ||
-                //    (date.Month == 11 && date.Day == 11 && !isWeekend) ||
-                //    (date.Month == 11 && date.Day == 12 && isMonday)) return true;
+                ////if ((date.Month == 11 && date.Day == 10 && isFriday) ||
+                ////    (date.Month == 11 && date.Day == 11 && !isWeekend) ||
+                ////    (date.Month == 11 && date.Day == 12 && isMonday)) return true;
                 case 5:
-                    // Memorial Day 
+                    // Memorial Day
                     return dow == DayOfWeek.Monday && date.AddDays(7).Month == 6;
                 case 7:
                     // Independence Day
@@ -289,13 +288,13 @@ namespace Utilities
                 case 9:
                     // Labor Day
                     return dow == DayOfWeek.Monday && weekOfMonth == 1;
-                // case 10:
+                //// case 10:
                 //// Columbus Day (2nd Monday in October)
-                //if (date.Month == 10 && isMonday && nthWeekDay == 2) return true;
+                ////if (date.Month == 10 && isMonday && nthWeekDay == 2) return true;
                 case 11:
-                    //Thanksgiving + day after Thanksgiving
-                    return ((weekOfMonth == 4 && dow == DayOfWeek.Thursday)
-                        || ((day - 2) / 7 == 3 && dow == DayOfWeek.Friday));
+                    // Thanksgiving + day after Thanksgiving
+                    return (weekOfMonth == 4 && dow == DayOfWeek.Thursday)
+                        || ((day - 2) / 7 == 3 && dow == DayOfWeek.Friday);
                 case 12:
                     // New Years
                     if (day == 31)
@@ -331,7 +330,7 @@ namespace Utilities
                 // Christmas
                 NearestWeekDay(new DateTime(year, 12, 25))
             };
-            // Thanksgiving -- 4th Thursday in November 
+            // Thanksgiving -- 4th Thursday in November
             DateTime thanksgiving = FirstDay(year, 11, DayOfWeek.Thursday).AddDays(7 * 3);
             holidays.Add(thanksgiving);
             holidays.Add(thanksgiving.AddDays(1)); // day after Thanksgiving

@@ -19,13 +19,17 @@ namespace Utilities
         public IReadOnlyList<SchemaTableColumn> UniqueColumns { get; private set; }
         public IReadOnlyList<SchemaTableColumn> Columns { get; private set; }
 
-        public SchemaTable(DataTable tableSchema)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SchemaTable"/> class.
+        /// </summary>
+        /// <param name="schema">The results from <see cref="System.Data.SqlClient.SqlDataReader.GetSchemaTable"/>.</param>
+        public SchemaTable(DataTable schema)
         {
-            SchemaTableColumn[] columns = new SchemaTableColumn[tableSchema.Rows.Count];
+            SchemaTableColumn[] columns = new SchemaTableColumn[schema.Rows.Count];
             List<SchemaTableColumn> uniqueCols = new List<SchemaTableColumn>();
             List<SchemaTableColumn> pkey = new List<SchemaTableColumn>();
-            for (int i = 0; i < tableSchema.Rows.Count; i++) {
-                columns[i] = new SchemaTableColumn(tableSchema, i);
+            for (int i = 0; i < schema.Rows.Count; i++) {
+                columns[i] = new SchemaTableColumn(schema, i);
                 if (columns[i].IsKey)
                     pkey.Add(columns[i]);
                 if (columns[i].IsUnique)
@@ -39,11 +43,12 @@ namespace Utilities
         public string CreateTableScript(string tablename)
         {
             if (createTable == null) {
-                //lazy evaluation
+                // lazy evaluation
                 StringBuilder sql = new StringBuilder(" (");
                 for (int i = 0; i < Columns.Count; i++) {
                     SchemaTableColumn col = Columns[i];
-                    sql.AppendFormat("\n\t[{0}] {1}{2}{3}{4},",
+                    sql.AppendFormat(
+                        "\n\t[{0}] {1}{2}{3}{4},",
                         col.Name,
                         col.DbTypeFullName,
                         col.IsIdentity ? " IDENTITY" : "",
@@ -58,7 +63,7 @@ namespace Utilities
                     pkeyConstraint = string.Format(" PRIMARY KEY ({0})\n);", string.Join(",", PrimaryKey.Select(col => col.Name)));
                 }
                 else
-                    sql.Remove(sql.Length - 1, 1).Append("\n);"); //remove last comma
+                    sql.Remove(sql.Length - 1, 1).Append("\n);"); // remove last comma
                 createTable = sql.ToString();
             }
 

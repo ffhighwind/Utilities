@@ -11,12 +11,14 @@ namespace Utilities
 {
     public static class Util
     {
-        private const BindingFlags FLAGS = BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty;
+        private const BindingFlags DefaultBindingFlags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty;
+
         #region Converters
         /// <summary>
-        /// Converters for most basic types. converterDict(outputType)(inputType) returns a converter function that takes an objet of inputType and converts it to outputType.
+        /// Converters for most basic types. converterMap(outputType)(inputType) returns a converter lambda function
+        /// that takes an object of the input <see cref="Type"/> and converts it to the output <see cref="Type"/>.
         /// </summary>
-        private static Dictionary<Type, Func<Type, Func<object, object>>> converterDict = new Dictionary<Type, Func<Type, Func<object, object>>>() {
+        private static Dictionary<Type, Func<Type, Func<object, object>>> converterMap = new Dictionary<Type, Func<Type, Func<object, object>>>() {
             { typeof(string), (input) => {
                 Func<object, object> converter;
                 if (input == typeof(DateTime))
@@ -25,11 +27,11 @@ namespace Utilities
                     converter = (inp) => { return ((TimeSpan) inp).ToString("h:mm:ss.fff"); };
                 else if (input == typeof(DateTimeOffset))
                     converter = (inp) => { return Extensions.ToDateTime((DateTimeOffset) inp).ToString("M-d-yyyy h:mm:ss.fff AM/PM"); };
-                else if(input == typeof(DateTime?))
+                else if (input == typeof(DateTime?))
                     converter = (inp) => { return (inp as DateTime?)?.ToString("M-d-yyyy h:mm:ss.fff AM/PM"); };
-                else if(input == typeof(DateTimeOffset?))
+                else if (input == typeof(DateTimeOffset?))
                     converter = (inp) => { return inp == null ? null : Extensions.ToDateTime((DateTimeOffset)inp).ToString("M-d-yyyy h:mm:ss.fff AM/PM"); };
-                else if(input == typeof(TimeSpan?))
+                else if (input == typeof(TimeSpan?))
                     converter = (inp) => { return (inp as TimeSpan?)?.ToString("h:mm:ss.fff"); };
                 else
                     converter = System.Convert.ToString;
@@ -41,7 +43,7 @@ namespace Utilities
                     converter = (inp) => { return (DateTime)inp; };
                 else if (input == typeof(DateTimeOffset) || input == typeof(DateTimeOffset?))
                     converter = (inp) => { return Extensions.ToDateTime((DateTimeOffset)inp); };
-                else if(input == typeof(TimeSpan) || input == typeof(TimeSpan?))
+                else if (input == typeof(TimeSpan) || input == typeof(TimeSpan?))
                     converter = (inp) => { return new DateTime(((TimeSpan) inp).Ticks); };
                 else
                     converter = (inp) => { return System.Convert.ToDateTime(inp); };
@@ -65,7 +67,7 @@ namespace Utilities
             } },
             { typeof(Guid), (input) => {
                 Func<object, object> converter;
-                if(input == typeof(string))
+                if (input == typeof(string))
                     converter = (inp) => { return Guid.Parse(inp as string); };
                 else
                     converter = NoConvert;
@@ -73,7 +75,7 @@ namespace Utilities
             } },
             { typeof(char[]), (input) => {
                 Func<object, object> converter;
-                if(input == typeof(byte[])) {
+                if (input == typeof(byte[])) {
                     converter = (inp) => {
                         byte[] inBytes = inp as byte[];
                         char[] outChars = new char[inBytes.Length / 4];
@@ -108,63 +110,65 @@ namespace Utilities
         private static object NoConvert(object obj) { return obj; }
 
         /// <summary>
-        /// Returns a function that converts an object from one Type to another.
+        /// Returns a function that converts an object from one <see cref="Type"/> to another.
         /// </summary>
-        /// <param name="input">The Type of the input object.</param>
-        /// <param name="output">The Type of the output object.</param>
-        /// <returns>A function that converts objects from one Type to another.</returns>
+        /// <param name="input">The <see cref="Type"/> of the input object.</param>
+        /// <param name="output">The <see cref="Type"/> of the output object.</param>
+        /// <returns>A function that converts objects from one <see cref="Type"/> to another.</returns>
         public static Func<object, object> Converter(Type input, Type output)
         {
-            if (input == output || !converterDict.TryGetValue(output, out Func<Type, Func<object, object>> converter))
+            if (input == output || !converterMap.TryGetValue(output, out Func<Type, Func<object, object>> converter))
                 return NoConvert;
             return converter(input);
         }
 
         /// <summary>
-        /// Returns a function that converts a list of strings to class.
+        /// Creates a function that converts an <see cref="IEnumerable{T}"/> of strings to an object.
         /// </summary>
-        /// <param name="input">The Type of the input object.</param>
-        /// <param name="output">The Type of the output object.</param>
-        /// <returns>A function that converts strings to a class.</returns>
-        public static Func<string[], T> StringsConverter<T>() where T : class, new()
+        /// <typeparam name="T">The <see cref="Type>"/> of the object.</typeparam>
+        /// <returns>A function that converts an <see cref="IEnumerable{T}"/> strings to an object.</returns>
+        public static Func<IEnumerable<string>, T> StringsConverter<T>() where T : class, new()
         {
-            PropertyInfo[] pinfos = typeof(T).GetProperties(FLAGS);
+            PropertyInfo[] pinfos = typeof(T).GetProperties(DefaultBindingFlags);
             Func<object, object>[] converters = new Func<object, object>[pinfos.Length];
             for (int i = 0; i < pinfos.Length; i++) {
-                converters[i] = converterDict[typeof(string)](pinfos[i].PropertyType);
+                converters[i] = converterMap[typeof(string)](pinfos[i].PropertyType);
             }
             return (strs) => {
                 T obj = new T();
-                for (int i = 0; i < pinfos.Length; i++) {
-                    pinfos[i].SetValue(obj, converters[i](strs[i]));
+                int i = 0;
+                foreach (string str in strs) {
+                    pinfos[i].SetValue(obj, converters[i](str));
+                    i++;
                 }
                 return obj;
             };
         }
 
         /// <summary>
-        /// Returns a function that converts a list of strings to class.
+        /// Creates a function that converts an <see cref="IEnumerable{T}"/> of strings to an object.
         /// </summary>
-        /// <param name="input">The Type of the input object.</param>
-        /// <param name="output">The Type of the output object.</param>
-        /// <returns>A function that converts strings to a class.</returns>
-        public static Func<string[], T> StringsConverter<T>(IEnumerable<string> propertyNames) where T : class, new()
+        /// <typeparam name="T">The <see cref="Type>"/> of the object.</typeparam>
+        /// <param name="propertyNames">The properties to set.</param>
+        /// <returns>A function that converts an <see cref="IEnumerable{T}"/> of strings to an object.</returns>
+        public static Func<IEnumerable<string>, T> StringsConverter<T>(IEnumerable<string> propertyNames) where T : class, new()
         {
             List<PropertyInfo> pinfos = new List<PropertyInfo>();
             foreach (string prop in propertyNames) {
-                PropertyInfo pinfo = typeof(T).GetProperty(prop, FLAGS);
+                PropertyInfo pinfo = typeof(T).GetProperty(prop, DefaultBindingFlags);
                 if (pinfo == null)
                     throw new InvalidOperationException("Invalid PropertyInfo '" + prop ?? "" + "'");
                 pinfos.Add(pinfo);
             }
             Func<object, object>[] converters = new Func<object, object>[pinfos.Count];
             for (int i = 0; i < pinfos.Count; i++) {
-                converters[i] = converterDict[pinfos[i].PropertyType](typeof(string));
+                converters[i] = converterMap[pinfos[i].PropertyType](typeof(string));
             }
             return (strs) => {
                 T obj = new T();
-                for (int i = 0; i < pinfos.Count; i++) {
-                    pinfos[i].SetValue(obj, converters[i](strs[i]));
+                int i = 0;
+                foreach (string str in strs) {
+                    pinfos[i].SetValue(obj, converters[i](str));
                 }
                 return obj;
             };
@@ -173,24 +177,24 @@ namespace Utilities
 
         #region Encoding/TextReader
         /// <summary>
-        /// Detects the encoding for UTF-7, UTF-8/16/32 (bom, no bom, little & big endian), 
-        /// and local default codepage, and other codepages.
+        /// Detects the <see cref="Encoding"/> for UTF-7, UTF-8/16/32 (bom, no bom, little & big endian),
+        /// the local default codepage, and others.
         /// </summary>
-        /// <param name="path">The file to detect encoding of.</param>
-        /// <returns>The text of the file after it has been processed for encoding.</returns>
+        /// <param name="path">The file to detect <see cref="Encoding"/> of.</param>
+        /// <returns>The text of the file after it has been read.</returns>
         public static string GetEncodedText(string path)
         {
             return GetEncodedText(path, out Encoding encoding);
         }
 
         /// <summary>
-        /// Detects the encoding for UTF-7, UTF-8/16/32 (bom, no bom, little & big endian), 
-        /// and local default codepage, and other codepages.
+        /// Detects the <see cref="Encoding"/> for UTF-7, UTF-8/16/32 (bom, no bom, little & big endian),
+        /// the local default codepage, and others.
         /// </summary>
-        /// <param name="path">The file to detect encoding of.</param>
-        /// <param name="encoding">The encoding of the file.</param>
-        /// <param name="maxBytes">The number of bytes to check of the file. Higher value is slower 
-        /// but more reliable (especially UTF-8 with special characters later on may appear to be ASCII initially). 
+        /// <param name="path">The file to detect <see cref="Encoding"/> of.</param>
+        /// <param name="encoding">The <see cref="Encoding"/> of the file.</param>
+        /// <param name="maxBytes">The number of bytes to check of the file. Higher value is slower
+        /// but more reliable (especially UTF-8 with special characters later on may appear to be ASCII initially).
         /// If negative then the whole file is read in (maximum reliability)</param>
         /// <returns>The text of the file after it has been processed for encoding.</returns>
         public static string GetEncodedText(string path, out Encoding encoding, int maxBytes = -1)
@@ -212,12 +216,12 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Creates a TextReader from the Path and attempts automatically detect the file encoding.
+        /// Creates a <see cref="System.IO.TextReader"/> from the path and attempts to detect the file <see cref="Encoding"/>.
         /// </summary>
-        /// <param name="path">The path of the file.</param>
-        /// <param name="maxBytesRead">The maximum number of bytes to read at once. 
+        /// <param name="fi">The <see cref="FileInfo"/> of the file.</param>
+        /// <param name="maxBytesRead">The maximum number of bytes to read at once.
         /// If the file is bigger than this size then it is read as a Stream.</param>
-        /// <returns>The TextReader with the file encoding automatically detected.</returns>
+        /// <returns>The <see cref="System.IO.TextReader"/> with the file <see cref="Encoding"/> automatically detected.</returns>
         public static TextReader TextReader(FileInfo fi, int maxBytesRead = 100000000)
         {
             if (!fi.Exists)
@@ -228,11 +232,11 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Attempts to detect the Encoding of a file.
+        /// Attempts to detect the <see cref="Encoding"/> of a file.
         /// </summary>
         /// <param name="path">The path of the file.</param>
-        /// <param name="maxBytes">The maximum number of bytes to read for detecting encoding.</param>
-        /// <returns>The encoding of the file.</returns>
+        /// <param name="maxBytes">The maximum number of bytes to read for detecting <see cref="Encoding"/>.</param>
+        /// <returns>The <see cref="Encoding"/> of the file.</returns>
         public static Encoding GetEncoding(string path, int maxBytes = 1000)
         {
             //////////// If the code reaches here, no BOM/signature was found, so now
@@ -243,11 +247,11 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Gets the file Encoding from an array of bytes.
+        /// Gets the file <see cref="Encoding"/> from a <see cref="byte"/>[].
         /// </summary>
-        /// <param name="b">The array of bytes to read for Encoding.</param>
-        /// <param name="index">The start of the file. This will be after the Encoding BOM/signature if one exists.</param>
-        /// <returns>The Encoding of the array of bytes.</returns>
+        /// <param name="b">The <see cref="byte"/>[] to detect <see cref="Encoding"/> for.</param>
+        /// <param name="index">The start of the file. This will be after the <see cref="Encoding"/> BOM/signature if one exists.</param>
+        /// <returns>The <see cref="Encoding"/> of the <see cref="byte"/>[].</returns>
         /// <source>https://stackoverflow.com/questions/1025332/determine-a-strings-encoding-in-c-sharp </source>
         private static Encoding GetTextEncoding(byte[] b, out int index)
         {
@@ -255,7 +259,7 @@ namespace Utilities
             //////////////// BOM/signature exists (sourced from http://www.unicode.org/faq/utf_bom.html#bom4)
             if (b.Length >= 4 && b[0] == 0x00 && b[1] == 0x00 && b[2] == 0xFE && b[3] == 0xFF) {
                 index = 4;
-                return Encoding.GetEncoding("utf-32BE"); // UTF-32, big-endian 
+                return Encoding.GetEncoding("utf-32BE"); // UTF-32, big-endian
             }
             else if (b.Length >= 4 && b[0] == 0xFF && b[1] == 0xFE && b[2] == 0x00 && b[3] == 0x00) {
                 index = 4;
@@ -290,20 +294,34 @@ namespace Utilities
             int i = 0;
             bool utf8 = false;
             while (i < b.Length - 4) {
-                if (b[i] <= 0x7F) { i += 1; continue; }     // If all characters are below 0x80, then it is valid UTF8, but UTF8 is not 'required' (and therefore the text is more desirable to be treated as the default codepage of the computer). Hence, there's no "utf8 = true;" code unlike the next three checks.
-                if (b[i] >= 0xC2 && b[i] <= 0xDF && b[i + 1] >= 0x80 && b[i + 1] < 0xC0) { i += 2; utf8 = true; continue; }
-                if (b[i] >= 0xE0 && b[i] <= 0xF0 && b[i + 1] >= 0x80 && b[i + 1] < 0xC0 && b[i + 2] >= 0x80 && b[i + 2] < 0xC0) { i += 3; utf8 = true; continue; }
-                if (b[i] >= 0xF0 && b[i] <= 0xF4 && b[i + 1] >= 0x80 && b[i + 1] < 0xC0 && b[i + 2] >= 0x80 && b[i + 2] < 0xC0 && b[i + 3] >= 0x80 && b[i + 3] < 0xC0) { i += 4; utf8 = true; continue; }
+                if (b[i] <= 0x7F) {
+                    i += 1;
+                    continue;
+                }     // If all characters are below 0x80, then it is valid UTF8, but UTF8 is not 'required' (and therefore the text is more desirable to be treated as the default codepage of the computer). Hence, there's no "utf8 = true;" code unlike the next three checks.
+                if (b[i] >= 0xC2 && b[i] <= 0xDF && b[i + 1] >= 0x80 && b[i + 1] < 0xC0) {
+                    i += 2;
+                    utf8 = true;
+                    continue;
+                }
+                if (b[i] >= 0xE0 && b[i] <= 0xF0 && b[i + 1] >= 0x80 && b[i + 1] < 0xC0 && b[i + 2] >= 0x80 && b[i + 2] < 0xC0) {
+                    i += 3;
+                    utf8 = true;
+                    continue;
+                }
+                if (b[i] >= 0xF0 && b[i] <= 0xF4 && b[i + 1] >= 0x80 && b[i + 1] < 0xC0 && b[i + 2] >= 0x80 && b[i + 2] < 0xC0 && b[i + 3] >= 0x80 && b[i + 3] < 0xC0) {
+                    i += 4;
+                    utf8 = true;
+                    continue;
+                }
                 utf8 = false;
                 break;
             }
-            if (utf8) {
+            if (utf8)
                 return Encoding.UTF8;
-            }
 
             // The next check is a heuristic attempt to detect UTF-16 without a BOM.
             // We simply look for zeroes in odd or even byte places, and if a certain
-            // threshold is reached, the code is 'probably' UF-16.          
+            // threshold is reached, the code is 'probably' UF-16.
             double threshold = 0.1; // proportion of chars step 2 which must be zeroed to be diagnosed as utf-16. 0.1 = 10%
             int count = 0;
             for (int n = 0; n < b.Length; n += 2) {
@@ -344,8 +362,8 @@ namespace Utilities
                     if (b[n] == '"' || b[n] == '\'')
                         n++;
                     int oldn = n;
-                    while (n < b.Length && (b[n] == '_' 
-                        || b[n] == '-' || (b[n] >= '0' && b[n] <= '9') 
+                    while (n < b.Length && (b[n] == '_'
+                        || b[n] == '-' || (b[n] >= '0' && b[n] <= '9')
                         || (b[n] >= 'a' && b[n] <= 'z') || (b[n] >= 'A' && b[n] <= 'Z'))) {
                         n++;
                     }
@@ -354,7 +372,9 @@ namespace Utilities
                     try {
                         return Encoding.GetEncoding(Encoding.ASCII.GetString(nb));
                     }
-                    catch { break; }    // If C# doesn't recognize the name of the encoding, break.
+                    catch {
+                        break; // C# doesn't recognize the name of the encoding
+                    }
                 }
             }
 
@@ -416,13 +436,14 @@ namespace Utilities
         private delegate string ToStringDelegate();
 
         /// <summary>
-        /// Gets the string representation of this DataTable.
+        /// Gets the string representation of a <see cref="System.Data.DataTable"/>.
         /// </summary>
-        /// <param name="table">The datatable to stringify.</param>
+        /// <param name="table">The <see cref="System.Data.DataTable"/> to stringify.</param>
         /// <param name="maxRows">The maximum number of rows.</param>
-        /// <param name="printRowNumbers">Determines if row numbers are added before each row.</param>
-        /// <param name="sep">The separater between fields in each row.</param>
-        /// <param name="columnsToPrint">Determines which columns are added by index and their order.</param>
+        /// <param name="includeRowNumbers">Determines if row numbers are added before each row.</param>
+        /// <param name="sep">The separator between the fields in each row.</param>
+        /// <param name="columnsToPrint">Determines which columns are and their order.</param>
+        /// <returns>The string representation of a <see cref="System.Data.DataTable"/></returns>
         public static string ToString(DataTable table, int maxRows = -1, bool includeRowNumbers = false, char sep = ',', params int[] columnsToPrint)
         {
             if (table.Columns.Count == 0)
@@ -436,14 +457,14 @@ namespace Utilities
                 sb.Remove(0, 1);
                 for (int row = 0; row < rowCount; row++) {
                     if (includeRowNumbers)
-                        sb.Append((row + 1)).Append(' ');
+                        sb.Append(row + 1).Append(' ');
                     for (int col = 0; col < table.Columns.Count; col++)
                         sb.Append(ToString(table.Rows[row][col])).Append(sep);
                     sb.Remove(sb.Length - 1, 1).AppendLine();
                 }
             }
             else {
-                //print specific columns in a costum order
+                // print specific columns in a costum order
                 for (int col = 0; col < columnsToPrint.Length; col++)
                     sb.Append(sep).Append(table.Columns[columnsToPrint[col]].ColumnName);
                 sb.Remove(0, 1);
@@ -461,9 +482,9 @@ namespace Utilities
         /// <summary>
         /// A default ToString method.
         /// </summary>
-        /// <typeparam name="T">Tye Type of the object.</typeparam>
+        /// <typeparam name="T">The <see cref="Type>"/> of the object.</typeparam>
         /// <param name="obj">The object to obtain the string representation of.</param>
-        /// <returns>The string representation of a type.</returns>
+        /// <returns>The string representation of <see cref="Type"/> T.</returns>
         public static string ToString<T>(T obj)
         {
             return ToString((object) obj);
@@ -472,9 +493,8 @@ namespace Utilities
         /// <summary>
         /// A default ToString method.
         /// </summary>
-        /// <typeparam name="T">Tye Type of the object.</typeparam>
         /// <param name="obj">The object to obtain the string representation of.</param>
-        /// <returns>The string representation of a type.</returns>
+        /// <returns>The string representation of <see cref="Type"/> T.</returns>
         public static string ToString(object obj)
         {
             return (obj != null && ((ToStringDelegate) obj.ToString).Method.DeclaringType == obj.GetType())
@@ -484,7 +504,7 @@ namespace Utilities
         #endregion //ToString
 
         /// <summary>
-        /// Parses a string into a basic Type.
+        /// Parses a string into a basic <see cref="Type"/>.
         /// </summary>
         /// <param name="str">The string to parse.</param>
         /// <returns>The result of the string being parsed.</returns>
@@ -507,22 +527,22 @@ namespace Utilities
                             return ts;
                     }
                     else if (c == '/' || c == '-' || c == ',') {
-                        if (DateTime.TryParse(str2, out DateTime dt))
-                            return dt;
+                        if (DateTime.TryParse(str2, out DateTime table))
+                            return table;
                     }
                     else if (c == ':') {
                         if (TimeSpan.TryParse(str2, out TimeSpan ts))
                             return ts;
-                        else if (DateTime.TryParse(str2, out DateTime dt))
-                            return dt;
+                        else if (DateTime.TryParse(str2, out DateTime table))
+                            return table;
                     }
                     return str;
                 }
                 if (int.TryParse(str2, out int ival))
                     return ival;
             }
-            else if (DateTime.TryParse(str2, out DateTime dt))
-                return dt;
+            else if (DateTime.TryParse(str2, out DateTime table))
+                return table;
             else {
                 string lower = str2.ToLower();
                 if (lower == "false")
@@ -534,9 +554,9 @@ namespace Utilities
             }
             return str;
         }
-         
+
         /// <summary>
-        /// Prints the contents of an object to the console.
+        /// Prints the contents of an object to <see cref="Console.Out"/>.
         /// </summary>
         /// <param name="obj">The object to print.</param>
         public static void Print(object obj)
@@ -547,7 +567,7 @@ namespace Utilities
         /// <summary>
         /// Swaps the value of two objects.
         /// </summary>
-        /// <typeparam name="T">The Type of each object.</typeparam>
+        /// <typeparam name="T">The <see cref="Type"/> of each object.</typeparam>
         /// <param name="lhs">The left hand side to compare.</param>
         /// <param name="rhs">The right hand side to compare.</param>
         public static void Swap<T>(ref T lhs, ref T rhs)
@@ -560,7 +580,7 @@ namespace Utilities
         /// <summary>
         /// Swaps the value of two objects if the left is greater than the right.
         /// </summary>
-        /// <typeparam name="T">The Type of each object.</typeparam>
+        /// <typeparam name="T">The <see cref="Type"/> of each object.</typeparam>
         /// <param name="lhs">The left hand side to compare.</param>
         /// <param name="rhs">The right hand side to compare.</param>
         public static void SwapIfGreater<T>(ref T lhs, ref T rhs) where T : System.IComparable<T>
@@ -573,14 +593,14 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Adds columns to the DataTable representing the getters/setters of a Type.
+        /// Adds columns to the <see cref="System.Data.DataTable"/> representing the getters/setters of a <see cref="Type"/>.
         /// </summary>
         /// <typeparam name="T">The Type to create the DataTable from.</typeparam>
         /// <param name="table">The DataTable to add columns to.</param>
         /// <returns>The modified DataTable with new columns representing the getters/setters of a Type.</returns>
         public static DataTable DataTable<T>(DataTable table) where T : class
         {
-            PropertyInfo[] pinfos = typeof(T).GetProperties(FLAGS);
+            PropertyInfo[] pinfos = typeof(T).GetProperties(DefaultBindingFlags);
             foreach (PropertyInfo pinfo in pinfos) {
                 table.Columns.Add(pinfo.Name, Nullable.GetUnderlyingType(pinfo.PropertyType) ?? pinfo.PropertyType);
             }
@@ -588,10 +608,10 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Creates the DataTable representing the getters/setters of a Type.
+        /// Creates a <see cref="System.Data.DataTable"/> representing the getters/setters of a <see cref="Type"/>.
         /// </summary>
-        /// <typeparam name="T">The Type to create a DataTable from.</typeparam>
-        /// <returns>A DataTable with columns representing the getters/setters of a Type.</returns>
+        /// <typeparam name="T">The <see cref="Type"/> to create a <see cref="System.Data.DataTable"/> from.</typeparam>
+        /// <returns>A <see cref="System.Data.DataTable"/> with columns representing the getters/setters of a <see cref="Type"/>.</returns>
         public static DataTable DataTable<T>() where T : class
         {
             DataTable table = new DataTable();
