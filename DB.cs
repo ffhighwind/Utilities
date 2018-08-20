@@ -73,7 +73,6 @@ namespace Utilities
         /// <returns>An empty table representing the database, or null on error.</returns>
         public static DataTable CreateDataTable(SqlConnection conn, string tablename)
         {
-            conn.Open();
             using (SqlDataAdapter adapter = new SqlDataAdapter("SELECT TOP 0 * FROM " + tablename, conn)) {
                 DataTable table = adapter.FillSchema(new DataTable(tablename), SchemaType.Source);
                 table.TableName = tablename;
@@ -89,7 +88,6 @@ namespace Utilities
         /// <returns>A DataTable with the schema information of an SQL table, or null on error.</returns>
         public static SchemaTable SelectSchema(SqlConnection conn, string selectCmd)
         {
-            conn.Open();
             using (SqlCommand cmd = new SqlCommand(selectCmd, conn))
             using (SqlDataReader reader = cmd.ExecuteReader(CommandBehavior.KeyInfo | CommandBehavior.SchemaOnly)) {
                 DataTable tableSchema = reader.GetSchemaTable();
@@ -135,7 +133,6 @@ namespace Utilities
             string[] restrictions = new string[4];
             restrictions[0] = catalog;
             restrictions[3] = restriction3;
-            conn.Open();
             using (DataTable table = conn.GetSchema("Tables", restrictions)) {
                 List<string> tableNames = new List<string>();
                 foreach (DataRow row in table.Rows) {
@@ -210,7 +207,6 @@ namespace Utilities
             Exception e = null;
             for (int i = 0; i < maxRetries; i++) {
                 try {
-                    conn.Open();
                     using (SqlTransaction trans = conn.BeginTransaction()) {
                         int count = conn.Execute(cmd, param, trans, timeoutSecs);
                         if (count > 0)
@@ -272,7 +268,6 @@ namespace Utilities
                 foreach (SqlBulkCopyColumnMapping mapping in mappings) {
                     bulkCpy.ColumnMappings.Add(mapping);
                 }
-                conn.Open();
                 bulkCpy.WriteToServer(reader);
             }
         }
@@ -325,7 +320,6 @@ namespace Utilities
                 foreach (SqlBulkCopyColumnMapping mapping in mappings) {
                     bulkCpy.ColumnMappings.Add(mapping);
                 }
-                conn.Open();
                 bulkCpy.WriteToServer(table);
             }
         }
@@ -391,7 +385,6 @@ namespace Utilities
         /// <param name="mappings">The column mappings.</param>
         private static void BulkUpsert(SqlConnection conn, string tablename, Action<SqlBulkCopy> writeAction, int timeoutSecs, bool update, SqlBulkCopyColumnMapping[] mappings)
         {
-            conn.Open();
             using (SqlTransaction trans = conn.BeginTransaction())
             using (SqlCommand cmd = conn.CreateCommand()) {
                 string tempTableName = "#Tmp_" + tablename;
@@ -476,7 +469,6 @@ namespace Utilities
                 if (update)
                     onStringBuilder.Append(updateStringBuilder);
                 cmd.CommandText = onStringBuilder.Append(insertStringBuilder).Append(valuesStringBuilder).ToString();
-                conn.Open();
                 return cmd.ExecuteNonQuery();
             }
         }
@@ -490,7 +482,6 @@ namespace Utilities
         /// <returns>The number of rows that were deleted from the database.</returns>
         public static int DeleteTable(SqlConnection conn, string tablename, int timeoutSecs = 0)
         {
-            conn.Open();
             using (SqlTransaction trans = conn.BeginTransaction()) {
                 int result = conn.Execute("DELETE FROM " + tablename, null, trans, timeoutSecs);
                 if (result > 0)
@@ -683,7 +674,6 @@ SELECT 1 ELSE SELECT 0", new { tablename = tablename });
         /// <returns>The number of rows affected by the query.</returns>
         public static int RemoveDuplicates(SqlConnection conn, string tablename, params string[] distinctColumns)
         {
-            conn.Open();
             using (SqlTransaction trans = conn.BeginTransaction()) {
                 return conn.Execute(
 @"WHILE 1=1

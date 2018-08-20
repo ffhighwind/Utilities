@@ -829,7 +829,6 @@ namespace Utilities
             using (OleDbConnection conn = new OleDbConnection(connStr))
             using (OleDbCommand cmd = new OleDbCommand()) {
                 cmd.Connection = conn;
-                conn.Open();
                 DataTable schema = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
                 if (schema.Rows.Count == 0)
                     throw new InvalidDataException(path);
