@@ -1072,10 +1072,13 @@ namespace Utilities
             if (!fi.Exists)
                 throw new FileNotFoundException(inpath);
             FileInfo fo = new FileInfo(outpath);
-            if (fo.Equals(fi))
+            if (fo.FullName == fi.FullName)
                 return;
-            if (overwrite)
-                File.Delete(outpath);
+            if (fo.Exists) {
+                if (!overwrite)
+                    return;
+                fo.Delete();
+            }
             fi.MoveTo(outpath);
         }
 

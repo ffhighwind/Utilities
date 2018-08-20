@@ -8,7 +8,7 @@ using OfficeOpenXml;
 namespace Utilities.Excel
 {
     /// <summary>
-    /// An Excel Spreadsheet wrapper for the EPPlus implementation of ExcelPackage.
+    /// Wrapper for the EPPlus implementation of <see cref="ExcelPackage"/>.
     /// </summary>
     public class Spreadsheet : IDisposable
     {
@@ -355,7 +355,7 @@ namespace Utilities.Excel
         public Worksheet this[string sheetName] => new Worksheet(Data.Workbook.Worksheets[sheetName]);
 
         /// <summary>
-        /// Gets a Worksheet from the Excel Spreadsheet.
+        /// Gets a <see cref="Worksheet"/> from the <see cref="Spreadsheet"/>.
         /// </summary>
         /// <param name="sheetIndex">The index of the Worksheet (base 0).</param>
         /// <returns>The <see cref="Worksheet"/>.</returns>

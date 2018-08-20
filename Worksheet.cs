@@ -582,11 +582,11 @@ namespace Utilities.Excel
             List<Type> colTypes = table.Columns.Cast<DataColumn>().Select(col => col.DataType).ToList();
             for (int row = hasHeaders ? 2 : 1; row <= maxRow; row++) {
                 DataRow newRow = table.NewRow();
-                for (int col = 1; col < maxCol; col++) {
-                    Type colType = colTypes[col];
+                for (int col = 1; col <= maxCol; col++) {
+                    Type colType = colTypes[col - 1];
                     ExcelRangeBase cell = Data.Cells[row, col];
                     if (colType == typeof(string))
-                        newRow[col] = cell.Text;
+                        newRow[col - 1] = cell.Text;
                     else if (cell.Value != null) {
                         try {
                             if (colType.IsIntegral())
