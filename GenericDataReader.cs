@@ -9,7 +9,7 @@ using System.Reflection;
 namespace Utilities
 {
     /// <summary>
-    /// Generic DbDataReader for use with ADO.NET SQL select commands.
+    /// Generic <see cref="DbDataReader"/> for use with ADO.NET SQL select commands.
     /// <see href="https://github.com/mgravell/fast-member/blob/master/FastMember/ObjectReader.cs"/>
     /// </summary>
     /// <typeparam name="T">The class type to read data into.</typeparam>
@@ -27,8 +27,8 @@ namespace Utilities
         /// <summary>
         /// Initializes a new instance of the <see cref="GenericDataReader{T}"/> class.
         /// </summary>
-        /// <param name="source">The list of objects to read.</param>
-        /// <param name="flags">The BindingFlags for the type's properties.</param>
+        /// <param name="source">The <see cref="IEnumerable{T}"/> to read.</param>
+        /// <param name="flags">The <see cref="BindingFlags"/> for the type's properties.</param>
         /// <param name="members">The property names that will be read. If this is empty then all properties will be read.</param>
         public GenericDataReader(IEnumerable<T> source, BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly, params string[] members)
         {
@@ -51,13 +51,20 @@ namespace Utilities
         /// <summary>
         /// Initializes a new instance of the <see cref="GenericDataReader{T}"/> class.
         /// </summary>
-        /// <param name="source">The list of objects to read.</param>
+        /// <param name="source">The <see cref="IEnumerable{T}"/> to read.</param>
         /// <param name="members">The property names that will be read. If this is empty then all properties will be read.</param>
         public GenericDataReader(IEnumerable<T> source, params string[] members)
             : this(source, DefaultBindingFlags, members) { }
 
+        /// <summary>
+        /// Not implemented.
+        /// </summary>
         public override int Depth => throw new NotImplementedException();
 
+        /// <summary>
+        /// The Schema for
+        /// </summary>
+        /// <returns></returns>
         public override DataTable GetSchemaTable()
         {
             DataTable table = new DataTable {
@@ -67,9 +74,27 @@ namespace Utilities
                     { "ColumnName", typeof(string) },
                     { "DataType", typeof(Type) },
                     { "ColumnSize", typeof(int) },
-                    { "AllowDBNull", typeof(bool) }
+                    { "AllowDBNull", typeof(bool) },
+                    ////{ "NumericPrecision", typeof(short) },
+                    ////{ "NumericScale", typeof(short) },
+                    ////{ "IsUnique", typeof(bool) },
+                    ////{ "IsKey", typeof(bool) },
+                    ////{ "IsIdentity", typeof(bool) },
+                    ////{ "IsHidden", typeof(bool) },
+                    ////{ "ProviderType", typeof(SqlDbType) },
+                    ////{ "ProviderSpecificDataType", typeof(Type) },
+                    ////{ "IsExpression", typeof(bool) },
+                    ////{ "IsAliased", typeof(bool) },
+                    ////{ "IsAutoIncrement", typeof(bool) },
+                    ////{ "IsRowVersion", typeof(bool) },
+                    ////{ "IsLongBlob", typeof(bool) },
+                    ////{ "IsReadOnly", typeof(bool) },
+                    ////{ "NonVersionedProviderType", typeof(SqlDbType) },
+                    ////{ "DataTypeName", typeof(string) },
+                    //{ "IsColumnSet", typeof(bool) }
                 }
             };
+
             object[] rowData = new object[5];
             for (int i = 0; i < propertyNames.Length; i++) {
                 rowData[0] = i;

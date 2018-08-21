@@ -17,7 +17,7 @@ namespace Utilities.Excel
         private const int MaxDateOnlyRows = 15;
 
         /// <summary>
-        /// The symbols to check for a decimal
+        /// The currency symbols to accept when reading a potential decimal value of a cell.
         /// </summary>
         private const string CurrencySymbols = "$£¥€¢";
         ////private const string currencySymbols = "$¥₤€£฿₿₵¢₡₫₲₱₽₮₩₸₳ℳ₹؋₼﷼₪₭₴";

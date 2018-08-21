@@ -40,6 +40,11 @@ namespace Utilities
             PrimaryKey = pkey;
         }
 
+        /// <summary>
+        /// Creates a command string creating a table with the given schema.
+        /// </summary>
+        /// <param name="tablename">The name of the new table to create.</param>
+        /// <returns>A command string for creating a table with the given schema.</returns>
         public string CreateTableScript(string tablename)
         {
             if (createTable == null) {

@@ -27,7 +27,6 @@ namespace Utilities
             IsUnique = (bool) r["IsUnique"];
             IsKey = (bool) r["IsKey"];
             IsIdentity = (bool) r["IsIdentity"];
-            IsHidden = CastDBNull(r["IsHidden"], false);
             DataType = (Type) r["DataType"];
             AllowDBNull = (bool) r["AllowDBNull"];
             DbType = (SqlDbType) r["ProviderType"];

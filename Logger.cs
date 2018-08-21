@@ -220,23 +220,6 @@ namespace Utilities.Log
             }
         }
 
-        /*
-        public void Log2(string message = null)
-        {
-            StackFrame stackFrame = new System.Diagnostics.StackTrace(1).GetFrame(1);
-            string methodName = stackFrame.GetMethod().ToString();
-            string filePath = stackFrame.GetFileName();
-            int lineNumber = stackFrame.GetFileLineNumber();
-
-            foreach (var writer in writers) {
-                writer.WriteLine("{0}({1}:{2})", methodName, Path.GetFileName(filePath), lineNumber);
-                if (message != null && message.Length > 0) {
-                    writer.WriteLine(message);
-                }
-            }
-        }
-        */
-
         #region Private Data
         private static void Log_MessageOnly(
             TextWriter writer,
