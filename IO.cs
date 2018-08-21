@@ -16,7 +16,7 @@ namespace Utilities
     /// </summary>
     public static class IO
     {
-        private const BindingFlags FLAGS = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance;
+        private const BindingFlags DefaultBindingFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance;
 
         #region Any
         /// <summary>
@@ -423,7 +423,7 @@ namespace Utilities
             using (CsvWriter csv = new CsvWriter(writer)) {
                 csv.Configuration.QuoteAllFields = true;
                 csv.Configuration.Delimiter = delim;
-                PropertyInfo[] props = typeof(T).GetProperties(FLAGS);
+                PropertyInfo[] props = typeof(T).GetProperties(DefaultBindingFlags);
                 if (printHeaders) {
                     foreach (string header in props.Select(prop => prop.Name)) {
                         csv.WriteField(header);
