@@ -1,28 +1,48 @@
 ﻿using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 
 namespace Utilities
 {
     /// <summary>
-    /// https://docs.microsoft.com/en-us/dotnet/framework/data/adonet/sql-server-schema-collections?view=netframework-4.7.2
-    /// https://docs.microsoft.com/en-us/sql/relational-databases/system-information-schema-views/system-information-schema-views-transact-sql?view=sql-server-2017
-    /// https://docs.microsoft.com/en-us/dotnet/api/system.data.datatablereader.getschematable?redirectedfrom=MSDN&view=netframework-4.7.2#System_Data_DataTableReader_GetSchemaTable
+    /// A class representation of the result from <see cref="SqlDataReader.GetSchemaTable"/>.
     /// </summary>
+    //// https://docs.microsoft.com/en-us/dotnet/framework/data/adonet/sql-server-schema-collections?view=netframework-4.7.2
+    //// https://docs.microsoft.com/en-us/sql/relational-databases/system-information-schema-views/system-information-schema-views-transact-sql?view=sql-server-2017
+    //// https://docs.microsoft.com/en-us/dotnet/api/system.data.datatablereader.getschematable?redirectedfrom=MSDN&view=netframework-4.7.2#System_Data_DataTableReader_GetSchemaTable
     public class SchemaTable
     {
+        /// <summary>
+        /// The start of the string returned by CreateTableScript.
+        /// </summary>
         private string createTable = null;
+
+        /// <summary>
+        /// The primary key constraint to append to createTable when calling CreateTableScript.
+        /// </summary>
         private string pkeyConstraint = null;
 
+        /// <summary>
+        /// The primary key columns for the input schema.
+        /// </summary>
         public IReadOnlyList<SchemaTableColumn> PrimaryKey { get; private set; }
+
+        /// <summary>
+        /// The unique columns for the input schema.
+        /// </summary>
         public IReadOnlyList<SchemaTableColumn> UniqueColumns { get; private set; }
+
+        /// <summary>
+        /// The columns for the input schema.
+        /// </summary>
         public IReadOnlyList<SchemaTableColumn> Columns { get; private set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SchemaTable"/> class.
         /// </summary>
-        /// <param name="schema">The results from <see cref="System.Data.SqlClient.SqlDataReader.GetSchemaTable"/>.</param>
+        /// <param name="schema">The results from <see cref="SqlDataReader.GetSchemaTable"/>.</param>
         public SchemaTable(DataTable schema)
         {
             SchemaTableColumn[] columns = new SchemaTableColumn[schema.Rows.Count];
