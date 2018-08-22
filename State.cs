@@ -47,7 +47,7 @@ namespace Utilities
         /// </summary>
         /// <param name="timezone">The abbreviated time zone to get the hour difference from Mountain Stanard Time.</param>
         /// <returns>The hour difference from the MST time zone.</returns>
-        public static int GetMSTDiff(string timezone)
+        public static double GetMSTDiff(string timezone)
         {
             double diff = 0;
             if (timezone == "MST" || timezone == "MT" || timezone == "MDT")
@@ -67,7 +67,9 @@ namespace Utilities
                 if (double.TryParse(diffstr, out diff))
                     diff = -(diff + 6 + (IsDaylightSavings ? 1 : 0));
             }
-            throw new InvalidTimeZoneException(timezone + " is not a valid timezone.");
+            else
+                throw new InvalidTimeZoneException(timezone + " is not a valid timezone.");
+            return diff;
         }
 
         /// <summary>
@@ -95,7 +97,7 @@ namespace Utilities
                     timezone = IsDaylightSavings ? "AKDT" : "AKST";
                     break;
                 default:
-                    if (mstdiff < -13 || mstdiff > 24)
+                    if (mstdiff < -12 || mstdiff > 24)
                         throw new ArgumentOutOfRangeException(nameof(mstdiff), "Value must be between -12 and 24");
                     int utcdiff = ((mstdiff + 24 + 6 + (IsDaylightSavings ? 1 : 0)) % 24) - 12;
                     timezone = string.Format("UTC{0}", utcdiff);
