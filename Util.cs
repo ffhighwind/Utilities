@@ -132,7 +132,7 @@ namespace Utilities
             PropertyInfo[] pinfos = typeof(T).GetProperties(DefaultBindingFlags);
             Func<object, object>[] converters = new Func<object, object>[pinfos.Length];
             for (int i = 0; i < pinfos.Length; i++) {
-                converters[i] = converterMap[typeof(string)](pinfos[i].PropertyType);
+                converters[i] = converterMap[pinfos[i].PropertyType](typeof(string));
             }
             return (strs) => {
                 T obj = new T();
@@ -140,6 +140,8 @@ namespace Utilities
                 foreach (string str in strs) {
                     pinfos[i].SetValue(obj, converters[i](str));
                     i++;
+                    if (i >= converters.Length)
+                        break;
                 }
                 return obj;
             };
@@ -213,6 +215,18 @@ namespace Utilities
             }
             encoding = GetTextEncoding(b, out int index);
             return encoding.GetString(b, index, b.Length - index);
+        }
+
+        /// <summary>
+        /// Creates a <see cref="System.IO.TextReader"/> from the path and attempts to detect the file <see cref="Encoding"/>.
+        /// </summary>
+        /// <param name="path">The path of the file.</param>
+        /// <param name="maxBytesRead">The maximum number of bytes to read at once.
+        /// If the file is bigger than this size then it is read as a Stream.</param>
+        /// <returns>The <see cref="System.IO.TextReader"/> with the file <see cref="Encoding"/> automatically detected.</returns>
+        public static TextReader TextReader(string path, int maxBytesRead = 100000000)
+        {
+            return TextReader(new FileInfo(path), maxBytesRead);
         }
 
         /// <summary>

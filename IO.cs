@@ -93,10 +93,14 @@ namespace Utilities
         /// <returns>A list with data from the file.</returns>
         public static ICollection<T> Read<T>(this ICollection<T> list, string path, bool hasHeaders = true, string sheetName = null) where T : class, new()
         {
-            foreach (T obj in IO.Foreach<T>(path, hasHeaders, sheetName)) {
-                list.Add(obj);
-            }
-            return list;
+            string ext = Path.GetExtension(path);
+            if (ext == ".xlsx")
+                return list.ReadXlsx(path, sheetName, hasHeaders);
+            if (ext == ".csv" || ext == ".tsv")
+                return list.ReadCsv(path, hasHeaders, true, ext == ".csv" ? "," : "\t");
+            if (ext == ".xls")
+                return list.ReadXls(path, sheetName, hasHeaders);
+            throw new NotSupportedException("File extension type not supported: '" + ext + "'");
         }
 
         /// <summary>
@@ -196,7 +200,14 @@ namespace Utilities
         /// <returns>The Enumerable rows in the file.</returns>
         public static IEnumerable<T> Foreach<T>(string path, bool hasHeaders = true, string sheetName = null) where T : class, new()
         {
-            return Foreach<T>(path, Util.StringsConverter<T>(), hasHeaders, sheetName);
+            string ext = Path.GetExtension(path);
+            if (ext == ".xlsx")
+                return XlsxForeach<T>(path, sheetName, hasHeaders);
+            if (ext == ".csv" || ext == ".tsv")
+                return CsvForeach<T>(path, hasHeaders, true, ext == ".csv" ? "," : "\t");
+            if (ext == ".xls")
+                return XlsForeach<T>(path, sheetName, hasHeaders);
+            throw new NotSupportedException("File extension type not supported: '" + ext + "'");
         }
 
         /// <summary>
@@ -211,7 +222,7 @@ namespace Utilities
         /// <returns>The Enumerable rows in the file.</returns>
         public static IEnumerable<T> Foreach<T>(string path, string sheetName, bool hasHeaders = true) where T : class, new()
         {
-            return Foreach<T>(path, Util.StringsConverter<T>(), hasHeaders, sheetName);
+            return Foreach<T>(path, hasHeaders, sheetName);
         }
         #endregion
 
@@ -496,10 +507,18 @@ namespace Utilities
         /// <returns>A Collection with data from the file.</returns>
         public static ICollection<T> ReadCsv<T>(this ICollection<T> list, string path, bool hasHeaders = true, bool ignoreBlankLines = true, string delim = ",") where T : class, new()
         {
-            foreach (T line in CsvForeach<T>(path, hasHeaders, ignoreBlankLines, delim)) {
-                list.Add(line);
+            using (TextReader reader = Util.TextReader(path))
+            using (CsvParser csv = new CsvParser(reader)) {
+                csv.Configuration.TrimOptions = TrimOptions.None;
+                csv.Configuration.IgnoreBlankLines = ignoreBlankLines;
+                csv.Configuration.Delimiter = delim;
+                string[] line;
+                if (hasHeaders)
+                    csv.Read();
+                while ((line = csv.Read()) != null) {
+                    list.Add(line)
+                }
             }
-            return list;
         }
 
         /// <summary>
@@ -595,23 +614,6 @@ namespace Utilities
                 foreach (string[] strs in CsvForeach(reader, hasHeaders, ignoreBlankLines, delim)) {
                     yield return constructor(strs);
                 }
-            }
-        }
-
-        /// <summary>
-        /// Enumerates each row in a CSV file.
-        /// </summary>
-        /// <typeparam name="T">The Type of objects to return.</typeparam>
-        /// <param name="path">The path of the CSV file.</param>
-        /// <param name="hasHeaders">Determines if the file has headers.
-        /// If this is true then the first row will be ignored.</param>
-        /// <param name="ignoreBlankLines">Determines if blank lines should be skipped.</param>
-        /// <param name="delim">The delimiter of the file.</param>
-        /// <returns>The Enumerable rows in the file.</returns>
-        public static IEnumerable<T> CsvForeach<T>(string path, bool hasHeaders = true, bool ignoreBlankLines = true, string delim = ",") where T : class, new()
-        {
-            using (TextReader reader = Util.TextReader(new FileInfo(path))) {
-                return CsvForeach<T>(reader, hasHeaders, ignoreBlankLines, delim);
             }
         }
 
@@ -948,6 +950,25 @@ namespace Utilities
                 list.Add(line);
             }
             return list;
+        }
+
+
+        /// <summary>
+        /// Reads an Xlsx Excel file into a Collection.
+        /// </summary>
+        /// <param name="list">The Collection to store the data in.</param>
+        /// <param name="path">Name of file to be written.</param>
+        /// <param name="sheetName">The name of the sheet in the file to read.
+        /// If this is null then the first sheet will be iterated.</param>
+        /// <param name="includeHeaders">Determines if the columns should be included.</param>
+        /// <returns>A Collection with data from the file.</returns>
+        public static ICollection<T> ReadXlsx<T>(this ICollection<T> list, string path, string sheetName = null, bool includeHeaders = true) where T : class, new()
+        {
+            using (Spreadsheet ss = new Spreadsheet(path)) {
+                if (!ss.IsOpen)
+                    throw new IOException(path);
+                return ss[0].ToList<T>(list);
+            }
         }
 
         /// <summary>
