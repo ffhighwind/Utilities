@@ -7,7 +7,7 @@ using OfficeOpenXml;
 namespace Utilities.Excel
 {
     /// <summary>
-    /// An Excel Worksheet wrapper for the EPPlus implementation of ExcelWorksheet.
+    /// Wrapper for the EPPlus implementation of <see cref="ExcelWorksheet"/>.
     /// </summary>
     public class Worksheet
     {
@@ -100,7 +100,6 @@ namespace Utilities.Excel
                 if (datetime.TimeOfDay != TimeSpan.Zero) {
                     column.Style.Numberformat.Format = "M/d/yyyy h:mm:ss AM/PM";
                     Data.Cells[1, columnIndex, Data.Dimension.Rows + 1, columnIndex].Style.Numberformat.Format = "M/d/yyyy h:mm:ss AM/PM";
-                    ////column.Style.Numberformat.Format = "m/d/yyyy h:mm:ss AM/PM";
                     return;
                 }
             }
@@ -577,7 +576,9 @@ namespace Utilities.Excel
                 }
             }
             else if (table.Columns.Count != Columns)
-                return null;
+                throw new InvalidProgramException(string.Format("DataTable column count ({0}) does not match expected excel column count ({1}).",
+                    table.Columns.Count,
+                    maxCol));
 
             List<Type> colTypes = table.Columns.Cast<DataColumn>().Select(col => col.DataType).ToList();
             for (int row = hasHeaders ? 2 : 1; row <= maxRow; row++) {
@@ -703,8 +704,8 @@ namespace Utilities.Excel
             for (int row = 1; row <= rows; row++) {
                 for (int col = 1; col <= cols; col++) {
                     object obj = Data.Cells[row, col].Value;
-                    if (obj is string) {
-                        Data.Cells[row, col].Value = Parse(Data.Cells[row, col]);
+                    if (obj is string str) {
+                        Data.Cells[row, col].Value = str;
                     }
                 }
             }
