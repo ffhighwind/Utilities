@@ -138,10 +138,10 @@ namespace Utilities
                 T obj = new T();
                 int i = 0;
                 foreach (string str in strs) {
-                    pinfos[i].SetValue(obj, converters[i](str));
-                    i++;
                     if (i >= converters.Length)
                         break;
+                    pinfos[i].SetValue(obj, converters[i](str));
+                    i++;
                 }
                 return obj;
             };
@@ -155,22 +155,25 @@ namespace Utilities
         /// <returns>A function that converts an <see cref="IEnumerable{T}"/> of strings to an object.</returns>
         public static Func<IEnumerable<string>, T> StringsConverter<T>(IEnumerable<string> propertyNames) where T : class, new()
         {
-            List<PropertyInfo> pinfos = new List<PropertyInfo>();
-            foreach (string prop in propertyNames) {
-                PropertyInfo pinfo = typeof(T).GetProperty(prop, DefaultBindingFlags);
-                if (pinfo == null)
-                    throw new InvalidOperationException("Invalid PropertyInfo '" + prop ?? "" + "'");
-                pinfos.Add(pinfo);
-            }
-            Func<object, object>[] converters = new Func<object, object>[pinfos.Count];
-            for (int i = 0; i < pinfos.Count; i++) {
-                converters[i] = converterMap[pinfos[i].PropertyType](typeof(string));
+            PropertyInfo[] pinfos = typeof(T).GetProperties(DefaultBindingFlags);
+            List<string> names = propertyNames.ToList();
+            Func<object, object>[] converters = new Func<object, object>[names.Count];
+            PropertyInfo[] props = new PropertyInfo[names.Count];
+            for (int i = 0; i < names.Count; i++) {
+                props[i] = pinfos.FirstOrDefault(p => p.Name == names[i]);
+                if (props[i] != null)
+                    converters[i] = converterMap[props[i].PropertyType](typeof(string));
             }
             return (strs) => {
                 T obj = new T();
                 int i = 0;
                 foreach (string str in strs) {
-                    pinfos[i].SetValue(obj, converters[i](str));
+                    if (i >= converters.Length)
+                        break;
+                    if (props[i] == null)
+                        continue;
+                    props[i].SetValue(obj, converters[i](str));
+                    i++;
                 }
                 return obj;
             };
@@ -239,7 +242,7 @@ namespace Utilities
         public static TextReader TextReader(FileInfo fi, int maxBytesRead = 100000000)
         {
             if (!fi.Exists)
-                return null;
+                throw new FileNotFoundException(fi.FullName);
             if (fi.Length > maxBytesRead)
                 return new StreamReader(fi.FullName, GetEncoding(fi.FullName), true);
             return new StringReader(GetEncodedText(fi.FullName));

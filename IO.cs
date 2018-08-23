@@ -95,7 +95,7 @@ namespace Utilities
         {
             string ext = Path.GetExtension(path);
             if (ext == ".xlsx")
-                return list.ReadXlsx(path, sheetName, hasHeaders);
+                return list.ReadXlsx<T>(path, sheetName, hasHeaders);
             if (ext == ".csv" || ext == ".tsv")
                 return list.ReadCsv(path, hasHeaders, true, ext == ".csv" ? "," : "\t");
             if (ext == ".xls")
@@ -483,12 +483,13 @@ namespace Utilities
         /// </summary>
         /// <param name="list">The Collection to modify.</param>
         /// <param name="path">The path of the CSV file.</param>
-        /// <param name="ignoreBlankLines">Determines if blank lines should be skipped.</param>
+        /// <param name="hasHeaders">Determines if the file has headers.
+        /// If this is true then the columns are named based on the first line.</param>
         /// <param name="delim">The delimiter of the file.</param>
         /// <returns>A Collection with data from the file.</returns>
-        public static ICollection<string[]> ReadCsv(this ICollection<string[]> list, string path, bool ignoreBlankLines = true, string delim = ",")
+        public static ICollection<string[]> ReadCsv(this ICollection<string[]> list, string path, bool hasHeaders = true, string delim = ",")
         {
-            foreach (string[] line in CsvForeach(path, false, ignoreBlankLines, delim)) {
+            foreach (string[] line in CsvForeach(path, hasHeaders, true, delim)) {
                 list.Add(line);
             }
             return list;
@@ -507,7 +508,55 @@ namespace Utilities
         /// <returns>A Collection with data from the file.</returns>
         public static ICollection<T> ReadCsv<T>(this ICollection<T> list, string path, bool hasHeaders = true, bool ignoreBlankLines = true, string delim = ",") where T : class, new()
         {
-            using (TextReader reader = Util.TextReader(path))
+            using (TextReader reader = Util.TextReader(path)) {
+                return ReadCsv(list, reader, hasHeaders, ignoreBlankLines, delim);
+            }
+        }
+
+        /// <summary>
+        /// Reads a CSV file into a Collection of strings.
+        /// </summary>
+        /// <typeparam name="T">The Type of objects to return.</typeparam>
+        /// <param name="list">The Collection to modify.</param>
+        /// <param name="path">The path of the CSV file.</param>
+        /// <param name="hasHeaders">Determines if the file has headers.
+        /// If this is true then the columns are named based on the first line.</param>
+        /// <param name="ignoreBlankLines">Determines if blank lines should be skipped.</param>
+        /// <param name="delim">The delimiter of the file.</param>
+        /// <returns>A Collection with data from the file.</returns>
+        public static ICollection<T> ReadCsv<T>(this ICollection<T> list, TextReader reader, bool hasHeaders = true, bool ignoreBlankLines = true, string delim = ",") where T : class, new()
+        {
+            using (CsvParser csv = new CsvParser(reader)) {
+                string[] line = csv.Read();
+                if (line != null) {
+                    csv.Configuration.TrimOptions = TrimOptions.None;
+                    csv.Configuration.IgnoreBlankLines = ignoreBlankLines;
+                    csv.Configuration.Delimiter = delim;
+                    Func<string[], T> constructor = hasHeaders ?
+                        Util.StringsConverter<T>(line)
+                        : Util.StringsConverter<T>();
+                    while ((line = csv.Read()) != null) {
+                        list.Add(constructor(line));
+                    }
+                }
+            }
+            return list;
+        }
+
+        /// <summary>
+        /// Reads a CSV file into a Collection of strings.
+        /// </summary>
+        /// <typeparam name="T">The Type of objects to return.</typeparam>
+        /// <param name="list">The Collection to modify.</param>
+        /// <param name="reader">The reader of the CSV file.</param>
+        /// <param name="constructor">A function that constructs an object from an array of strings.</param>
+        /// <param name="hasHeaders">Determines if the file has headers.
+        /// If this is true then the columns are named based on the first line.</param>
+        /// <param name="ignoreBlankLines">Determines if blank lines should be skipped.</param>
+        /// <param name="delim">The delimiter of the file.</param>
+        /// <returns>A Collection with data from the file.</returns>
+        public static ICollection<T> ReadCsv<T>(this ICollection<T> list, TextReader reader, Func<string[], T> constructor, bool hasHeaders = true, bool ignoreBlankLines = true, string delim = ",") where T : class, new()
+        {
             using (CsvParser csv = new CsvParser(reader)) {
                 csv.Configuration.TrimOptions = TrimOptions.None;
                 csv.Configuration.IgnoreBlankLines = ignoreBlankLines;
@@ -516,9 +565,10 @@ namespace Utilities
                 if (hasHeaders)
                     csv.Read();
                 while ((line = csv.Read()) != null) {
-                    list.Add(line)
+                    list.Add(constructor(line));
                 }
             }
+            return list;
         }
 
         /// <summary>
@@ -534,25 +584,28 @@ namespace Utilities
         public static DataTable ReadCsv(this DataTable table, string path, bool hasHeaders = true, bool ignoreBlankLines = true, string delim = ",")
         {
             IEnumerable<string[]> lines = CsvForeach(path, false, ignoreBlankLines, delim);
-            string[] headers = lines.First();
-            lines = lines.Skip(1);
-            if (headers != null && table.Columns.Count == 0) {
-                for (int i = 0; i < headers.Length; i++) {
-                    string columnName = headers[i];
-                    if (hasHeaders) {
-                        table.Columns.Add(columnName.Length == 0 ? new string(' ', i) : columnName);
+            if (lines.Any()) {
+                string[] headers = lines.First();
+                lines = lines.Skip(1);
+                if (headers != null && table.Columns.Count == 0) {
+                    for (int i = 0; i < headers.Length; i++) {
+                        string columnName = headers[i].Trim();
+                        if (hasHeaders) {
+                            table.Columns.Add(columnName.Length == 0 ? new string(' ', i) : columnName);
+                        }
+                        else
+                            table.Columns.Add(new string(' ', i + 1));
                     }
-                    else
+                }
+                foreach (string[] line in lines) {
+                    for (int i = table.Columns.Count; i < line.Length; i++) {
                         table.Columns.Add(new string(' ', i + 1));
+                    }
+                    table.Rows.Add(line);
                 }
+                table.Trim();
             }
-            foreach (string[] line in lines) {
-                for (int i = table.Columns.Count; i < line.Length; i++) {
-                    table.Columns.Add(new string(' ', i + 1));
-                }
-                table.Rows.Add(line);
-            }
-            return table.Trim();
+            return table;
         }
 
         /// <summary>
@@ -610,7 +663,7 @@ namespace Utilities
         /// <returns>The Enumerable rows in the file.</returns>
         public static IEnumerable<T> CsvForeach<T>(string path, Func<string[], T> constructor, bool hasHeaders = true, bool ignoreBlankLines = true, string delim = ",")
         {
-            using (TextReader reader = Util.TextReader(new FileInfo(path))) {
+            using (TextReader reader = Util.TextReader(path)) {
                 foreach (string[] strs in CsvForeach(reader, hasHeaders, ignoreBlankLines, delim)) {
                     yield return constructor(strs);
                 }
@@ -621,7 +674,27 @@ namespace Utilities
         /// Enumerates each row in a CSV file.
         /// </summary>
         /// <typeparam name="T">The Type of objects to return.</typeparam>
-        /// <param name="reader">The TextReader for the CSV file.</param>
+        /// <param name="path">The path of the CSV file.</param>
+        /// <param name="constructor">The constructor for the returned objects.</param>
+        /// <param name="hasHeaders">Determines if the file has headers.
+        /// If this is true then the first row will be ignored.</param>
+        /// <param name="ignoreBlankLines">Determines if blank lines should be skipped.</param>
+        /// <param name="delim">The delimiter of the file.</param>
+        /// <returns>The Enumerable rows in the file.</returns>
+        public static IEnumerable<T> CsvForeach<T>(string path, bool hasHeaders = true, bool ignoreBlankLines = true, string delim = ",") where T : class, new()
+        {
+            using (TextReader reader = Util.TextReader(path)) {
+                foreach (T obj in CsvForeach<T>(reader, hasHeaders, ignoreBlankLines, delim)) {
+                    yield return obj;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Enumerates each row in a CSV file.
+        /// </summary>
+        /// <typeparam name="T">The Type of objects to return.</typeparam>
+        /// <param name="path">The path of the CSV file.</param>
         /// <param name="constructor">The constructor for the returned objects.</param>
         /// <param name="hasHeaders">Determines if the file has headers.
         /// If this is true then the first row will be ignored.</param>
@@ -648,15 +721,14 @@ namespace Utilities
         public static IEnumerable<T> CsvForeach<T>(TextReader reader, bool hasHeaders = true, bool ignoreBlankLines = true, string delim = ",") where T : class, new()
         {
             using (CsvParser csv = new CsvParser(reader)) {
-                Func<string[], T> constructor;
                 string[] line = csv.Read();
                 if (line != null) {
-                    constructor = hasHeaders ? Util.StringsConverter<T>(line) : Util.StringsConverter<T>();
+                    Func<string[], T> constructor = hasHeaders ?
+                        Util.StringsConverter<T>(line)
+                        : Util.StringsConverter<T>();
                     csv.Configuration.TrimOptions = TrimOptions.None;
                     csv.Configuration.IgnoreBlankLines = ignoreBlankLines;
                     csv.Configuration.Delimiter = delim;
-                    if (hasHeaders)
-                        csv.Read();
                     while ((line = csv.Read()) != null) {
                         yield return constructor(line);
                     }
@@ -679,7 +751,12 @@ namespace Utilities
         {
             IEnumerable<string[]> func(OleDbCommand cmd, DataTable schema)
             {
+                if (sheetName == null)
+                    sheetName = schema.Rows[0]["TABLE_NAME"].ToString();
+                cmd.CommandText = "SELECT * FROM [" + sheetName + "]";
                 OleDbDataReader reader = cmd.ExecuteReader();
+                if (hasHeaders)
+                    reader.Read();
                 while (reader.Read()) {
                     int count = reader.VisibleFieldCount;
                     string[] cellValues = new string[count];
@@ -690,7 +767,9 @@ namespace Utilities
                 }
                 reader.Close();
             }
-            return GetXlsData(path, hasHeaders, func);
+            foreach (string[] line in GetXlsData(path, func)) {
+                yield return line;
+            }
         }
 
         /// <summary>
@@ -705,7 +784,7 @@ namespace Utilities
         /// <returns>The Enumerable rows in the file.</returns>
         public static IEnumerable<T> XlsForeach<T>(string path, string sheetName = null, bool hasHeaders = true) where T : class, new()
         {
-            IEnumerable<string[]> lines = XlsForeach(path, sheetName, hasHeaders);
+            IEnumerable<string[]> lines = XlsForeach(path, sheetName, false);
             if (lines.Any()) {
                 Func<string[], T> constructor;
                 if (hasHeaders) {
@@ -773,13 +852,13 @@ namespace Utilities
             using (OleDbDataAdapter oda = new OleDbDataAdapter()) {
                 IEnumerable<DataTable> func(OleDbCommand cmd, DataTable schema)
                 {
+                    oda.SelectCommand = cmd;
                     if (sheetName == null)
                         sheetName = schema.Rows[0]["TABLE_NAME"].ToString();
                     FillXlsDataTable(table, oda, sheetName, hasHeaders);
                     yield return table;
                 }
-                GetXlsData(path, hasHeaders, func);
-                return table;
+                return GetXlsData(path, func).First();
             }
         }
 
@@ -804,7 +883,7 @@ namespace Utilities
                         yield return table;
                     }
                 }
-                foreach (DataTable table in GetXlsData(path, hasHeaders, func))
+                foreach (DataTable table in GetXlsData(path, func))
                     dataset.Tables.Add(table);
                 return dataset;
             }
@@ -815,13 +894,12 @@ namespace Utilities
         /// </summary>
         /// <typeparam name="T">The Type of object to return.</typeparam>
         /// <param name="path">The path of the XLS Excel file.</param>
-        /// <param name="hasHeaders">Determines if the file has headers.
-        /// If this is true then the columns are named based on the first line.</param>
+        /// <param name="sheetName">The name of the worksheet to read.</param>
         /// <param name="action">The action to perform on the file.
         /// The first parameter is a command object which allows reading of the file.
         /// The second parameter is the schema of the file which allows the user to get the names of the worksheets.</param>
         /// <returns>The return value of the action.</returns>
-        private static IEnumerable<T> GetXlsData<T>(string path, bool hasHeaders, Func<OleDbCommand, DataTable, IEnumerable<T>> action)
+        private static IEnumerable<T> GetXlsData<T>(string path, Func<OleDbCommand, DataTable, IEnumerable<T>> action)
         {
             // parses as the correct type
             ////string connStr = @"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + path + "; Jet OLEDB:Engine Type = 5; Extended Properties =\"Excel 8.0;\"";
@@ -831,10 +909,13 @@ namespace Utilities
             using (OleDbConnection conn = new OleDbConnection(connStr))
             using (OleDbCommand cmd = new OleDbCommand()) {
                 cmd.Connection = conn;
+                conn.Open();
                 DataTable schema = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
                 if (schema.Rows.Count == 0)
                     throw new InvalidDataException(path);
-                return action(cmd, schema);
+                foreach (T obj in action(cmd, schema)) {
+                    yield return obj;
+                }
             }
         }
 
@@ -850,7 +931,7 @@ namespace Utilities
         {
             oda.SelectCommand.CommandText = "SELECT * FROM [" + sheetName + "]";
             oda.Fill(table);
-            table.TableName = sheetName;
+            table.TableName = sheetName.Substring(1, sheetName.Length - 3);
             if (hasHeaders && table.Rows.Count > 0) {
                 DataRow row = table.Rows[0];
                 for (int c = 0; c < table.Columns.Count; c++) {
@@ -923,7 +1004,7 @@ namespace Utilities
         /// <returns>The Enumerable rows in the file.</returns>
         public static IEnumerable<T> XlsxForeach<T>(string path, Func<string[], T> constructor, string sheetName = null, bool hasHeaders = true)
         {
-            using (Excel.Spreadsheet ss = new Excel.Spreadsheet(path)) {
+            using (Spreadsheet ss = new Spreadsheet(path)) {
                 Worksheet worksheet = sheetName == null ? ss[0] : ss[sheetName];
                 IEnumerable<string[]> rows = worksheet.AsEnumerable();
                 if (hasHeaders)
@@ -967,7 +1048,7 @@ namespace Utilities
             using (Spreadsheet ss = new Spreadsheet(path)) {
                 if (!ss.IsOpen)
                     throw new IOException(path);
-                return ss[0].ToList<T>(list);
+                return ss[0].ToList(list, includeHeaders);
             }
         }
 
@@ -983,7 +1064,7 @@ namespace Utilities
             using (Spreadsheet ss = new Spreadsheet(path)) {
                 if (!ss.IsOpen)
                     throw new IOException(path);
-                return ss.ToDataSet(dataset);
+                return ss.ToDataSet(dataset, hasHeaders);
             }
         }
 

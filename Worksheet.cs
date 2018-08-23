@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using OfficeOpenXml;
 
 namespace Utilities.Excel
@@ -11,6 +13,8 @@ namespace Utilities.Excel
     /// </summary>
     public class Worksheet
     {
+        private const BindingFlags DefaultBindingFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly;
+
         /// <summary>
         /// The number of rows to check in a <see cref="DateTime"/> column before determining whether to remove the Time component.
         /// </summary>
@@ -73,8 +77,10 @@ namespace Utilities.Excel
         /// <param name="printHeaders">Determines if the column names of the <see cref="DataTable"/> should be written to the first row.</param>
         public void Load(DataTable table, bool printHeaders = true)
         {
-            Data.Cells.LoadFromDataTable(table, printHeaders);
-            FixColumnTypes(table.Columns.Cast<DataColumn>().AsEnumerable().Select(col => col.DataType));
+            if (table.Rows.Count > 0) {
+                Data.Cells.LoadFromDataTable(table, printHeaders);
+                FixColumnTypes(table.Columns.Cast<DataColumn>().AsEnumerable().Select(col => col.DataType));
+            }
         }
 
         private void FixColumnTypes(IEnumerable<Type> types)
@@ -646,27 +652,23 @@ namespace Utilities.Excel
         public IEnumerable<T> AsEnumerable<T>(bool hasHeaders = true) where T : class, new()
         {
             Func<string[], T> converter;
-            string[] vals = new string[Columns];
-            if (hasHeaders) {
-                vals = new string[Columns];
-                for (int col = 0; col < vals.Length; col++) {
-                    vals[col] = Cell<string>(1, col + 1);
-                }
-                converter = Util.StringsConverter<T>(vals);
-            }
+            if (hasHeaders)
+                converter = Util.StringsConverter<T>(Data.Cells[1, 1, 1, Columns].Select(cell => cell.Value?.ToString()));
             else
                 converter = Util.StringsConverter<T>();
+
             bool[] isTimespan = new bool[Columns];
             for (int i = 0; i < isTimespan.Length; i++) {
                 isTimespan[i] = ColumnType(i + 1) == typeof(TimeSpan);
             }
             for (int row = hasHeaders ? 2 : 1; row <= Rows; row++) {
+                string[] line = new string[Columns];
                 for (int col = 1; col <= Columns; col++) {
                     // Excel stores all numbers as double including int
                     ExcelRange cell = Data.Cells[row, col];
-                    vals[col - 1] = isTimespan[col - 1] ? DateTime.FromOADate(cell.GetValue<double>()).ToString("h:mm:ss") : cell.GetValue<string>();
+                    line[col - 1] = isTimespan[col - 1] ? DateTime.FromOADate(cell.GetValue<double>()).ToString("h:mm:ss") : cell.GetValue<string>();
                 }
-                yield return converter(vals);
+                yield return converter(line);
             }
         }
 
@@ -674,10 +676,11 @@ namespace Utilities.Excel
         /// Converts a <see cref="Worksheet"/> to a <see cref="List{T}"/>.
         /// </summary>
         /// <typeparam name="T">The <see cref="Type"/> to convert the rows to.</typeparam>
+        /// <param name="hasHeaders">Determines if the first row should be skipped.</param>
         /// <returns>The <see cref="List"/>.</returns>
-        public List<T> ToList<T>() where T : class, new()
+        public List<T> ToList<T>(bool hasHeaders = true) where T : class, new()
         {
-            return AsEnumerable<T>().ToList();
+            return AsEnumerable<T>(hasHeaders).ToList();
         }
 
         /// <summary>
@@ -685,10 +688,11 @@ namespace Utilities.Excel
         /// </summary>
         /// <typeparam name="T">The <see cref="Type"/> to convert the rows to.</typeparam>
         /// <param name="list">The <see cref="ICollection{T}"/> to add data to.</param>
+        /// <param name="hasHeaders">Determines if the first row should be skipped.</param>
         /// <returns>The <see cref="ICollection{T}"/>.</returns>
-        public ICollection<T> ToList<T>(ICollection<T> list) where T : class, new()
+        public ICollection<T> ToList<T>(ICollection<T> list, bool hasHeaders = true) where T : class, new()
         {
-            foreach (T obj in AsEnumerable<T>()) {
+            foreach (T obj in AsEnumerable<T>(hasHeaders)) {
                 list.Add(obj);
             }
             return list;
@@ -703,10 +707,7 @@ namespace Utilities.Excel
             int cols = Data.Dimension.Columns;
             for (int row = 1; row <= rows; row++) {
                 for (int col = 1; col <= cols; col++) {
-                    object obj = Data.Cells[row, col].Value;
-                    if (obj is string str) {
-                        Data.Cells[row, col].Value = str;
-                    }
+                    Data.Cells[row, col].Value = Parse(Data.Cells[row, col]);
                 }
             }
         }
@@ -726,67 +727,76 @@ namespace Utilities.Excel
 
             char c = str2[0];
             if (char.IsDigit(c) || c == '-') {
-                char last = str.Last();
+                char last = str2.Last();
                 if (last == '%') {
-                    if (decimal.TryParse(str.Substring(0, str.Length - 1), out decimal d)) {
+                    if (TryParseNumber(str2.Substring(0, str2.Length - 1), out decimal d)) {
                         cell.Style.Numberformat.Format = "0.00%";
                         return d / 100m;
                     }
                     return str;
                 }
                 if (CurrencySymbols.Contains(last)) {
-                    if (decimal.TryParse(str.Substring(0, str.Length - 1), out decimal d)) {
+                    if (TryParseNumber(str2.Substring(0, str2.Length - 1), out decimal d)) {
                         cell.Style.Numberformat.Format = "0.00" + last;
                         return d;
                     }
                     return str;
                 }
-                for (int i = 1; i < str.Length; i++) {
-                    c = str[i];
+                for (int i = 1; i < str2.Length; i++) {
+                    c = str2[i];
                     if (char.IsDigit(c))
                         continue;
                     else if (c == '.') {
-                        if (TimeSpan.TryParse(str, out TimeSpan ts)) {
+                        if (TimeSpan.TryParse(str2, out TimeSpan ts)) {
                             cell.Style.Numberformat.Format = "h:mm:ss";
                             return ts;
                         }
-                        if (double.TryParse(str, out double d)) {
+                        if (TryParseNumber(str2, out decimal d)) {
                             cell.Style.Numberformat.Format = "0.0#";
                             return d;
                         }
                     }
-                    else if (c == '/' || c == '-' || c == ',') {
-                        if (DateTime.TryParse(str, out DateTime table)) {
+                    else if (c == '/' || c == '-') {
+                        if (DateTime.TryParse(str2, out DateTime dt)) {
                             cell.Style.Numberformat.Format = "M/d/yyyy H:mm:ss AM/PM";
-                            return table;
+                            return dt;
                         }
                     }
                     else if (c == ':') {
-                        if (TimeSpan.TryParse(str, out TimeSpan ts)) {
+                        if (TimeSpan.TryParse(str2, out TimeSpan ts)) {
                             cell.Style.Numberformat.Format = "h:mm:ss";
                             return ts;
                         }
-                        else if (DateTime.TryParse(str, out DateTime table)) {
+                        if (DateTime.TryParse(str2, out DateTime dt)) {
                             cell.Style.Numberformat.Format = "M/d/yyyy H:mm:ss AM/PM";
-                            return table;
+                            return dt;
+                        }
+                    }
+                    else if (c == '/') {
+                        if (DateTime.TryParse(str2, out DateTime dt)) {
+                            cell.Style.Numberformat.Format = "M/d/yyyy H:mm:ss AM/PM";
+                            return dt;
+                        }
+                        if (TryParseFraction(str2, out decimal d, out string format)) {
+                            cell.Style.Numberformat.Format = format;
+                            return d;
                         }
                     }
                     return str;
                 }
-                if (int.TryParse(str, out int ival)) {
-                    cell.Style.Numberformat.Format = "0";
-                    return ival;
-                }
+                int ival = int.Parse(str2);
+                cell.Style.Numberformat.Format = "0";
+                return ival;
             }
             else if (CurrencySymbols.Contains(c)) {
-                if (decimal.TryParse(str.Substring(1), out decimal d)) {
+                if (TryParseNumber(str2.Substring(1), out decimal d)) {
                     cell.Style.Numberformat.Format = c + "0.00";
                     return d;
                 }
             }
-            else if (DateTime.TryParse(str, out DateTime table)) {
+            else if (DateTime.TryParse(str2, out DateTime dt)) {
                 cell.Style.Numberformat.Format = "M-d-yyyy H:mm:ss AM/PM";
-                return table;
+                return dt;
             }
             else {
                 string lower = str2.ToUpper();
@@ -798,6 +808,39 @@ namespace Utilities.Excel
                     return null;
             }
             return str;
+        }
+
+        private static readonly NumberStyles style = NumberStyles.Number | NumberStyles.AllowCurrencySymbol;
+        private static readonly CultureInfo culture = new CultureInfo("en-US");
+
+        public static bool TryParseNumber(string str, out decimal d)
+        {
+            try {
+                d = decimal.Parse(str, style, culture);
+                return true;
+            }
+            catch { // ignore
+            }
+            d = 0;
+            return false;
+        }
+
+        private static bool TryParseFraction(string str, out decimal d, out string format)
+        {
+            d = 0;
+            format = "#/###";
+            string[] parts = str.Split('/');
+            if (parts.Length != 2 || !int.TryParse(parts[0], out int numerator) || !int.TryParse(parts[1], out int denominator)
+                || denominator == 0)
+                return false;
+            if (numerator != 0) {
+                int decimals = numerator > denominator ? 3 : Math.Min(3, denominator / numerator);
+                if (decimals <= 10) {
+                    format = "#/" + new string('#', decimals);
+                    d = ((decimal) numerator) / denominator;
+                }
+            }
+            return true;
         }
 
         /// <summary>
