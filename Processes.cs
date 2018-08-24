@@ -125,7 +125,7 @@ namespace Utilities
         /// <param name="includeDirs">Determines if directories matching the search pattern</param>
         /// <param name="expandEnvVars">Determines if environment variables should be expanded (%var)%.</param>
         /// <returns>The paths of file system entries that match the search pattern.</returns>
-        public static List<string> ExpandPath(string path, bool includeDirs = true, bool expandEnvVars = true)
+        public static IEnumerable<string> ExpandPath(string path, bool includeDirs = true, bool expandEnvVars = true)
         {
             string envExpanded = expandEnvVars ? Environment.ExpandEnvironmentVariables(path) : path;
             // skip initial slashes in case it's a network drive.
@@ -133,24 +133,27 @@ namespace Utilities
             List<DirectoryInfo> dirs = GetDirectories(pathParts);
             string pattern = pathParts.Last();
             string patternExt = Path.GetExtension(pattern);
-            List<string> results = new List<string>();
             if (patternExt.Length == 3 && !patternExt.Contains('*') && !patternExt.Contains('?')) {
                 string patternFile = Path.GetFileNameWithoutExtension(pattern);
                 foreach (DirectoryInfo dir in dirs) {
                     IEnumerable<string> files = includeDirs ?
                         Directory.GetFileSystemEntries(dir.FullName, patternFile)
                         : Directory.GetFiles(dir.FullName, patternFile);
-                    results.AddRange(files.Where(item => item.EndsWith(patternExt, StringComparison.InvariantCultureIgnoreCase)));
+                    foreach (string file in files.Where(item => item.EndsWith(patternExt, StringComparison.InvariantCultureIgnoreCase))) {
+                        yield return file;
+                    }
                 }
             }
             else {
                 foreach (DirectoryInfo dir in dirs) {
-                    results.AddRange(includeDirs ?
+                    string[] files = includeDirs ?
                         Directory.GetFileSystemEntries(dir.FullName, pattern)
-                        : Directory.GetFiles(dir.FullName, pattern));
+                        : Directory.GetFiles(dir.FullName, pattern);
+                    for (int i = 0; i < files.Length; i++) {
+                        yield return files[i];
+                    }
                 }
             }
-            return results;
         }
 
         private static readonly char[] DirSeparators = new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };

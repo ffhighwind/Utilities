@@ -50,15 +50,14 @@ namespace Utilities.Email
                     Credentials = new WebCredentials(Username, Password),
                     UseDefaultCredentials = string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password)
                 };
-                IsConnected = false;
                 Service.AutodiscoverUrl(Email, RedirectionUrlValidationCallback);
                 IsConnected = Service.Url != null;
-                return IsConnected;
             }
             catch (Exception ex) {
                 Console.Error.WriteLine(ex.Message);
-                return false;
+                IsConnected = false;
             }
+            return IsConnected;
         }
 
         public EmailMessage CreateEmail()
