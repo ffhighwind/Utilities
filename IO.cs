@@ -1203,8 +1203,9 @@ namespace Utilities
         public static bool IsAvailable(FileInfo path, FileAccess access = FileAccess.Read)
         {
             try {
-                FileStream stream = path.Open(FileMode.Open, access, FileShare.None);
-                stream.Close();
+                using (FileStream stream = path.Open(FileMode.Open, access, FileShare.None)) {
+                    // do nothing
+                }
             }
             catch (IOException) {
                 return false; // not accessible

@@ -13,8 +13,6 @@ namespace Utilities.Excel
     /// </summary>
     public class Worksheet
     {
-        private const BindingFlags DefaultBindingFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly;
-
         /// <summary>
         /// The number of rows to check in a <see cref="DateTime"/> column before determining whether to remove the Time component.
         /// </summary>
