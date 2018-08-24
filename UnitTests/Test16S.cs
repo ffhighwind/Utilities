@@ -1,4 +1,4 @@
-﻿namespace UnitTestProject1
+﻿namespace Utilities.UnitTests
 {
     public class Test16S
     {

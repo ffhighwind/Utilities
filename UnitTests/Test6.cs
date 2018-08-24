@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace UnitTestProject1
+namespace Utilities.UnitTests
 {
     internal class Test6
     {
