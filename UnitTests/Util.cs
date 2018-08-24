@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Utilities;
 
@@ -11,11 +7,6 @@ namespace UnitTests
     [TestClass]
     public class UtilTests
     {
-        [TestMethod]
-        public void Test()
-        {
-        }
-
         [TestMethod]
         public void Parse()
         {
@@ -39,7 +30,7 @@ namespace UnitTests
                 throw new Exception();
             if (!Util.Parse("6/5/2018 6:33:15 PM").Equals(new DateTime(2018, 6, 5, 6 + 12, 33, 15)))
                 throw new Exception();
-            if (Util.Parse("6:12:14:45.3448").GetType() != typeof(TimeSpan))
+            if (Util.Parse("6:12:14:45.3448") is TimeSpan)
                 throw new Exception();
 
             if (Util.Parse("Null") != null)

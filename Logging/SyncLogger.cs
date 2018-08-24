@@ -2,7 +2,7 @@
 using System.IO;
 using System.Runtime.CompilerServices;
 
-namespace Utilities.Log
+namespace Utilities.Logging
 {
     public class SyncLogger : ILogger
     {

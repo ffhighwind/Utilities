@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
 
-namespace Utilities.Log
+namespace Utilities.Logging
 {
     public enum LogStyle
     {

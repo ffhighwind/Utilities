@@ -539,7 +539,7 @@ namespace Utilities
             if (printRowNumbers) {
                 int i = 1;
                 foreach (T item in list) {
-                    Console.WriteLine("{0} {2}", i, tostringT(item));
+                    Console.WriteLine("{0} {1}", i, tostringT(item));
                     i++;
                 }
             }

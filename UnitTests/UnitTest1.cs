@@ -11,6 +11,7 @@ namespace UnitTestProject1
     public class UnitTest1
     {
         private const string dir = @"D:\Github\Utilities\bin\Debug\";
+
         [TestMethod]
         public void TestMethod1()
         {
@@ -18,16 +19,6 @@ namespace UnitTestProject1
             //ReadTest(filename);
             //ForeachTest(filename);
             ReadWriteTest(filename);
-
-            //WORKING
-            //set csv/tsv -> xlsx didn't format 
-
-
-            //set_xlsx->xlsx failed some columns
-            //T6 csv -> csv failed some columns
-            //T6 csv -> xlsx failed most columns
-
-            //no value
         }
 
         public void ReadWrite(string filename)
@@ -87,15 +78,6 @@ namespace UnitTestProject1
             Read(dir + filename + ".xls", 700);
             Read(dir + filename + ".tsv", 700);
             Read(dir + "Empty.csv", 0);
-        }
-
-        public void Write(string path, string path2)
-        {
-            List<Test16> list1 = new List<Test16>();
-            List<Test16S> list2 = new List<Test16S>();
-            List<Test6> list3 = new List<Test6>();
-            DataSet set = new DataSet();
-            DataTable table = new DataTable();
         }
 
         public void Read(string path, int count)

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Utilities;
 
@@ -29,7 +30,6 @@ namespace UnitTests
         public void WeeksInMonth()
         {
             for (int year = 1; year <= 9998; year++) {
-                var holidays = WorkCalendar.Holidays(year);
                 for (int month = 1; month <= 12; month++) {
                     int weeks1 = WorkCalendar.WeeksInMonth(year, month);
                     int weeks2 = WorkCalendar.FirstDay(year, month, WEEK_START).AddDays(7 * 4).Month == month ? 5 : 4;
@@ -43,7 +43,7 @@ namespace UnitTests
         public void IsHoliday()
         {
             for (int year = 1; year <= 9998; year++) {
-                var holidays = WorkCalendar.Holidays(year);
+                HashSet<DateTime> holidays = WorkCalendar.Holidays(year);
                 for (int month = 1; month <= 12; month++) {
                     int days = DateTime.DaysInMonth(year, month);
                     for (int day = 1; day <= days; day++) {
@@ -75,7 +75,6 @@ namespace UnitTests
                 }
                 if (weekCount < 52 || weekCount > 53)
                     throw new Exception();
-                weekCount = 0;
             }
         }
 
