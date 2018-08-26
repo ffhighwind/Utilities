@@ -54,7 +54,7 @@
     <Compile Include="Test16.cs" />
     <Compile Include="Test16S.cs" />
     <Compile Include="Test6.cs" />
-    <Compile Include="UnitTest1.cs" />
+    <Compile Include="IO.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Util.cs" />
     <Compile Include="WorkCalendar.cs" />

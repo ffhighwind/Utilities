@@ -2,7 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Utilities;
 
-namespace UnitTests
+namespace Utilities.UnitTests
 {
     [TestClass]
     public class UtilTests

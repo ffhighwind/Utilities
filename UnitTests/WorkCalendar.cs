@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Utilities;
 
-namespace UnitTests
+namespace Utilities.UnitTests
 {
     [TestClass]
     public class WorkCalendarTests
