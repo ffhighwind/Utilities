@@ -11,28 +11,32 @@ namespace Utilities
 {
     public static class Util
     {
-        private const BindingFlags DefaultBindingFlags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty;
+        private const BindingFlags DefaultBindingFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly;
 
         #region Converters
         /// <summary>
         /// Converters for most basic types. converterMap(outputType)(inputType) returns a converter lambda function
         /// that takes an object of the input <see cref="Type"/> and converts it to the output <see cref="Type"/>.
         /// </summary>
-        private static Dictionary<Type, Func<Type, Func<object, object>>> converterMap = new Dictionary<Type, Func<Type, Func<object, object>>>() {
+        private static readonly Dictionary<Type, Func<Type, Func<object, object>>> converterMap = new Dictionary<Type, Func<Type, Func<object, object>>>() {
             { typeof(string), (input) => {
                 Func<object, object> converter;
                 if (input == typeof(DateTime))
-                    converter = (inp) => { return ((DateTime)inp).ToString("M-d-yyyy h:mm:ss.fff AM/PM"); };
+                    converter = (inp) => { return ((DateTime) inp).ToString("M-d-yyyy H:mm:ss.fff"); };
                 else if (input == typeof(TimeSpan))
                     converter = (inp) => { return ((TimeSpan) inp).ToString("h:mm:ss.fff"); };
                 else if (input == typeof(DateTimeOffset))
-                    converter = (inp) => { return Extensions.ToDateTime((DateTimeOffset) inp).ToString("M-d-yyyy h:mm:ss.fff AM/PM"); };
+                    converter = (inp) => { return Extensions.ToDateTime((DateTimeOffset) inp).ToString("M-d-yyyy H:mm:ss.fff"); };
                 else if (input == typeof(DateTime?))
-                    converter = (inp) => { return (inp as DateTime?)?.ToString("M-d-yyyy h:mm:ss.fff AM/PM"); };
+                    converter = (inp) => { return (inp as DateTime?)?.ToString("M-d-yyyy H:mm:ss.fff"); };
                 else if (input == typeof(DateTimeOffset?))
-                    converter = (inp) => { return inp == null ? null : Extensions.ToDateTime((DateTimeOffset)inp).ToString("M-d-yyyy h:mm:ss.fff AM/PM"); };
+                    converter = (inp) => { return inp == null ? null : Extensions.ToDateTime((DateTimeOffset) inp).ToString("M-d-yyyy H:mm:ss.fff"); };
                 else if (input == typeof(TimeSpan?))
                     converter = (inp) => { return (inp as TimeSpan?)?.ToString("h:mm:ss.fff"); };
+                else if(input == typeof(char[]))
+                    converter = (inp) => { return inp == null ? null : new string(inp as char[]); };
+                else if(input == typeof(byte[]))
+                    converter = (inp) => { return inp == null ? null : System.Convert.ToBase64String(inp as byte[]); };
                 else
                     converter = System.Convert.ToString;
                 return converter;
@@ -79,14 +83,24 @@ namespace Utilities
                     converter = (inp) => {
                         byte[] inBytes = inp as byte[];
                         char[] outChars = new char[inBytes.Length / 4];
-                        return System.Convert.ToBase64CharArray(inBytes, 0, inBytes.Length, outChars, 0);
+                        System.Convert.ToBase64CharArray(inBytes, 0, inBytes.Length, outChars, 0);
+                        return outChars;
                     };
                 }
+                else if (input == typeof(string))
+                    converter = (inp) => { return inp == null ? null : (inp as string).ToCharArray(); };
                 else
                     converter = NoConvert;
                 return converter;
             } },
-            { typeof(int), (input) => { return (inp) => { return System.Convert.ToInt32(inp); }; } },
+            { typeof(int), (input) => {
+                Func<object, object> converter;
+                if(input == typeof(string))
+                    converter = (inp) => { return int.Parse(inp as string); };
+                else
+                    converter = (inp) => { return System.Convert.ToInt32(inp); };
+                return converter;
+            } },
             { typeof(short), (input) => { return (inp) => { return System.Convert.ToInt16(inp); }; } },
             { typeof(long), (input) => { return (inp) => { return System.Convert.ToInt64(inp); }; } },
             { typeof(uint), (input) => { return (inp) => { return System.Convert.ToUInt32(inp); }; } },
@@ -504,7 +518,7 @@ namespace Utilities
         /// <returns>The string representation of <see cref="Type"/> T.</returns>
         public static string ToString<T>(T obj)
         {
-            return ToString((object) obj);
+            return ToString(obj);
         }
 
         /// <summary>

@@ -9,7 +9,7 @@ namespace Utilities.Email
     /// <summary>
     /// Creates a network connection using a different network credential.
     /// </summary>
-    /// <author>AlanBarber on GitHub</author>
+    /// <author>Alan Barber</author>
     /// <see href="https://gist.github.com/AlanBarber/92db36339a129b94b7dd"/>
     public class NetworkConnection : IDisposable
     {

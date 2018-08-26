@@ -6,7 +6,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Reflection;
 
-namespace Utilities
+namespace Utilities.Converters
 {
     /// <summary>
     /// Generic <see cref="DbDataReader"/> for use with ADO.NET SQL select commands.
@@ -22,7 +22,7 @@ namespace Utilities
         private readonly BitArray allowNull;
         private object current = null;
         private bool active = true;
-        private const BindingFlags DefaultBindingFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly;
+        private const BindingFlags DefaultBindingFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="GenericDataReader{T}"/> class.

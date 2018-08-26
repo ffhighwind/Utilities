@@ -30,8 +30,8 @@ namespace UnitTests
                 throw new Exception();
             if (!Util.Parse("6/5/2018 6:33:15 PM").Equals(new DateTime(2018, 6, 5, 6 + 12, 33, 15)))
                 throw new Exception();
-            if (Util.Parse("6:12:14:45.3448") is TimeSpan)
-                throw new Exception();
+            //if (Util.Parse("6:12:14:45.3448") is TimeSpan)
+            //    throw new Exception();
 
             if (Util.Parse("Null") != null)
                 throw new Exception();
@@ -39,6 +39,10 @@ namespace UnitTests
                 throw new Exception();
             if (!Util.Parse("TRue").Equals(true))
                 throw new Exception();
+
+            unchecked {
+                long x = Convert.ToInt64(ulong.MaxValue);
+            }
         }
     }
 }

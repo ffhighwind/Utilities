@@ -6,7 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using Dapper;
-
+using Utilities.Converters;
 
 namespace Utilities
 {
@@ -15,7 +15,7 @@ namespace Utilities
     /// </summary>
     public static class DB
     {
-        private const BindingFlags DefaultBindingFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance;
+        private const BindingFlags DefaultBindingFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly;
         private const SqlBulkCopyOptions BulkCopyOptions = SqlBulkCopyOptions.FireTriggers | SqlBulkCopyOptions.UseInternalTransaction | SqlBulkCopyOptions.TableLock;
         private static readonly SqlBulkCopyColumnMapping[] EmptyColumnMappings = Array.Empty<SqlBulkCopyColumnMapping>();
 
@@ -154,16 +154,16 @@ namespace Utilities
         /// <returns>The results from the query, or null on error.</returns>
         public static IEnumerable<T> Query<T>(SqlConnection conn, string cmd, object param = null, int timeoutSecs = 0, int maxRetries = 5)
         {
-            Exception e = null;
             for (int i = 0; i < maxRetries; i++) {
                 try {
                     return conn.Query<T>(cmd, param, null, true, timeoutSecs);
                 }
-                catch (Exception ex) {
-                    e = ex;
+                catch {
+                    if (i == maxRetries - 1)
+                        throw; // keeps StackTrace
                 }
             }
-            throw e ?? new ArgumentOutOfRangeException("maxRetries: " + maxRetries);
+            throw new ArgumentOutOfRangeException("maxRetries: " + maxRetries);
         }
 
         /// <summary>
@@ -177,7 +177,6 @@ namespace Utilities
         /// <returns>The results from the query, or null on error.</returns>
         public static DataTable Query(SqlConnection conn, string cmd, object param = null, int timeoutSecs = 0, int maxRetries = 5)
         {
-            Exception e = null;
             for (int i = 0; i < maxRetries; i++) {
                 try {
                     using (IDataReader reader = conn.ExecuteReader(cmd, param, null, timeoutSecs)) {
@@ -186,11 +185,12 @@ namespace Utilities
                         return table;
                     }
                 }
-                catch (Exception ex) {
-                    e = ex;
+                catch {
+                    if (i == maxRetries - 1)
+                        throw; // keeps StackTrace
                 }
             }
-            throw e ?? new ArgumentOutOfRangeException("maxRetries: " + maxRetries);
+            throw new ArgumentOutOfRangeException("maxRetries: " + maxRetries);
         }
 
         /// <summary>
@@ -204,7 +204,6 @@ namespace Utilities
         /// <returns>The number of rows affected, or -1 on error.</returns>
         public static int Execute(SqlConnection conn, string cmd, object param = null, int timeoutSecs = 0, int maxRetries = 5)
         {
-            Exception e = null;
             for (int i = 0; i < maxRetries; i++) {
                 try {
                     using (SqlTransaction trans = conn.BeginTransaction()) {
@@ -214,11 +213,12 @@ namespace Utilities
                         return count;
                     }
                 }
-                catch (Exception ex) {
-                    e = ex;
+                catch {
+                    if (i == maxRetries - 1)
+                        throw; // keeps StackTrace
                 }
             }
-            throw e ?? new ArgumentOutOfRangeException("maxRetries: " + maxRetries);
+            throw new ArgumentOutOfRangeException("maxRetries: " + maxRetries);
         }
 
         /// <summary>
@@ -621,7 +621,6 @@ namespace Utilities
                 }
             }
         }
-
 
         /// <summary>
         /// Drops a table from a database.

@@ -22,17 +22,9 @@ namespace Utilities
         /// <returns>The process that ran the command or null on error.</returns>
         public static Process Exec(string path, string args = "", bool redirectOutput = false, int maxWaitMillis = -1, bool showWindow = false)
         {
-            try {
-                Process proc = ExecAsync(path, args, redirectOutput, showWindow);
-                if (proc != null) {
-                    proc.WaitForExit(maxWaitMillis);
-                    return proc;
-                }
-            }
-            catch (Exception ex) {
-                Console.Error.WriteLine(ex.Message);
-            }
-            return null; // EXIT_FAILURE
+            Process proc = ExecAsync(path, args, redirectOutput, showWindow);
+            proc.WaitForExit(maxWaitMillis);
+            return proc;
         }
 
         /// <summary>

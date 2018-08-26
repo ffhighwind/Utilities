@@ -11,6 +11,8 @@ namespace Utilities.Email
     /// </summary>
     public class EmailService
     {
+        public const int PageSize = 50;
+
         public EmailService() { }
 
         public EmailService(string email, string username, string password)
@@ -20,9 +22,9 @@ namespace Utilities.Email
             Password = password;
         }
 
-        public string Email { get; protected set; }
+        public string Email { get; private set; }
 
-        public string Username { get; protected set; }
+        public string Username { get; private set; }
 
         public bool IsConnected { get; private set; }
 
@@ -92,35 +94,36 @@ namespace Utilities.Email
                 PropertySet = PropertySet.FirstClassProperties,
                 Traversal = traversal,
             };
-            FindItemsResults<Item> findItemsResults = Service.FindItems(parentFolder, filter, fview);
+            FindItemsResults<Item> results = Service.FindItems(parentFolder, fview);
             do {
-                foreach (Item item in findItemsResults) {
+                foreach (Item item in results) {
                     yield return item;
                 }
-                if (findItemsResults.NextPageOffset.HasValue)
-                    fview.Offset = findItemsResults.NextPageOffset.Value;
-            } while (findItemsResults.MoreAvailable);
+                if (results.NextPageOffset.HasValue)
+                    fview.Offset = results.NextPageOffset.Value;
+            } while (results.MoreAvailable);
         }
 
-        public Folder CreateFolder(string folderName, FolderId parentFolder)
+        public Folder CreateFolder(string name, FolderId parentFolder)
         {
-            Folder folder = FindFolder(folderName, parentFolder);
+            Folder folder = FindFolder(name, parentFolder);
             if (folder == null) {
                 folder = new Folder(Service) {
-                    DisplayName = folderName
+                    DisplayName = name
                 };
                 folder.Save(parentFolder);
             }
             return folder;
         }
 
-        public Folder CreateFolder(string folderName, WellKnownFolderName parentFolder = WellKnownFolderName.MsgFolderRoot)
+        public Folder CreateFolder(string folderName, WellKnownFolderName parentFolder = WellKnownFolderName.MsgFolderRoot, string mailbox = null)
         {
-            return CreateFolder(folderName, new FolderId(parentFolder));
+            FolderId folderId = mailbox == null ? new FolderId(parentFolder) : new FolderId(parentFolder, mailbox);
+            return CreateFolder(folderName, folderId);
         }
 
-        public Folder FindFolder(string folderName, WellKnownFolderName parentFolder = WellKnownFolderName.Root,
-            FolderTraversal traversal = FolderTraversal.Shallow, string mailbox = null, PropertySet properties = null)
+        public Folder FindFolder(string folderName, WellKnownFolderName parentFolder = WellKnownFolderName.Root, string mailbox = null,
+            FolderTraversal traversal = FolderTraversal.Shallow, PropertySet properties = null)
         {
             FolderId folderId = mailbox == null ? new FolderId(parentFolder) : new FolderId(parentFolder, mailbox);
             return FindFolders(folderName, folderId, traversal, properties).FirstOrDefault();
@@ -148,14 +151,14 @@ namespace Utilities.Email
                 PropertySet = properties ?? PropertySet.FirstClassProperties,
                 Traversal = traversal
             };
-            FindFoldersResults findFolderResults = Service.FindFolders(parentFolder, filter, fview);
+            FindFoldersResults results = Service.FindFolders(parentFolder, filter, fview);
             do {
-                foreach (Folder myFolder in findFolderResults.Folders) {
-                    yield return myFolder;
+                foreach (Folder folder in results.Folders) {
+                    yield return folder;
                 }
-                if (findFolderResults.NextPageOffset.HasValue)
-                    fview.Offset = findFolderResults.NextPageOffset.Value;
-            } while (findFolderResults.MoreAvailable);
+                if (results.NextPageOffset.HasValue)
+                    fview.Offset = results.NextPageOffset.Value;
+            } while (results.MoreAvailable);
         }
 
         public IEnumerable<Folder> FindFolders(string folderName, WellKnownFolderName parentFolder,
@@ -189,59 +192,60 @@ namespace Utilities.Email
                 PropertySet = properties ?? PropertySet.FirstClassProperties,
                 Traversal = traversal
             };
-            FindFoldersResults findFolderResults = Service.FindFolders(parentFolder, fview);
+            FindFoldersResults results = Service.FindFolders(parentFolder, fview);
             do {
-                foreach (Folder folder in findFolderResults.Folders) {
+                foreach (Folder folder in results.Folders) {
                     yield return folder;
                 }
-                if (findFolderResults.NextPageOffset.HasValue)
-                    fview.Offset = findFolderResults.NextPageOffset.Value;
-            } while (findFolderResults.MoreAvailable);
+                if (results.NextPageOffset.HasValue)
+                    fview.Offset = results.NextPageOffset.Value;
+            } while (results.MoreAvailable);
         }
 
-        public IEnumerable<FileAttachment> GetFileAttachments(Folder folder, PropertySet properties = null)
+        public IEnumerable<FileAttachment> GetFileAttachments(FolderId folderId, ItemTraversal traversal = ItemTraversal.Shallow, PropertySet properties = null)
         {
             ItemView iview = new ItemView(PageSize, 0) {
-                PropertySet = properties ?? PropertySet.FirstClassProperties
+                PropertySet = properties ?? PropertySet.FirstClassProperties,
+                Traversal = traversal
             };
             iview.OrderBy.Add(ItemSchema.DateTimeReceived, SortDirection.Descending);
-            FindItemsResults<Item> findItemsResults = Service.FindItems(folder.Id, iview);
+            FindItemsResults<Item> results = Service.FindItems(folderId, iview);
             do {
-                foreach (Item item in findItemsResults) {
-                    foreach (FileAttachment fileAttachment in GetNestedFileAttachments(item)) {
-                        yield return fileAttachment;
+                foreach (Item item in results) {
+                    foreach (FileAttachment file in GetNestedFileAttachments(item)) {
+                        yield return file;
                     }
                 }
-                if (findItemsResults.NextPageOffset.HasValue)
-                    iview.Offset = findItemsResults.NextPageOffset.Value;
-            } while (findItemsResults.MoreAvailable);
+                if (results.NextPageOffset.HasValue)
+                    iview.Offset = results.NextPageOffset.Value;
+            } while (results.MoreAvailable);
         }
 
-        public IEnumerable<EmailMessage> GetEmails(Folder folder, PropertySet properties = null)
+        public IEnumerable<EmailMessage> GetEmails(FolderId folderId, PropertySet properties = null)
         {
             if (properties == null)
                 properties = PropertySet.FirstClassProperties;
-            ItemView iview = new ItemView(PageSize, 0);
+            ItemView iview = new ItemView(PageSize, 0) {
+                PropertySet = properties ?? PropertySet.FirstClassProperties,
+            };
             iview.OrderBy.Add(ItemSchema.DateTimeReceived, SortDirection.Descending);
-            FindItemsResults<Item> findItemsResults = Service.FindItems(folder.Id, iview);
-            if (findItemsResults.TotalCount > 0) {
+            FindItemsResults<Item> results = Service.FindItems(folderId, new SearchFilter.IsEqualTo(ItemSchema.ItemClass, "IPM.Note"), iview);
+            if (results.TotalCount > 0) {
                 do {
-                    Service.LoadPropertiesForItems(findItemsResults, properties);
-                    foreach (Item email in findItemsResults) {
-                        if (email is EmailMessage emailMsg)
-                            yield return emailMsg;
+                    foreach (Item email in results) {
+                        //if (email is EmailMessage emailMsg)
+                        yield return (EmailMessage) email;
                     }
-                    if (findItemsResults.NextPageOffset.HasValue)
-                        iview.Offset = findItemsResults.NextPageOffset.Value;
-                } while (findItemsResults.MoreAvailable);
+                    if (results.NextPageOffset.HasValue)
+                        iview.Offset = results.NextPageOffset.Value;
+                } while (results.MoreAvailable);
             }
         }
 
-        public void DeleteEmail(EmailMessage email, DeleteMode mode = DeleteMode.MoveToDeletedItems)
+        public IEnumerable<FileAttachment> GetFileAttachments(EmailMessage email)
         {
-            email.Delete(mode);
+            return GetNestedFileAttachments(email);
         }
-
 
         private IEnumerable<FileAttachment> GetNestedFileAttachments(Item item)
         {
@@ -250,14 +254,14 @@ namespace Utilities.Email
                     if (att is ItemAttachment iatt) {
                         if (iatt.Item == null)
                             att.Load();
-                        foreach (FileAttachment fileAttachment in GetNestedFileAttachments(iatt.Item)) {
-                            yield return fileAttachment;
+                        foreach (FileAttachment file in GetNestedFileAttachments(iatt.Item)) {
+                            yield return file;
                         }
                     }
                     else if (att is FileAttachment fileAttachment)
                         yield return fileAttachment;
                     else
-                        Console.WriteLine("Unknown attachment type: " + att.GetType().Name);
+                        throw new InvalidCastException("Unknown attachment type: " + att.GetType().FullName);
                 }
             }
         }
@@ -273,86 +277,5 @@ namespace Utilities.Email
             return new Uri(redirectionUrl).Scheme == "https";
             ////return redirectionUrl.StartsWith("https", StringComparison.OrdinalIgnoreCase);
         }
-
-        /// <summary>
-        /// https://docs.microsoft.com/en-us/exchange/client-developer/exchange-web-services/property-sets-and-response-shapes-in-ews-in-exchange
-        /// </summary>
-        public static class PropertySets
-        {
-            public static readonly PropertySet IdOnly =
-                new PropertySet(BasePropertySet.IdOnly);
-
-            public static readonly PropertySet Default =
-                new PropertySet(BasePropertySet.FirstClassProperties);
-
-            public static readonly PropertySet FolderAll =
-                new PropertySet(
-                    BasePropertySet.FirstClassProperties,
-                    FolderSchema.ArchiveTag,
-                    FolderSchema.ChildFolderCount,
-                    FolderSchema.DisplayName,
-                    FolderSchema.EffectiveRights,
-                    FolderSchema.FolderClass,
-                    FolderSchema.ManagedFolderInformation,
-                    FolderSchema.ParentFolderId,
-                    FolderSchema.Permissions,
-                    FolderSchema.PolicyTag,
-                    FolderSchema.TotalCount,
-                    FolderSchema.UnreadCount,
-                    FolderSchema.WellKnownFolderName);
-
-            public static readonly PropertySet ItemAll =
-                new PropertySet(
-                    BasePropertySet.FirstClassProperties,
-                    ItemSchema.AllowedResponseActions,
-                    ItemSchema.ArchiveTag,
-                    ItemSchema.Attachments,
-                    ItemSchema.Body,
-                    ItemSchema.Categories,
-                    ItemSchema.ConversationId,
-                    ItemSchema.Culture,
-                    ItemSchema.DateTimeCreated,
-                    ItemSchema.DateTimeReceived,
-                    ItemSchema.DateTimeSent,
-                    ItemSchema.DisplayCc,
-                    ItemSchema.DisplayTo,
-                    ItemSchema.EffectiveRights,
-                    ItemSchema.EntityExtractionResult,
-                    ItemSchema.Flag,
-                    ItemSchema.HasAttachments,
-                    ItemSchema.IconIndex,
-                    ItemSchema.Importance,
-                    ItemSchema.InReplyTo,
-                    ItemSchema.InstanceKey,
-                    ItemSchema.InternetMessageHeaders,
-                    ItemSchema.IsAssociated,
-                    ItemSchema.IsDraft,
-                    ItemSchema.IsFromMe,
-                    ItemSchema.IsReminderSet,
-                    ItemSchema.IsResend,
-                    ItemSchema.IsSubmitted,
-                    ItemSchema.IsUnmodified,
-                    ItemSchema.ItemClass,
-                    ItemSchema.LastModifiedName,
-                    ItemSchema.LastModifiedTime,
-                    ItemSchema.MimeContent,
-                    ItemSchema.NormalizedBody,
-                    ItemSchema.ParentFolderId,
-                    ItemSchema.PolicyTag,
-                    ItemSchema.Preview,
-                    ItemSchema.ReminderDueBy,
-                    ItemSchema.ReminderMinutesBeforeStart,
-                    ItemSchema.RetentionDate,
-                    ItemSchema.Sensitivity,
-                    ItemSchema.Size,
-                    ItemSchema.StoreEntryId,
-                    ItemSchema.Subject,
-                    ItemSchema.TextBody,
-                    ItemSchema.UniqueBody,
-                    ItemSchema.WebClientEditFormQueryString,
-                    ItemSchema.WebClientReadFormQueryString);
-        }
-
-        public const int PageSize = 50;
     }
 }

@@ -338,7 +338,7 @@ namespace Utilities
         /// <returns>The <see cref="ICollection{T}"/>.</returns>
         public static ICollection<T> ToList<T>(this DataTable table, ICollection<T> list) where T : class, new()
         {
-            DataRowConverter<T> converter = DataRowConverter<T>.Create(table);
+            Converters.DataRowConverter<T> converter = new Converters.DataRowConverter<T>(table);
             foreach (T obj in converter.Convert(table)) {
                 list.Add(obj);
             }
