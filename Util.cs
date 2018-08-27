@@ -14,113 +14,6 @@ namespace Utilities
         private const BindingFlags DefaultBindingFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly;
 
         #region Converters
-        /// <summary>
-        /// Converters for most basic types. converterMap(outputType)(inputType) returns a converter lambda function
-        /// that takes an object of the input <see cref="Type"/> and converts it to the output <see cref="Type"/>.
-        /// </summary>
-        private static readonly Dictionary<Type, Func<Type, Func<object, object>>> converterMap = new Dictionary<Type, Func<Type, Func<object, object>>>() {
-            { typeof(string), (input) => {
-                Func<object, object> converter;
-                if (input == typeof(DateTime))
-                    converter = (inp) => { return ((DateTime) inp).ToString("M-d-yyyy H:mm:ss.fff"); };
-                else if (input == typeof(TimeSpan))
-                    converter = (inp) => { return ((TimeSpan) inp).ToString("h:mm:ss.fff"); };
-                else if (input == typeof(DateTimeOffset))
-                    converter = (inp) => { return Extensions.ToDateTime((DateTimeOffset) inp).ToString("M-d-yyyy H:mm:ss.fff"); };
-                else if (input == typeof(DateTime?))
-                    converter = (inp) => { return (inp as DateTime?)?.ToString("M-d-yyyy H:mm:ss.fff"); };
-                else if (input == typeof(DateTimeOffset?))
-                    converter = (inp) => { return inp == null ? null : Extensions.ToDateTime((DateTimeOffset) inp).ToString("M-d-yyyy H:mm:ss.fff"); };
-                else if (input == typeof(TimeSpan?))
-                    converter = (inp) => { return (inp as TimeSpan?)?.ToString("h:mm:ss.fff"); };
-                else if(input == typeof(char[]))
-                    converter = (inp) => { return inp == null ? null : new string(inp as char[]); };
-                else if(input == typeof(byte[]))
-                    converter = (inp) => { return inp == null ? null : System.Convert.ToBase64String(inp as byte[]); };
-                else
-                    converter = System.Convert.ToString;
-                return converter;
-            } },
-            { typeof(DateTime), (input) => {
-                Func<object, object> converter;
-                if (input == typeof(DateTime?))
-                    converter = (inp) => { return (DateTime)inp; };
-                else if (input == typeof(DateTimeOffset) || input == typeof(DateTimeOffset?))
-                    converter = (inp) => { return Extensions.ToDateTime((DateTimeOffset)inp); };
-                else if (input == typeof(TimeSpan) || input == typeof(TimeSpan?))
-                    converter = (inp) => { return new DateTime(((TimeSpan) inp).Ticks); };
-                else
-                    converter = (inp) => { return System.Convert.ToDateTime(inp); };
-                return converter;
-            } },
-            { typeof(TimeSpan), (input) => {
-                Func<object, object> converter;
-                if (input == typeof(string))
-                    converter = (inp) => { return TimeSpan.Parse(inp as string); };
-                else if (input == typeof(DateTime))
-                    converter = (inp) => { return ((DateTime) inp).TimeOfDay; };
-                else if (input == typeof(DateTimeOffset))
-                    converter = (inp) => { return Extensions.ToDateTime((DateTimeOffset) inp).TimeOfDay; };
-                else if (input == typeof(DateTime?))
-                    converter = (inp) => { return inp == null ? TimeSpan.MinValue : ((DateTime) inp).TimeOfDay; };
-                else if (input == typeof(DateTimeOffset?))
-                    converter = (inp) => { return inp == null ? TimeSpan.MinValue : Extensions.ToDateTime((DateTimeOffset) inp).TimeOfDay; };
-                else
-                    converter = NoConvert;
-                return converter;
-            } },
-            { typeof(Guid), (input) => {
-                Func<object, object> converter;
-                if (input == typeof(string))
-                    converter = (inp) => { return Guid.Parse(inp as string); };
-                else
-                    converter = NoConvert;
-                return converter;
-            } },
-            { typeof(char[]), (input) => {
-                Func<object, object> converter;
-                if (input == typeof(byte[])) {
-                    converter = (inp) => {
-                        byte[] inBytes = inp as byte[];
-                        char[] outChars = new char[inBytes.Length / 4];
-                        System.Convert.ToBase64CharArray(inBytes, 0, inBytes.Length, outChars, 0);
-                        return outChars;
-                    };
-                }
-                else if (input == typeof(string))
-                    converter = (inp) => { return inp == null ? null : (inp as string).ToCharArray(); };
-                else
-                    converter = NoConvert;
-                return converter;
-            } },
-            { typeof(int), (input) => {
-                Func<object, object> converter;
-                if(input == typeof(string))
-                    converter = (inp) => { return int.Parse(inp as string); };
-                else
-                    converter = (inp) => { return System.Convert.ToInt32(inp); };
-                return converter;
-            } },
-            { typeof(short), (input) => { return (inp) => { return System.Convert.ToInt16(inp); }; } },
-            { typeof(long), (input) => { return (inp) => { return System.Convert.ToInt64(inp); }; } },
-            { typeof(uint), (input) => { return (inp) => { return System.Convert.ToUInt32(inp); }; } },
-            { typeof(ushort), (input) => { return (inp) => { return System.Convert.ToUInt16(inp); }; } },
-            { typeof(ulong), (input) => { return (inp) => { return System.Convert.ToUInt64(inp); }; } },
-            { typeof(bool), (input) => { return (inp) => { return System.Convert.ToBoolean(inp); }; } },
-            { typeof(byte), (input) => { return (inp) => { return System.Convert.ToByte(inp); }; } },
-            { typeof(sbyte), (input) => { return (inp) => { return System.Convert.ToSByte(inp); }; } },
-            { typeof(char), (input) => { return (inp) => { return System.Convert.ToChar(inp); }; } },
-            { typeof(float), (input) => { return (inp) => { return System.Convert.ToSingle(inp); }; } },
-            { typeof(double), (input) => { return (inp) => { return System.Convert.ToDouble(inp); }; } },
-            { typeof(decimal), (input) => { return (inp) => { return System.Convert.ToDecimal(inp); }; } },
-        };
-
-        /// <summary>
-        /// A converter that does nothing.
-        /// </summary>
-        /// <param name="obj">The object to convert.</param>
-        /// <returns>The same object that was input.</returns>
-        private static object NoConvert(object obj) { return obj; }
 
         /// <summary>
         /// Returns a function that converts an object from one <see cref="Type"/> to another.
@@ -128,11 +21,9 @@ namespace Utilities
         /// <param name="input">The <see cref="Type"/> of the input object.</param>
         /// <param name="output">The <see cref="Type"/> of the output object.</param>
         /// <returns>A function that converts objects from one <see cref="Type"/> to another.</returns>
-        public static Func<object, object> Converter(Type input, Type output)
+        public static Converter<object, object> Converter(Type input, Type output)
         {
-            if (input == output || !converterMap.TryGetValue(output, out Func<Type, Func<object, object>> converter))
-                return NoConvert;
-            return converter(input);
+            return Converters.Converters.GetConverter(input, output);
         }
 
         /// <summary>
@@ -143,9 +34,9 @@ namespace Utilities
         public static Func<IEnumerable<string>, T> StringsConverter<T>() where T : class, new()
         {
             PropertyInfo[] pinfos = typeof(T).GetProperties(DefaultBindingFlags);
-            Func<object, object>[] converters = new Func<object, object>[pinfos.Length];
+            Converter<object, object>[] converters = new Converter<object, object>[pinfos.Length];
             for (int i = 0; i < pinfos.Length; i++) {
-                converters[i] = converterMap[pinfos[i].PropertyType](typeof(string));
+                converters[i] = Converters.Converters.GetConverter(pinfos[i].PropertyType)(typeof(string));
             }
             return (strs) => {
                 T obj = new T();
@@ -170,12 +61,12 @@ namespace Utilities
         {
             PropertyInfo[] pinfos = typeof(T).GetProperties(DefaultBindingFlags);
             List<string> names = propertyNames.ToList();
-            Func<object, object>[] converters = new Func<object, object>[names.Count];
+            Converter<object, object>[] converters = new Converter<object, object>[names.Count];
             PropertyInfo[] props = new PropertyInfo[names.Count];
             for (int i = 0; i < names.Count; i++) {
                 props[i] = pinfos.FirstOrDefault(p => p.Name == names[i]);
                 if (props[i] != null)
-                    converters[i] = converterMap[props[i].PropertyType](typeof(string));
+                    converters[i] = Converters.Converters.GetConverter(props[i].PropertyType)(typeof(string));
             }
             return (strs) => {
                 T obj = new T();
