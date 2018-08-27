@@ -13,16 +13,20 @@ namespace Utilities.Converters
             return GetConverter(output)(input);
         }
 
+        public static Converter<object, object> GetNullableConverter(Type input, Type output)
+        {
+            Converter<object, object> converter = GetConverter(output)(input);
+            object nullableConverter(object value)
+            {
+                return value == null ? null : converter(value);
+            }
+            return nullableConverter;
+        }
+
         public static Func<Type, Converter<object, object>> GetConverter(Type output)
         {
             if (ConverterMap.TryGetValue(output, out Func<Type, Converter<object, object>> converter))
                 return converter;
-            Type ty = Nullable.GetUnderlyingType(output);
-            if (ty != output && ConverterMap.TryGetValue(ty, out converter)) {
-                Converter<object, object> nullableConverter = (val) => { return val == null ? null : converter(val.GetType())(val); };
-                Func<Type, Converter<object, object>> value = (x) => { return nullableConverter; };
-                return value;
-            }
             return NonConverter;
         }
 
@@ -71,15 +75,13 @@ namespace Utilities.Converters
                 case TypeCode.Object:
                     if (type == typeof(TimeSpan))
                         return ToTimeSpan(value);
-                    Type valueType = value.GetType();
-                    if (type == valueType)
-                        return value;
                     else if (type == typeof(DateTimeOffset))
                         return ToDateTimeOffset(value);
-                    Type underlying = Nullable.GetUnderlyingType(type);
-                    if (underlying == null || underlying == type)
-                        return value;
-                    return GetConverter(type)(valueType)(value); // last ditch effort... probably a Nullable type
+                    else if (type == typeof(char[]))
+                        return ToChars(value);
+                    else if (type == typeof(byte[]))
+                        return ToBytes(value);
+                    return value;
                 case TypeCode.DBNull:
                     throw new InvalidCastException("Invalid cast: TypeCode.DBNull");
                 case TypeCode.Empty:
@@ -97,8 +99,8 @@ namespace Utilities.Converters
             { typeof(DateTime), ToDateTime },
             { typeof(DateTimeOffset), ToDateTimeOffset },
             { typeof(TimeSpan), ToTimeSpan },
-            { typeof(Guid), ToGuid }, // equivalent to Convert.ToGuid
             { typeof(char[]), ToChars },
+            { typeof(byte[]), ToBytes },
             { typeof(short), ToInt16 }, // equivalent to Convert.ToInt16
             { typeof(int), ToInt32 }, // equivalent to Convert.ToInt32
             { typeof(long), ToInt64 }, // equivalent to Convert.ToInt64
@@ -138,12 +140,6 @@ namespace Utilities.Converters
                 converter = TimeSpanToString;
             else if (input == typeof(DateTimeOffset))
                 converter = DateTimeOffsetToString;
-            else if (input == typeof(DateTime?))
-                converter = DateTimeNullableToString;
-            else if (input == typeof(DateTimeOffset?))
-                converter = DateTimeOffsetNullableToString;
-            else if (input == typeof(TimeSpan?))
-                converter = TimeSpanNullableToString;
             else if (input == typeof(char[]))
                 converter = CharsToString;
             else if (input == typeof(byte[]))
@@ -158,19 +154,9 @@ namespace Utilities.Converters
             return ((DateTime) value).ToString("M-d-yyyy H:mm:ss.fff");
         }
 
-        private static object DateTimeNullableToString(object value)
-        {
-            return value == null ? value : DateTimeToString(value);
-        }
-
         private static object TimeSpanToString(object value)
         {
             return ((TimeSpan) value).ToString("h:mm:ss.fff");
-        }
-
-        private static object TimeSpanNullableToString(object value)
-        {
-            return value == null ? null : TimeSpanToString(value);
         }
 
         private static object DateTimeOffsetToString(object value)
@@ -178,19 +164,14 @@ namespace Utilities.Converters
             return Extensions.ToDateTime((DateTimeOffset) value).ToString("M-d-yyyy H:mm:ss.fff");
         }
 
-        private static object DateTimeOffsetNullableToString(object value)
-        {
-            return value == null ? null : DateTimeOffsetToString(value);
-        }
-
         private static object CharsToString(object value)
         {
-            return value == null ? null : new string((char[]) value);
+            return new string((char[]) value);
         }
 
         private static object BytesToString(object value)
         {
-            return value == null ? null : DefaultEncoding.GetString((byte[]) value);
+            return DefaultEncoding.GetString((byte[]) value);
         }
 
         // ToDateTime
@@ -202,9 +183,9 @@ namespace Utilities.Converters
         public static Converter<object, object> ToDateTime(Type input)
         {
             Converter<object, object> converter;
-            if (input == typeof(TimeSpan) || input == typeof(TimeSpan?))
+            if (input == typeof(TimeSpan))
                 converter = TimeSpanToDateTime;
-            else if (input == typeof(DateTimeOffset) || input == typeof(DateTimeOffset?))
+            else if (input == typeof(DateTimeOffset))
                 converter = DateTimeOffsetToDateTime;
             else
                 converter = ObjectToDateTime;
@@ -242,9 +223,9 @@ namespace Utilities.Converters
         {
             if (input == typeof(string))
                 return StringToDateTimeOffset;
-            if (input == typeof(DateTime) || input == typeof(DateTime?))
+            if (input == typeof(DateTime))
                 return DateTimeToDateTimeOffset;
-            else if (input == typeof(TimeSpan) || input == typeof(TimeSpan?))
+            else if (input == typeof(TimeSpan))
                 return TimeSpanToDateTimeOffset;
             else
                 return NoConvert<DateTimeOffset>;
@@ -276,9 +257,9 @@ namespace Utilities.Converters
             Converter<object, object> converter;
             if (input == typeof(string))
                 converter = StringToTimeSpan;
-            else if (input == typeof(DateTime) || input == typeof(DateTime?))
+            else if (input == typeof(DateTime))
                 converter = DateTimeToTimeSpan;
-            else if (input == typeof(DateTimeOffset) || input == typeof(DateTimeOffset?))
+            else if (input == typeof(DateTimeOffset))
                 converter = DateTimeOffsetToTimeSpan;
             else
                 converter = NoConvert<TimeSpan>;
@@ -298,27 +279,6 @@ namespace Utilities.Converters
         private static object DateTimeOffsetToTimeSpan(object value)
         {
             return Extensions.ToDateTime((DateTimeOffset) value).TimeOfDay;
-        }
-
-        // ToGuid
-        public static object ToGuid(object value)
-        {
-            return ToGuid(value.GetType())(value);
-        }
-
-        public static Converter<object, object> ToGuid(Type input)
-        {
-            Converter<object, object> converter;
-            if (input == typeof(string))
-                converter = StringToGuid;
-            else
-                converter = NoConvert<Guid>;
-            return converter;
-        }
-
-        private static object StringToGuid(object value)
-        {
-            return Guid.Parse((string) value);
         }
 
         // ToChars
@@ -346,7 +306,46 @@ namespace Utilities.Converters
 
         private static object StringToChars(object value)
         {
-            return ((string) value)?.ToCharArray();
+            return ((string) value).ToCharArray();
+        }
+
+        // ToBytes
+        public static object ToBytes(object value)
+        {
+            return ToBytes(value.GetType())(value);
+        }
+
+        public static Converter<object, object> ToBytes(Type input)
+        {
+            if (input == typeof(string))
+                return StringToBytes;
+            else if (input == typeof(byte))
+                return ByteToBytes;
+            else if (input == typeof(char))
+                return CharToBytes;
+            else if (input == typeof(char[]))
+                return CharsToBytes;
+            return NoConvert<byte[]>;
+        }
+
+        private static object StringToBytes(object value)
+        {
+            return DefaultEncoding.GetBytes(((string) value).ToCharArray());
+        }
+
+        private static object CharsToBytes(object value)
+        {
+            return DefaultEncoding.GetBytes((char[]) value);
+        }
+
+        private static object CharToBytes(object value)
+        {
+            return DefaultEncoding.GetBytes(new char[] { (char) value });
+        }
+
+        private static object ByteToBytes(object value)
+        {
+            return new byte[] { (byte) value };
         }
 
         // ToInt16
