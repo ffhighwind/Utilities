@@ -40,13 +40,16 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="DataRowConverter.cs">
+    <Compile Include="Converters\Converters.cs" />
+    <Compile Include="Converters\DataRowConverter.cs">
       <ExcludeFromStyleCop>True</ExcludeFromStyleCop>
     </Compile>
     <Compile Include="DataRowEqualityComparer.cs" />
     <Compile Include="DB.cs" />
+    <Compile Include="Email\ItemClass.cs" />
+    <Compile Include="Email\PropertySets.cs" />
     <Compile Include="Extentions.cs" />
-    <Compile Include="GenericDataReader.cs" />
+    <Compile Include="Converters\GenericDataReader.cs" />
     <Compile Include="IO.cs" />
     <Compile Include="Logging\Logger.cs" />
     <Compile Include="Email\NetworkConnection.cs" />

@@ -85,10 +85,10 @@ namespace Utilities.Excel
                 if (Data.Workbook.Worksheets.Count == 0)
                     Add();
             }
-            catch (Exception ex) {
+            catch {
                 if (path != null && !path.EndsWith(".xlsx"))
                     throw new IOException("Invalid file extension: " + path);
-                throw ex;
+                throw;
             }
         }
 
