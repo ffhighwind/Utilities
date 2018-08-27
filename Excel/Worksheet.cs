@@ -705,7 +705,9 @@ namespace Utilities.Excel
             int cols = Data.Dimension.Columns;
             for (int row = 1; row <= rows; row++) {
                 for (int col = 1; col <= cols; col++) {
-                    Data.Cells[row, col].Value = Parse(Data.Cells[row, col]);
+                    if (Data.Cells[row, col].Value is string) {
+                        Data.Cells[row, col].Value = Parse(Data.Cells[row, col]);
+                    }
                 }
             }
         }
