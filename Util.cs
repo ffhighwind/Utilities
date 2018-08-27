@@ -113,7 +113,6 @@ namespace Utilities
             { typeof(float), (input) => { return (inp) => { return System.Convert.ToSingle(inp); }; } },
             { typeof(double), (input) => { return (inp) => { return System.Convert.ToDouble(inp); }; } },
             { typeof(decimal), (input) => { return (inp) => { return System.Convert.ToDecimal(inp); }; } },
-            { typeof(byte[]), (input) => { return NoConvert; } },
         };
 
         /// <summary>
