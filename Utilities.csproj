@@ -41,7 +41,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Converters\Converters.cs" />
-    <Compile Include="Converters\DataRowConverter.cs">
+    <Compile Include="Converters\DataTableConverter.cs">
       <ExcludeFromStyleCop>True</ExcludeFromStyleCop>
     </Compile>
     <Compile Include="DataRowEqualityComparer.cs" />

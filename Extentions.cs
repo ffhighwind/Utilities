@@ -266,7 +266,9 @@ namespace Utilities
             foreach (T entity in list) {
                 DataRow row = table.NewRow();
                 for (int i = 0; i < properties.Length; i++) {
-                    row[properties[i].Name] = properties[i].GetValue(entity) ?? DBNull.Value;
+                    object val = properties[i].GetValue(entity);
+                    if (val != null)
+                        row[i] = val;
                 }
                 table.Rows.Add(row);
             }
@@ -338,7 +340,7 @@ namespace Utilities
         /// <returns>The <see cref="ICollection{T}"/>.</returns>
         public static ICollection<T> ToList<T>(this DataTable table, ICollection<T> list) where T : class, new()
         {
-            Converters.DataRowConverter<T> converter = new Converters.DataRowConverter<T>(table);
+            Converters.DataTableConverter<T> converter = new Converters.DataTableConverter<T>(table);
             foreach (T obj in converter.Convert(table)) {
                 list.Add(obj);
             }
@@ -524,7 +526,7 @@ namespace Utilities
         /// <param name="printRowNumbers">Determines if row numbers should be printed before each row.</param>
         public static void Print<T>(this IEnumerable<T> list, bool printRowNumbers = false)
         {
-            Print(list, Util.ToString, printRowNumbers);
+            Print(list, (obj) => Util.ToString(obj), printRowNumbers);
         }
 
         /// <summary>

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using System.Linq;
-using System.Reflection;
 using OfficeOpenXml;
 
 namespace Utilities.Excel
@@ -458,7 +457,6 @@ namespace Utilities.Excel
             }
         }
 
-
         /*ID  Format Code
         9   0%
         10  0.00%
@@ -649,11 +647,9 @@ namespace Utilities.Excel
         /// <returns>An <see cref="IEnumerable{T}"/> of objects representing the rows in the <see cref="Worksheet"/>.</returns>
         public IEnumerable<T> AsEnumerable<T>(bool hasHeaders = true) where T : class, new()
         {
-            Func<string[], T> converter;
-            if (hasHeaders)
-                converter = Util.StringsConverter<T>(Data.Cells[1, 1, 1, Columns].Select(cell => cell.Value?.ToString()));
-            else
-                converter = Util.StringsConverter<T>();
+            Func<string[], T> converter = hasHeaders
+                ? Converters.Converters.ListToObject<string, T>(Data.Cells[1, 1, 1, Columns].Select(cell => cell.Value?.ToString()).ToList())
+                : Converters.Converters.ListToObject<string, T>();
 
             bool[] isTimespan = new bool[Columns];
             for (int i = 0; i < isTimespan.Length; i++) {

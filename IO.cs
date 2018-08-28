@@ -299,7 +299,9 @@ namespace Utilities
         public static IEnumerable<T> FileForeach<T>(string path, char delim = ',', bool hasHeaders = true) where T : class, new()
         {
             using (TextReader reader = Util.TextReader(new FileInfo(path))) {
-                Func<string[], T> constructor = hasHeaders ? Util.StringsConverter<T>(reader.ReadLine().Split(delim)) : Util.StringsConverter<T>();
+                Func<IReadOnlyList<string>, T> constructor = hasHeaders
+                    ? Converters.Converters.ListToObject<string, T>(reader.ReadLine().Split(delim))
+                    : Converters.Converters.ListToObject<string, T>();
                 return FileForeach<T>(reader, constructor, delim, false);
             }
         }
@@ -335,7 +337,9 @@ namespace Utilities
         /// <returns>The Enumerable rows in the file.</returns>
         public static IEnumerable<T> FileForeach<T>(TextReader reader, char delim = ',', bool hasHeaders = true) where T : class, new()
         {
-            Func<string[], T> constructor = hasHeaders ? Util.StringsConverter<T>(reader.ReadLine().Split(delim)) : Util.StringsConverter<T>();
+            Func<IReadOnlyList<string>, T> constructor = hasHeaders
+                ? Converters.Converters.ListToObject<string, T>(reader.ReadLine().Split(delim))
+                : Converters.Converters.ListToObject<string, T>();
             string line;
             while ((line = reader.ReadLine()) != null) {
                 yield return constructor(line.Split(delim));
@@ -532,9 +536,9 @@ namespace Utilities
                     csv.Configuration.TrimOptions = TrimOptions.None;
                     csv.Configuration.IgnoreBlankLines = ignoreBlankLines;
                     csv.Configuration.Delimiter = delim;
-                    Func<string[], T> constructor = hasHeaders ?
-                        Util.StringsConverter<T>(line)
-                        : Util.StringsConverter<T>();
+                    Func<IReadOnlyList<string>, T> constructor = hasHeaders
+                        ? Converters.Converters.ListToObject<string, T>(line)
+                        : Converters.Converters.ListToObject<string, T>();
                     while ((line = csv.Read()) != null) {
                         list.Add(constructor(line));
                     }
@@ -723,9 +727,9 @@ namespace Utilities
             using (CsvParser csv = new CsvParser(reader)) {
                 string[] line = csv.Read();
                 if (line != null) {
-                    Func<string[], T> constructor = hasHeaders ?
-                        Util.StringsConverter<T>(line)
-                        : Util.StringsConverter<T>();
+                    Func<IReadOnlyList<string>, T> constructor = hasHeaders
+                        ? Converters.Converters.ListToObject<string, T>(line)
+                        : Converters.Converters.ListToObject<string, T>();
                     csv.Configuration.TrimOptions = TrimOptions.None;
                     csv.Configuration.IgnoreBlankLines = ignoreBlankLines;
                     csv.Configuration.Delimiter = delim;
@@ -786,13 +790,13 @@ namespace Utilities
         {
             IEnumerable<string[]> lines = XlsForeach(path, sheetName, false);
             if (lines.Any()) {
-                Func<string[], T> constructor;
+                Func<IReadOnlyList<string>, T> constructor;
                 if (hasHeaders) {
-                    constructor = Util.StringsConverter<T>(lines.First());
+                    constructor = Converters.Converters.ListToObject<string, T>(lines.First());
                     lines = lines.Skip(1);
                 }
                 else
-                    constructor = Util.StringsConverter<T>();
+                    constructor = Converters.Converters.ListToObject<string, T>();
                 foreach (string[] line in lines) {
                     yield return constructor(line);
                 }
@@ -1032,7 +1036,6 @@ namespace Utilities
             }
             return list;
         }
-
 
         /// <summary>
         /// Reads an Xlsx Excel file into a Collection.

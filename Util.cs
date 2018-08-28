@@ -11,79 +11,6 @@ namespace Utilities
 {
     public static class Util
     {
-        private const BindingFlags DefaultBindingFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly;
-
-        #region Converters
-
-        /// <summary>
-        /// Returns a function that converts an object from one <see cref="Type"/> to another.
-        /// </summary>
-        /// <param name="input">The <see cref="Type"/> of the input object.</param>
-        /// <param name="output">The <see cref="Type"/> of the output object.</param>
-        /// <returns>A function that converts objects from one <see cref="Type"/> to another.</returns>
-        public static Converter<object, object> Converter(Type input, Type output)
-        {
-            return Converters.Converters.GetConverter(input, output);
-        }
-
-        /// <summary>
-        /// Creates a function that converts an <see cref="IEnumerable{T}"/> of strings to an object.
-        /// </summary>
-        /// <typeparam name="T">The <see cref="Type>"/> of the object.</typeparam>
-        /// <returns>A function that converts an <see cref="IEnumerable{T}"/> strings to an object.</returns>
-        public static Func<IEnumerable<string>, T> StringsConverter<T>() where T : class, new()
-        {
-            PropertyInfo[] pinfos = typeof(T).GetProperties(DefaultBindingFlags);
-            Converter<object, object>[] converters = new Converter<object, object>[pinfos.Length];
-            for (int i = 0; i < pinfos.Length; i++) {
-                converters[i] = Converters.Converters.GetConverter(pinfos[i].PropertyType)(typeof(string));
-            }
-            return (strs) => {
-                T obj = new T();
-                int i = 0;
-                foreach (string str in strs) {
-                    if (i >= converters.Length)
-                        break;
-                    pinfos[i].SetValue(obj, converters[i](str));
-                    i++;
-                }
-                return obj;
-            };
-        }
-
-        /// <summary>
-        /// Creates a function that converts an <see cref="IEnumerable{T}"/> of strings to an object.
-        /// </summary>
-        /// <typeparam name="T">The <see cref="Type>"/> of the object.</typeparam>
-        /// <param name="propertyNames">The properties to set.</param>
-        /// <returns>A function that converts an <see cref="IEnumerable{T}"/> of strings to an object.</returns>
-        public static Func<IEnumerable<string>, T> StringsConverter<T>(IEnumerable<string> propertyNames) where T : class, new()
-        {
-            PropertyInfo[] pinfos = typeof(T).GetProperties(DefaultBindingFlags);
-            List<string> names = propertyNames.ToList();
-            Converter<object, object>[] converters = new Converter<object, object>[names.Count];
-            PropertyInfo[] props = new PropertyInfo[names.Count];
-            for (int i = 0; i < names.Count; i++) {
-                props[i] = pinfos.FirstOrDefault(p => p.Name == names[i]);
-                if (props[i] != null)
-                    converters[i] = Converters.Converters.GetConverter(props[i].PropertyType)(typeof(string));
-            }
-            return (strs) => {
-                T obj = new T();
-                int i = 0;
-                foreach (string str in strs) {
-                    if (i >= converters.Length)
-                        break;
-                    if (props[i] == null)
-                        continue;
-                    props[i].SetValue(obj, converters[i](str));
-                    i++;
-                }
-                return obj;
-            };
-        }
-        #endregion //Converters
-
         #region Encoding/TextReader
         /// <summary>
         /// Detects the <see cref="Encoding"/> for UTF-7, UTF-8/16/32 (bom, no bom, little & big endian),
@@ -403,17 +330,6 @@ namespace Utilities
         /// <summary>
         /// A default ToString method.
         /// </summary>
-        /// <typeparam name="T">The <see cref="Type>"/> of the object.</typeparam>
-        /// <param name="obj">The object to obtain the string representation of.</param>
-        /// <returns>The string representation of <see cref="Type"/> T.</returns>
-        public static string ToString<T>(T obj)
-        {
-            return ToString(obj);
-        }
-
-        /// <summary>
-        /// A default ToString method.
-        /// </summary>
         /// <param name="obj">The object to obtain the string representation of.</param>
         /// <returns>The string representation of <see cref="Type"/> T.</returns>
         public static string ToString(object obj)
@@ -519,9 +435,11 @@ namespace Utilities
         /// <typeparam name="T">The Type to create the DataTable from.</typeparam>
         /// <param name="table">The DataTable to add columns to.</param>
         /// <returns>The modified DataTable with new columns representing the getters/setters of a Type.</returns>
-        public static DataTable DataTable<T>(DataTable table) where T : class
+        public static DataTable DataTable<T>(
+            DataTable table,
+            BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly) where T : class
         {
-            PropertyInfo[] pinfos = typeof(T).GetProperties(DefaultBindingFlags);
+            PropertyInfo[] pinfos = typeof(T).GetProperties(flags);
             foreach (PropertyInfo pinfo in pinfos) {
                 table.Columns.Add(pinfo.Name, Nullable.GetUnderlyingType(pinfo.PropertyType) ?? pinfo.PropertyType);
             }
@@ -533,10 +451,11 @@ namespace Utilities
         /// </summary>
         /// <typeparam name="T">The <see cref="Type"/> to create a <see cref="System.Data.DataTable"/> from.</typeparam>
         /// <returns>A <see cref="System.Data.DataTable"/> with columns representing the getters/setters of a <see cref="Type"/>.</returns>
-        public static DataTable DataTable<T>() where T : class
+        public static DataTable DataTable<T>(
+            BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly) where T : class
         {
             DataTable table = new DataTable();
-            return Util.DataTable<T>(table);
+            return Util.DataTable<T>(table, flags);
         }
     }
 }

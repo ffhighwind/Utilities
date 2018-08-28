@@ -9,10 +9,10 @@ using System.Reflection;
 namespace Utilities.Converters
 {
     /// <summary>
-    /// Generic <see cref="DbDataReader"/> for use with ADO.NET SQL select commands.
-    /// <see href="https://github.com/mgravell/fast-member/blob/master/FastMember/ObjectReader.cs"/>
+    /// Generic <see cref="DbDataReader"/> for use with ADO.NET SQL select commands. Converts from a <see cref="DataTable"/> to <see cref="T"/>.
     /// </summary>
     /// <typeparam name="T">The class type to read data into.</typeparam>
+    /// <see href="https://github.com/mgravell/fast-member/blob/master/FastMember/ObjectReader.cs"/>
     public class GenericDataReader<T> : DbDataReader where T : class
     {
         private IEnumerator enumerator;

@@ -1,21 +1,156 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace Utilities.Converters
 {
     public static class Converters
     {
+        /// <summary>
+        /// The default <see cref="Encoding"/> from <see cref="byte"/>[] to <see cref="char"/> and <see cref="string"/>.
+        /// </summary>
         private static readonly Encoding DefaultEncoding = Encoding.UTF8;
 
-        public static Converter<object, object> GetConverter(Type input, Type output)
+        public static Func<Tin, Tout> ObjectToObject<Tin, Tout>(
+            BindingFlags inFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly,
+            BindingFlags outFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+            where Tin : class
+            where Tout : class, new()
+        {
+            return ObjectToObject<Tin, Tout>(null, inFlags, outFlags);
+        }
+
+        public static Func<Tin, Tout> ObjectToObject<Tin, Tout>(
+            IReadOnlyList<string> propertyNames,
+            BindingFlags inFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly,
+            BindingFlags outFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+            where Tin : class
+            where Tout : class, new()
+        {
+            PropertyInfo[] pi = typeof(Tout).GetProperties(inFlags);
+            PropertyInfo[] po = typeof(Tout).GetProperties(outFlags);
+            List<string> names = pi.Select(p => p.Name).Where(piName => po.Select(pO => pO.Name).Contains(piName)).ToList();
+            if (propertyNames != null)
+                names = names.Where(name => propertyNames.Contains(name)).ToList();
+            List<PropertyInfo> piIntersect = pi.Where(p => names.Contains(p.Name)).ToList();
+            List<PropertyInfo> poIntersect = new List<PropertyInfo>();
+            for (int i = 0; i < piIntersect.Count; i++) {
+                string name = piIntersect[i].Name;
+                poIntersect.Add(po.First(p => p.Name == name));
+            }
+            return ObjectToObject<Tin, Tout>(piIntersect, poIntersect);
+        }
+
+        public static Func<Tin, Tout> ObjectToObject<Tin, Tout>(IReadOnlyList<PropertyInfo> pinfoIn, IReadOnlyList<PropertyInfo> pinfoOut)
+            where Tin : class
+            where Tout : class, new()
+        {
+            Func<object, object>[] converters = new Func<object, object>[pinfoIn.Count];
+            for (int i = 0; i < pinfoOut.Count; i++) {
+                converters[i] = GetConverter(pinfoIn[i].PropertyType, pinfoOut[i].PropertyType);
+            }
+            Tout objToObj(Tin input)
+            {
+                Tout tout = new Tout();
+                for (int i = 0; i < pinfoOut.Count; i++) {
+                    pinfoOut[i].SetValue(tout, pinfoIn[i].GetValue(input));
+                }
+                return tout;
+            }
+            return objToObj;
+        }
+
+        /// <summary>
+        /// Creates a function that converts an <see cref="IEnumerable{T}"/> of Tin to a Tout.
+        /// </summary>
+        /// <typeparam name="T">The <see cref="Type>"/> of the object.</typeparam>
+        /// <returns>A function that converts an <see cref="IEnumerable{T}"/> Tin to a Tout.</returns>
+        public static Func<IReadOnlyList<Tin>, Tout> ListToObject<Tin, Tout>(
+            BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+            where Tout : class, new()
+        {
+            return CreateListToObject<Tin, Tout>(typeof(Tout).GetProperties(flags));
+        }
+
+        public static Func<IReadOnlyList<Tin>, Tout> ListToObject<Tin, Tout>(
+            IReadOnlyList<string> propertyNames,
+            BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+            where Tout : class, new()
+        {
+            PropertyInfo[] pinfos = typeof(Tout).GetProperties(flags);
+            List<PropertyInfo> tmp = new List<PropertyInfo>(propertyNames.Count);
+            bool safeConvert = false;
+            for (int i = 0; i < tmp.Count; i++) {
+                PropertyInfo pinfo = pinfos.FirstOrDefault(pi => pi.Name == propertyNames[i]);
+                tmp.Add(pinfo);
+                if (pinfo == null)
+                    safeConvert = true;
+            }
+            return safeConvert ? CreateListToObjectSafe<Tin, Tout>(tmp) : CreateListToObject<Tin, Tout>(tmp);
+        }
+
+        private static Func<IReadOnlyList<Tin>, Tout> CreateListToObject<Tin, Tout>(IReadOnlyList<PropertyInfo> pinfos) where Tout : class, new()
+        {
+            Func<object, object>[] converters = new Func<object, object>[pinfos.Count];
+            for (int i = 0; i < pinfos.Count; i++) {
+                converters[i] = GetConverter(pinfos[i].PropertyType)(typeof(Tin));
+            }
+            Tout listToObj(IReadOnlyList<Tin> list)
+            {
+                Tout obj = new Tout();
+                for (int i = 0; i < list.Count; i++) {
+                    pinfos[i].SetValue(obj, converters[i](list[i]));
+                }
+                return obj;
+            }
+            return listToObj;
+        }
+
+        private static Func<IReadOnlyList<Tin>, Tout> CreateListToObjectSafe<Tin, Tout>(IReadOnlyList<PropertyInfo> pinfos) where Tout : class, new()
+        {
+            Func<object, object>[] converters = new Func<object, object>[pinfos.Count];
+            for (int i = 0; i < pinfos.Count; i++) {
+                if (pinfos[i] != null)
+                    converters[i] = GetConverter(pinfos[i].PropertyType)(typeof(Tin));
+            }
+            Tout listToObjectSafe(IReadOnlyList<Tin> list)
+            {
+                Tout obj = new Tout();
+                int count = Math.Max(list.Count, pinfos.Count);
+                for (int i = 0; i < count; i++) {
+                    if (pinfos[i] != null)
+                        pinfos[i].SetValue(obj, converters[i](list[i]));
+                }
+                return obj;
+            }
+            return listToObjectSafe;
+        }
+
+        /// <summary>
+        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts from one type to another.
+        /// </summary>
+        /// <param name="input">The input <see cref="Type"/>.</param>
+        /// <param name="output">The output <see cref="Type"/>.</param>
+        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts from one type to another.</returns>
+        public static Func<object, object> GetConverter(Type input, Type output)
         {
             return GetConverter(output)(input);
         }
 
-        public static Converter<object, object> GetNullableConverter(Type input, Type output)
+        /// <summary>
+        /// Creates a converter that accepts null values. This should be used if the input type
+        /// and output type are <see cref="Nullable"/>.
+        /// </summary>
+        /// <param name="input">The input <see cref="Type"/>.</param>
+        /// <param name="output">The output <see cref="Type"/>.</param>
+        /// <returns>A function that converts objects from one type to another.</returns>
+        public static Func<object, object> GetNullableConverter(Type input, Type output)
         {
-            Converter<object, object> converter = GetConverter(output)(input);
+            if (!output.IsNullable())
+                return GetConverter(input, output);
+            Func<object, object> converter = GetConverter(output)(input);
             object nullableConverter(object value)
             {
                 return value == null ? null : converter(value);
@@ -23,22 +158,22 @@ namespace Utilities.Converters
             return nullableConverter;
         }
 
-        public static Func<Type, Converter<object, object>> GetConverter(Type output)
+        public static Func<Type, Func<object, object>> GetConverter(Type output)
         {
-            if (ConverterMap.TryGetValue(output, out Func<Type, Converter<object, object>> converter))
+            if (ConverterMap.TryGetValue(output, out Func<Type, Func<object, object>> converter))
                 return converter;
             return NonConverter;
         }
 
         /// <summary>
-        ///
+        /// Returns an object of the specified type whose value is equivalent to the specified object.
         /// </summary>
-        /// <param name="value"></param>
-        /// <param name="typeCode"></param>
-        /// <returns></returns>
+        /// <param name="value">An object that implements the System.IConvertible interface.</param>
+        /// <param name="typeCode">The type of object to return.</param>
+        /// <returns>An object whose type is conversionType and whose value is equivalent to value.</returns>
         public static object ChangeType(object value, Type type)
         {
-            if (value == null)
+            if (value == null || value == DBNull.Value)
                 return null;
             TypeCode typeCode = Type.GetTypeCode(type);
             switch (typeCode) {
@@ -92,9 +227,9 @@ namespace Utilities.Converters
         }
 
         /// <summary>
-        /// Converters for most basic types. converterMap(outputType)(inputType) returns a Converter from inputType to outputType
+        /// Maps input/output types to a <see cref="Converter{TInput, TOutput}"/>.
         /// </summary>
-        private static readonly Dictionary<Type, Func<Type, Converter<object, object>>> ConverterMap = new Dictionary<Type, Func<Type, Converter<object, object>>>() {
+        private static readonly Dictionary<Type, Func<Type, Func<object, object>>> ConverterMap = new Dictionary<Type, Func<Type, Func<object, object>>>() {
             { typeof(string), ToString },
             { typeof(DateTime), ToDateTime },
             { typeof(DateTimeOffset), ToDateTimeOffset },
@@ -117,23 +252,43 @@ namespace Utilities.Converters
         };
 
         /// <summary>
-        /// A converter that boxes and unboxes a type and then does nothing.
+        /// A converter that casts and unboxes an <see cref="object"/> .
         /// </summary>
-        /// <param name="obj">The object to convert.</param>
-        /// <returns>The same object that was input.</returns>
+        /// <param name="obj">The <see cref="object"/>  to convert.</param>
+        /// <returns>The same <see cref="object"/>  that was input.</returns>
         private static object NoConvert<T>(object obj) { return (T) obj; }
 
-        private static readonly Func<Type, Converter<object, object>> NonConverter = (inp) => { return NoConvert<object>; };
+        /// <summary>
+        /// Does nothing.
+        /// </summary>
+        /// <param name="value">The <see cref="object"/> to convert.</param>
+        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that does nothing.</returns>
+        private static object NoConvert(object value) { return value; }
 
-        // ToString
+        /// <summary>
+        /// A function that returns a <see cref="Converter{TInput, TOutput}"/> that does nothing.
+        /// </summary>
+        private static readonly Func<Type, Func<object, object>> NonConverter = (inp) => { return NoConvert; };
+
+        #region ToString
+        /// <summary>
+        /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="string"/> representation.
+        /// </summary>
+        /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
+        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="string"/> representation.</returns>
         public static object ToString(object value)
         {
             return ToString(value.GetType())(value);
         }
 
-        public static Converter<object, object> ToString(Type input)
+        /// <summary>
+        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="string"/>.
+        /// </summary>
+        /// <param name="input">The input <see cref="Type"/>.</param>
+        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="string"/>.</returns>
+        public static Func<object, object> ToString(Type input)
         {
-            Converter<object, object> converter;
+            Func<object, object> converter;
             if (input == typeof(DateTime))
                 converter = DateTimeToString;
             else if (input == typeof(TimeSpan))
@@ -173,16 +328,27 @@ namespace Utilities.Converters
         {
             return DefaultEncoding.GetString((byte[]) value);
         }
+        #endregion // ToString
 
-        // ToDateTime
+        #region ToDateTime
+        /// <summary>
+        /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="DateTime"/> representation.
+        /// </summary>
+        /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
+        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="DateTime"/> representation.</returns>
         public static object ToDateTime(object value)
         {
             return ToDateTime(value.GetType())(value);
         }
 
-        public static Converter<object, object> ToDateTime(Type input)
+        /// <summary>
+        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="DateTime"/>.
+        /// </summary>
+        /// <param name="input">The input <see cref="Type"/>.</param>
+        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="DateTime"/>.</returns>
+        public static Func<object, object> ToDateTime(Type input)
         {
-            Converter<object, object> converter;
+            Func<object, object> converter;
             if (input == typeof(TimeSpan))
                 converter = TimeSpanToDateTime;
             else if (input == typeof(DateTimeOffset))
@@ -212,14 +378,25 @@ namespace Utilities.Converters
         {
             return System.Convert.ToDateTime(value);
         }
+        #endregion // ToDateTime
 
-        // ToDateTimeOffset
+        #region ToDateTimeOffset
+        /// <summary>
+        /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="DateTimeOffset"/> representation.
+        /// </summary>
+        /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
+        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="DateTimeOffset"/> representation.</returns>
         public static object ToDateTimeOffset(object value)
         {
             return ToDateTimeOffset(value.GetType())(value);
         }
 
-        public static Converter<object, object> ToDateTimeOffset(Type input)
+        /// <summary>
+        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="DateTimeOffset"/>.
+        /// </summary>
+        /// <param name="input">The input <see cref="Type"/>.</param>
+        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="DateTimeOffset"/>.</returns>
+        public static Func<object, object> ToDateTimeOffset(Type input)
         {
             if (input == typeof(string))
                 return StringToDateTimeOffset;
@@ -245,16 +422,27 @@ namespace Utilities.Converters
         {
             return new DateTimeOffset(0, (TimeSpan) value);
         }
+        #endregion // ToDateTimeOffset
 
-        // ToTimeSpan
+        #region ToTimeSpan
+        /// <summary>
+        /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="TimeSpan"/> representation.
+        /// </summary>
+        /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
+        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="TimeSpan"/> representation.</returns>
         public static object ToTimeSpan(object value)
         {
             return ToTimeSpan(value.GetType())(value);
         }
 
-        public static Converter<object, object> ToTimeSpan(Type input)
+        /// <summary>
+        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="TimeSpan"/>.
+        /// </summary>
+        /// <param name="input">The input <see cref="Type"/>.</param>
+        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="TimeSpan"/>.</returns>
+        public static Func<object, object> ToTimeSpan(Type input)
         {
-            Converter<object, object> converter;
+            Func<object, object> converter;
             if (input == typeof(string))
                 converter = StringToTimeSpan;
             else if (input == typeof(DateTime))
@@ -280,16 +468,27 @@ namespace Utilities.Converters
         {
             return Extensions.ToDateTime((DateTimeOffset) value).TimeOfDay;
         }
+        #endregion // ToTimeSpan
 
-        // ToChars
+        #region ToChars
+        /// <summary>
+        /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="char"/>[] representation.
+        /// </summary>
+        /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
+        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="char"/>[] representation.</returns>
         public static object ToChars(object value)
         {
             return ToChars(value.GetType())(value);
         }
 
-        public static Converter<object, object> ToChars(Type input)
+        /// <summary>
+        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="char"/>[].
+        /// </summary>
+        /// <param name="input">The input <see cref="Type"/>.</param>
+        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="char"/>[].</returns>
+        public static Func<object, object> ToChars(Type input)
         {
-            Converter<object, object> converter;
+            Func<object, object> converter;
             if (input == typeof(byte[]))
                 converter = BytesToChars;
             else if (input == typeof(string))
@@ -308,14 +507,25 @@ namespace Utilities.Converters
         {
             return ((string) value).ToCharArray();
         }
+        #endregion // ToChars
 
-        // ToBytes
+        #region // ToBytes
+        /// <summary>
+        /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="byte"/>[] representation.
+        /// </summary>
+        /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
+        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="byte"/>[] representation.</returns>
         public static object ToBytes(object value)
         {
             return ToBytes(value.GetType())(value);
         }
 
-        public static Converter<object, object> ToBytes(Type input)
+        /// <summary>
+        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="byte"/>[].
+        /// </summary>
+        /// <param name="input">The input <see cref="Type"/>.</param>
+        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="byte"/>[].</returns>
+        public static Func<object, object> ToBytes(Type input)
         {
             if (input == typeof(string))
                 return StringToBytes;
@@ -347,15 +557,26 @@ namespace Utilities.Converters
         {
             return new byte[] { (byte) value };
         }
+        #endregion // ToBytes
 
-        // ToInt16
+        #region ToInt16
+        /// <summary>
+        /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="short"/> representation.
+        /// </summary>
+        /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
+        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="short"/> representation.</returns>
         public static object ToInt16(object value)
         {
             return System.Convert.ToInt16(value);
             ////return ToInt16(value.GetType())(value);
         }
 
-        public static Converter<object, object> ToInt16(Type input)
+        /// <summary>
+        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="short"/>.
+        /// </summary>
+        /// <param name="input">The input <see cref="Type"/>.</param>
+        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="short"/>.</returns>
+        public static Func<object, object> ToInt16(Type input)
         {
             return ObjectToInt16;
         }
@@ -365,14 +586,25 @@ namespace Utilities.Converters
             return System.Convert.ToInt16(value);
         }
 
-        // ToInt32
+        #region ToInt32
+        /// <summary>
+        /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="int"/> representation.
+        /// </summary>
+        /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
+        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="int"/> representation.</returns>
         public static object ToInt32(object value)
         {
             return ToInt32(value.GetType())(value);
         }
-        public static Converter<object, object> ToInt32(Type input)
+
+        /// <summary>
+        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to an <see cref="int"/>.
+        /// </summary>
+        /// <param name="input">The input <see cref="Type"/>.</param>
+        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to an <see cref="int"/>.</returns>
+        public static Func<object, object> ToInt32(Type input)
         {
-            Converter<object, object> converter;
+            Func<object, object> converter;
             if (input == typeof(string))
                 converter = StringToInt32;
             else
@@ -389,15 +621,26 @@ namespace Utilities.Converters
         {
             return System.Convert.ToInt32(value);
         }
+        #endregion // ToInt32
 
-        // ToInt64
+        #endregion ToInt64
+        /// <summary>
+        /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="long"/> representation.
+        /// </summary>
+        /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
+        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="long"/> representation.</returns>
         public static object ToInt64(object value)
         {
             return System.Convert.ToInt64(value);
             ////return ToInt64(value.GetType())(value);
         }
 
-        public static Converter<object, object> ToInt64(Type input)
+        /// <summary>
+        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="long"/>.
+        /// </summary>
+        /// <param name="input">The input <see cref="Type"/>.</param>
+        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="long"/>.</returns>
+        public static Func<object, object> ToInt64(Type input)
         {
             return ObjectToInt64;
         }
@@ -407,14 +650,24 @@ namespace Utilities.Converters
             return System.Convert.ToInt64(value);
         }
 
-        // ToUInt16
+        #region ToUInt16
+        /// <summary>
+        /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="ushort"/> representation.
+        /// </summary>
+        /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
+        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="ushort"/> representation.</returns>
         public static object ToUInt16(object value)
         {
             return System.Convert.ToUInt16(value);
             ////return ToUInt16(value.GetType())(value);
         }
 
-        public static Converter<object, object> ToUInt16(Type input)
+        /// <summary>
+        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="ushort"/>.
+        /// </summary>
+        /// <param name="input">The input <see cref="Type"/>.</param>
+        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="ushort"/>.</returns>
+        public static Func<object, object> ToUInt16(Type input)
         {
             return ObjectToUInt16;
         }
@@ -423,15 +676,26 @@ namespace Utilities.Converters
         {
             return System.Convert.ToUInt16(value);
         }
+        #endregion
 
-        // ToUInt32
+        #region ToUInt32
+        /// <summary>
+        /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="uint"/> representation.
+        /// </summary>
+        /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
+        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="uint"/> representation.</returns>
         public static object ToUInt32(object value)
         {
             return System.Convert.ToUInt32(value);
             ////return ToUInt32(value.GetType())(value);
         }
 
-        public static Converter<object, object> ToUInt32(Type input)
+        /// <summary>
+        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="uint"/>.
+        /// </summary>
+        /// <param name="input">The input <see cref="Type"/>.</param>
+        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="uint"/>.</returns>
+        public static Func<object, object> ToUInt32(Type input)
         {
             return ObjectToUInt32;
         }
@@ -440,15 +704,26 @@ namespace Utilities.Converters
         {
             return System.Convert.ToUInt32(value);
         }
+        #endregion // ToUInt32
 
-        // ToUInt64
+        #region ToUInt64
+        /// <summary>
+        /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="ulong"/> representation.
+        /// </summary>
+        /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
+        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="ulong"/> representation.</returns>
         public static object ToUInt64(object value)
         {
             return System.Convert.ToUInt64(value);
             ////return ToUInt64(value.GetType())(value);
         }
 
-        public static Converter<object, object> ToUInt64(Type input)
+        /// <summary>
+        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="ulong"/>.
+        /// </summary>
+        /// <param name="input">The input <see cref="Type"/>.</param>
+        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="ulong"/>.</returns>
+        public static Func<object, object> ToUInt64(Type input)
         {
             return ObjectToUInt64;
         }
@@ -457,15 +732,26 @@ namespace Utilities.Converters
         {
             return System.Convert.ToUInt64(value);
         }
+        #endregion // ToUInt32
 
-        // ToBoolean
+        #region ToBoolean
+        /// <summary>
+        /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="bool"/> representation.
+        /// </summary>
+        /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
+        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="bool"/> representation.</returns>
         public static object ToBoolean(object value)
         {
             return ObjectToBoolean(value);
             ////return ToBoolean(value.GetType())(value);
         }
 
-        public static Converter<object, object> ToBoolean(Type input)
+        /// <summary>
+        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="bool"/>.
+        /// </summary>
+        /// <param name="input">The input <see cref="Type"/>.</param>
+        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="bool"/>.</returns>
+        public static Func<object, object> ToBoolean(Type input)
         {
             return ObjectToBoolean;
         }
@@ -473,22 +759,35 @@ namespace Utilities.Converters
         private static object ObjectToBoolean(object value)
         {
             if (value is string str) {
+
                 if (string.Equals(str, "true", StringComparison.OrdinalIgnoreCase))
                     return true;
                 if (string.Equals(str, "false", StringComparison.OrdinalIgnoreCase))
                     return false;
+                return System.Convert.ToBoolean(str);
             }
             return System.Convert.ToBoolean(value);
         }
+        #endregion // ToBoolean
 
-        // ToByte
+        #region ToByte
+        /// <summary>
+        /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="byte"/> representation.
+        /// </summary>
+        /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
+        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="byte"/> representation.</returns>
         public static object ToByte(object value)
         {
             return System.Convert.ToByte(value);
             ////return ToByte(value.GetType())(value);
         }
 
-        public static Converter<object, object> ToByte(Type input)
+        /// <summary>
+        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="byte"/>.
+        /// </summary>
+        /// <param name="input">The input <see cref="Type"/>.</param>
+        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="byte"/>.</returns>
+        public static Func<object, object> ToByte(Type input)
         {
             return ObjectToByte;
         }
@@ -497,15 +796,26 @@ namespace Utilities.Converters
         {
             return System.Convert.ToByte(value);
         }
+        #endregion // ToByte
 
-        // ToSByte
+        #region ToSByte
+        /// <summary>
+        /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="sbyte"/> representation.
+        /// </summary>
+        /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
+        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="sbyte"/> representation.</returns>
         public static object ToSByte(object value)
         {
             return System.Convert.ToSByte(value);
             ////return ToSByte(value.GetType())(value);
         }
 
-        public static Converter<object, object> ToSByte(Type input)
+        /// <summary>
+        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to an <see cref="sbyte"/>.
+        /// </summary>
+        /// <param name="input">The input <see cref="Type"/>.</param>
+        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to an <see cref="sbyte"/>.</returns>
+        public static Func<object, object> ToSByte(Type input)
         {
             return ObjectToSByte;
         }
@@ -514,15 +824,26 @@ namespace Utilities.Converters
         {
             return System.Convert.ToSByte(value);
         }
+        #endregion // ToSByte
 
-        // ToChar
+        #region ToChar
+        /// <summary>
+        /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="char"/> representation.
+        /// </summary>
+        /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
+        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="char"/> representation.</returns>
         public static object ToChar(object value)
         {
             return System.Convert.ToChar(value);
             ////return ToChar(value.GetType())(value);
         }
 
-        public static Converter<object, object> ToChar(Type input)
+        /// <summary>
+        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="char"/>.
+        /// </summary>
+        /// <param name="input">The input <see cref="Type"/>.</param>
+        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="char"/>.</returns>
+        public static Func<object, object> ToChar(Type input)
         {
             return ObjectToChar;
         }
@@ -531,15 +852,26 @@ namespace Utilities.Converters
         {
             return System.Convert.ToChar(value);
         }
+        #endregion // ToChar
 
-        // ToSingle
+        #region ToSingle
+        /// <summary>
+        /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="float"/> representation.
+        /// </summary>
+        /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
+        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="float"/> representation.</returns>
         public static object ToSingle(object value)
         {
             return System.Convert.ToSingle(value);
             ////return ToSingle(value.GetType())(value);
         }
 
-        public static Converter<object, object> ToSingle(Type input)
+        /// <summary>
+        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="float"/>.
+        /// </summary>
+        /// <param name="input">The input <see cref="Type"/>.</param>
+        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="float"/>.</returns>
+        public static Func<object, object> ToSingle(Type input)
         {
             return ObjectToSingle;
         }
@@ -548,14 +880,26 @@ namespace Utilities.Converters
         {
             return System.Convert.ToSingle(value);
         }
+        #endregion // ToSingle
 
-        // ToDouble
+        #region ToDouble
+        /// <summary>
+        /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="double"/> representation.
+        /// </summary>
+        /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
+        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="double"/> representation.</returns>
         public static object ToDouble(object value)
         {
             return System.Convert.ToDouble(value);
             ////return ToDouble(value.GetType())(value);
         }
-        public static Converter<object, object> ToDouble(Type input)
+
+        /// <summary>
+        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="double"/>.
+        /// </summary>
+        /// <param name="input">The input <see cref="Type"/>.</param>
+        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="double"/>.</returns>
+        public static Func<object, object> ToDouble(Type input)
         {
             return ObjectToDouble;
         }
@@ -564,15 +908,26 @@ namespace Utilities.Converters
         {
             return System.Convert.ToDouble(value);
         }
+        #endregion // ToDouble
 
-        // ToDecimal
+        #region ToDecimal
+        /// <summary>
+        /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="decimal"/> representation.
+        /// </summary>
+        /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
+        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="decimal"/> representation.</returns>
         public static object ToDecimal(object value)
         {
             return System.Convert.ToDecimal(value);
             ////return ToDecimal(value.GetType())(value);
         }
 
-        public static Converter<object, object> ToDecimal(Type input)
+        /// <summary>
+        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="decimal"/>.
+        /// </summary>
+        /// <param name="input">The input <see cref="Type"/>.</param>
+        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="decimal"/>.</returns>
+        public static Func<object, object> ToDecimal(Type input)
         {
             return ObjectToDecimal;
         }
@@ -581,5 +936,6 @@ namespace Utilities.Converters
         {
             return System.Convert.ToDecimal(value);
         }
+        #endregion // ToDecimal
     }
 }
