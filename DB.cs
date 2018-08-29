@@ -229,7 +229,7 @@ namespace Utilities
         /// <param name="tablename">The name of the database table to upload data to.</param>
         /// <param name="list">The List to upload.</param>
         /// <param name="columns">The column names.</param>
-        public static void BulkUpload<T>(SqlConnection conn, string tablename, IEnumerable<T> list, params string[] columns) where T : class
+        public static void BulkInsert<T>(SqlConnection conn, string tablename, IEnumerable<T> list, params string[] columns) where T : class
         {
             BulkInsert<T>(conn, tablename, list, 0, CreateMappings(columns));
         }
@@ -243,7 +243,7 @@ namespace Utilities
         /// <param name="list">The List to upload.</param>
         /// <param name="timeoutSecs">The timeout in seconds for the command. A value of 0 means no timeout.</param>
         /// <param name="columns">The columns names. If no columns are given then all columns are mapped automatically by name using reflection.</param>
-        public static void BulkUpload<T>(SqlConnection conn, string tablename, IEnumerable<T> list, int timeoutSecs, params string[] columns) where T : class
+        public static void BulkInsert<T>(SqlConnection conn, string tablename, IEnumerable<T> list, int timeoutSecs, params string[] columns) where T : class
         {
             BulkInsert<T>(conn, tablename, list, timeoutSecs, CreateMappings(columns));
         }
