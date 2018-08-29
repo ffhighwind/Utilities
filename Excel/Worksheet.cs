@@ -701,9 +701,9 @@ namespace Utilities.Excel
             int cols = Data.Dimension.Columns;
             for (int row = 1; row <= rows; row++) {
                 for (int col = 1; col <= cols; col++) {
-                    if (Data.Cells[row, col].Value is string) {
-                        Data.Cells[row, col].Value = Parse(Data.Cells[row, col]);
-                    }
+                    ExcelRange cell = Data.Cells[row, col];
+                    if (cell.Value is string str)
+                        cell.Value = Parse(cell, str);
                 }
             }
         }
@@ -712,11 +712,10 @@ namespace Utilities.Excel
         /// Parses an <see cref="ExcelRange"/> containing a string into an object.
         /// </summary>
         /// <param name="cell">The <see cref="ExcelRange"/> to parse.</param>
+        /// <param name="str">The <see cref="string"/> value of the cell.</param>
         /// <returns>The result of the <see cref="ExcelRange"/> being parsed.</returns>
-        private static object Parse(ExcelRange cell)
+        private static object Parse(ExcelRange cell, string str)
         {
-            if (!(cell.Value is string str))
-                return null;
             string str2 = str.Trim();
             if (str2.Length == 0)
                 return str;
@@ -773,8 +772,8 @@ namespace Utilities.Excel
                             cell.Style.Numberformat.Format = "M/d/yyyy H:mm:ss AM/PM";
                             return dt;
                         }
-                        if (TryParseFraction(str2, out decimal d, out string format)) {
-                            cell.Style.Numberformat.Format = format;
+                        if (TryParseFraction(str2, out decimal d)) {
+                            cell.Style.Numberformat.Format = "#/#########################";
                             return d;
                         }
                     }
@@ -795,12 +794,11 @@ namespace Utilities.Excel
                 return dt;
             }
             else {
-                string lower = str2.ToUpper();
-                if (lower == "false")
+                if (string.Equals(str2, "false", StringComparison.OrdinalIgnoreCase))
                     return false;
-                else if (lower == "true")
+                else if (string.Equals(str2, "true", StringComparison.OrdinalIgnoreCase))
                     return true;
-                else if (lower == "null")
+                else if (string.Equals(str2, "null", StringComparison.OrdinalIgnoreCase))
                     return null;
             }
             return str;
@@ -821,21 +819,15 @@ namespace Utilities.Excel
             return false;
         }
 
-        private static bool TryParseFraction(string str, out decimal d, out string format)
+        private static bool TryParseFraction(string str, out decimal d)
         {
             d = 0;
-            format = "#/###";
             string[] parts = str.Split('/');
             if (parts.Length != 2 || !int.TryParse(parts[0], out int numerator) || !int.TryParse(parts[1], out int denominator)
                 || denominator == 0)
                 return false;
-            if (numerator != 0) {
-                int decimals = numerator > denominator ? 3 : Math.Min(3, denominator / numerator);
-                if (decimals <= 10) {
-                    format = "#/" + new string('#', decimals);
-                    d = ((decimal) numerator) / denominator;
-                }
-            }
+            if (numerator != 0)
+                d = ((decimal) numerator) / denominator;
             return true;
         }
 

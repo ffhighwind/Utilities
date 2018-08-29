@@ -122,6 +122,16 @@ namespace Utilities.Email
             return CreateFolder(folderName, folderId);
         }
 
+        public Folder FindFolder(FolderId folder, PropertySet properties = null)
+        {
+            return Folder.Bind(Service, folder, properties ?? PropertySet.FirstClassProperties);
+        }
+
+        public Folder FindFolder(WellKnownFolderName folder, string mailbox = null, PropertySet properties = null)
+        {
+            return Folder.Bind(Service, folder, properties ?? PropertySet.FirstClassProperties);
+        }
+
         public Folder FindFolder(string folderName, WellKnownFolderName parentFolder = WellKnownFolderName.Root, string mailbox = null,
             FolderTraversal traversal = FolderTraversal.Shallow, PropertySet properties = null)
         {
@@ -229,7 +239,7 @@ namespace Utilities.Email
                 PropertySet = properties ?? PropertySet.FirstClassProperties,
             };
             iview.OrderBy.Add(ItemSchema.DateTimeReceived, SortDirection.Descending);
-            FindItemsResults<Item> results = Service.FindItems(folderId, new SearchFilter.IsEqualTo(ItemSchema.ItemClass, "IPM.Note"), iview);
+            FindItemsResults<Item> results = Service.FindItems(folderId, new SearchFilter.IsEqualTo(ItemSchema.ItemClass, ItemClass.Email), iview);
             if (results.TotalCount > 0) {
                 do {
                     foreach (Item email in results) {

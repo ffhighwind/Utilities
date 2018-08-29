@@ -9,7 +9,7 @@ namespace Utilities
     /// <summary>
     /// Security measures for encrypting and decrypting data.
     /// </summary>
-    /// <source> https://weblogs.asp.net/jongalloway/encrypting-passwords-in-a-net-app-config-file </source>
+    ///  <see cref="https://weblogs.asp.net/jongalloway/encrypting-passwords-in-a-net-app-config-file"/>
     public static class Security
     {
         private static readonly Encoding Unicode = Encoding.Unicode;

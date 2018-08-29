@@ -90,8 +90,7 @@ namespace Utilities
             //////////// If the code reaches here, no BOM/signature was found, so now
             //////////// we need to 'taste' the file to see if can manually discover
             //////////// the encoding. A high taster value is desired for UTF-8
-            GetEncodedText(path, out Encoding encoding, maxBytes);
-            return encoding;
+            return GetTextEncoding(new byte[maxBytes], out int index);
         }
 
         /// <summary>
@@ -100,7 +99,7 @@ namespace Utilities
         /// <param name="b">The <see cref="byte"/>[] to detect <see cref="Encoding"/> for.</param>
         /// <param name="index">The start of the file. This will be after the <see cref="Encoding"/> BOM/signature if one exists.</param>
         /// <returns>The <see cref="Encoding"/> of the <see cref="byte"/>[].</returns>
-        /// <source>https://stackoverflow.com/questions/1025332/determine-a-strings-encoding-in-c-sharp </source>
+        /// <source>https://stackoverflow.com/questions/1025332/determine-a-strings-encoding-in-c-sharp</source>
         private static Encoding GetTextEncoding(byte[] b, out int index)
         {
             //////////////// First check the low hanging fruit by checking if a
@@ -229,7 +228,7 @@ namespace Utilities
             // If all else fails, the encoding is probably (though certainly not
             // definitely) the user's local codepage! One might present to the user a
             // list of alternative encodings as shown here: https://stackoverflow.com/questions/8509339/what-is-the-most-common-encoding-of-each-language
-            // A full list can be found using Encoding.GetEncodings();
+            //// A full list can be found using Encoding.GetEncodings();
             return Encoding.Default;
         }
         #endregion //Encoding/TextReader

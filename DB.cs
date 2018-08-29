@@ -686,7 +686,7 @@ FROM @tablename
 WHERE DuplicateRows > 1
 IF @@ROWCOUNT < 4000
     BREAK;
-END", new { tablename = tablename, columns = distinctColumns.Length > 0 ? string.Join(",", distinctColumns) : "*" });
+END", new { tablename = tablename, columns = distinctColumns.Length > 0 ? string.Join(",", distinctColumns) : "*" }, trans);
             }
         }
 

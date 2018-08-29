@@ -55,7 +55,10 @@ namespace Utilities.Converters
             {
                 Tout tout = new Tout();
                 for (int i = 0; i < pinfoOut.Count; i++) {
-                    pinfoOut[i].SetValue(tout, pinfoIn[i].GetValue(input));
+                    object value = pinfoIn[i].GetValue(input);
+                    if (value != null)
+                        value = converters[i](value);
+                    pinfoOut[i].SetValue(tout, value);
                 }
                 return tout;
             }
@@ -81,14 +84,11 @@ namespace Utilities.Converters
         {
             PropertyInfo[] pinfos = typeof(Tout).GetProperties(flags);
             List<PropertyInfo> tmp = new List<PropertyInfo>(propertyNames.Count);
-            bool safeConvert = false;
             for (int i = 0; i < tmp.Count; i++) {
                 PropertyInfo pinfo = pinfos.FirstOrDefault(pi => pi.Name == propertyNames[i]);
                 tmp.Add(pinfo);
-                if (pinfo == null)
-                    safeConvert = true;
             }
-            return safeConvert ? CreateListToObjectSafe<Tin, Tout>(tmp) : CreateListToObject<Tin, Tout>(tmp);
+            return CreateListToObject<Tin, Tout>(tmp);
         }
 
         private static Func<IReadOnlyList<Tin>, Tout> CreateListToObject<Tin, Tout>(IReadOnlyList<PropertyInfo> pinfos) where Tout : class, new()
@@ -100,40 +100,24 @@ namespace Utilities.Converters
             Tout listToObj(IReadOnlyList<Tin> list)
             {
                 Tout obj = new Tout();
-                for (int i = 0; i < list.Count; i++) {
-                    pinfos[i].SetValue(obj, converters[i](list[i]));
+                int count = Math.Min(list.Count, pinfos.Count);
+                for (int i = 0; i < count; i++) {
+                    object value = list[i];
+                    if (value != null)
+                        value = converters[i](list[i]);
+                    pinfos[i].SetValue(obj, value);
                 }
                 return obj;
             }
             return listToObj;
         }
 
-        private static Func<IReadOnlyList<Tin>, Tout> CreateListToObjectSafe<Tin, Tout>(IReadOnlyList<PropertyInfo> pinfos) where Tout : class, new()
-        {
-            Func<object, object>[] converters = new Func<object, object>[pinfos.Count];
-            for (int i = 0; i < pinfos.Count; i++) {
-                if (pinfos[i] != null)
-                    converters[i] = GetConverter(pinfos[i].PropertyType)(typeof(Tin));
-            }
-            Tout listToObjectSafe(IReadOnlyList<Tin> list)
-            {
-                Tout obj = new Tout();
-                int count = Math.Max(list.Count, pinfos.Count);
-                for (int i = 0; i < count; i++) {
-                    if (pinfos[i] != null)
-                        pinfos[i].SetValue(obj, converters[i](list[i]));
-                }
-                return obj;
-            }
-            return listToObjectSafe;
-        }
-
         /// <summary>
-        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts from one type to another.
+        /// Gets a <see cref="Func{T, TResult}"/> that converts from one type to another.
         /// </summary>
         /// <param name="input">The input <see cref="Type"/>.</param>
         /// <param name="output">The output <see cref="Type"/>.</param>
-        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts from one type to another.</returns>
+        /// <returns>A <see cref="Func{T, TResult}"/> that converts from one type to another.</returns>
         public static Func<object, object> GetConverter(Type input, Type output)
         {
             return GetConverter(output)(input);
@@ -227,7 +211,7 @@ namespace Utilities.Converters
         }
 
         /// <summary>
-        /// Maps input/output types to a <see cref="Converter{TInput, TOutput}"/>.
+        /// Maps input/output types to a <see cref="Func{T, TResult}"/>.
         /// </summary>
         private static readonly Dictionary<Type, Func<Type, Func<object, object>>> ConverterMap = new Dictionary<Type, Func<Type, Func<object, object>>>() {
             { typeof(string), ToString },
@@ -262,11 +246,11 @@ namespace Utilities.Converters
         /// Does nothing.
         /// </summary>
         /// <param name="value">The <see cref="object"/> to convert.</param>
-        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that does nothing.</returns>
+        /// <returns>A <see cref="Func{T, TResult}"/> that does nothing.</returns>
         private static object NoConvert(object value) { return value; }
 
         /// <summary>
-        /// A function that returns a <see cref="Converter{TInput, TOutput}"/> that does nothing.
+        /// A function that returns a <see cref="Func{T, TResult}"/> that does nothing.
         /// </summary>
         private static readonly Func<Type, Func<object, object>> NonConverter = (inp) => { return NoConvert; };
 
@@ -282,10 +266,10 @@ namespace Utilities.Converters
         }
 
         /// <summary>
-        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="string"/>.
+        /// Gets a <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="string"/>.
         /// </summary>
         /// <param name="input">The input <see cref="Type"/>.</param>
-        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="string"/>.</returns>
+        /// <returns>A <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="string"/>.</returns>
         public static Func<object, object> ToString(Type input)
         {
             Func<object, object> converter;
@@ -342,10 +326,10 @@ namespace Utilities.Converters
         }
 
         /// <summary>
-        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="DateTime"/>.
+        /// Gets a <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="DateTime"/>.
         /// </summary>
         /// <param name="input">The input <see cref="Type"/>.</param>
-        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="DateTime"/>.</returns>
+        /// <returns>A <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="DateTime"/>.</returns>
         public static Func<object, object> ToDateTime(Type input)
         {
             Func<object, object> converter;
@@ -392,10 +376,10 @@ namespace Utilities.Converters
         }
 
         /// <summary>
-        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="DateTimeOffset"/>.
+        /// Gets a <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="DateTimeOffset"/>.
         /// </summary>
         /// <param name="input">The input <see cref="Type"/>.</param>
-        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="DateTimeOffset"/>.</returns>
+        /// <returns>A <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="DateTimeOffset"/>.</returns>
         public static Func<object, object> ToDateTimeOffset(Type input)
         {
             if (input == typeof(string))
@@ -436,10 +420,10 @@ namespace Utilities.Converters
         }
 
         /// <summary>
-        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="TimeSpan"/>.
+        /// Gets a <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="TimeSpan"/>.
         /// </summary>
         /// <param name="input">The input <see cref="Type"/>.</param>
-        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="TimeSpan"/>.</returns>
+        /// <returns>A <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="TimeSpan"/>.</returns>
         public static Func<object, object> ToTimeSpan(Type input)
         {
             Func<object, object> converter;
@@ -482,10 +466,10 @@ namespace Utilities.Converters
         }
 
         /// <summary>
-        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="char"/>[].
+        /// Gets a <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="char"/>[].
         /// </summary>
         /// <param name="input">The input <see cref="Type"/>.</param>
-        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="char"/>[].</returns>
+        /// <returns>A <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="char"/>[].</returns>
         public static Func<object, object> ToChars(Type input)
         {
             Func<object, object> converter;
@@ -521,10 +505,10 @@ namespace Utilities.Converters
         }
 
         /// <summary>
-        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="byte"/>[].
+        /// Gets a <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="byte"/>[].
         /// </summary>
         /// <param name="input">The input <see cref="Type"/>.</param>
-        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="byte"/>[].</returns>
+        /// <returns>A <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="byte"/>[].</returns>
         public static Func<object, object> ToBytes(Type input)
         {
             if (input == typeof(string))
@@ -572,10 +556,10 @@ namespace Utilities.Converters
         }
 
         /// <summary>
-        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="short"/>.
+        /// Gets a <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="short"/>.
         /// </summary>
         /// <param name="input">The input <see cref="Type"/>.</param>
-        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="short"/>.</returns>
+        /// <returns>A <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="short"/>.</returns>
         public static Func<object, object> ToInt16(Type input)
         {
             return ObjectToInt16;
@@ -598,10 +582,10 @@ namespace Utilities.Converters
         }
 
         /// <summary>
-        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to an <see cref="int"/>.
+        /// Gets a <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to an <see cref="int"/>.
         /// </summary>
         /// <param name="input">The input <see cref="Type"/>.</param>
-        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to an <see cref="int"/>.</returns>
+        /// <returns>A <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to an <see cref="int"/>.</returns>
         public static Func<object, object> ToInt32(Type input)
         {
             Func<object, object> converter;
@@ -636,10 +620,10 @@ namespace Utilities.Converters
         }
 
         /// <summary>
-        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="long"/>.
+        /// Gets a <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="long"/>.
         /// </summary>
         /// <param name="input">The input <see cref="Type"/>.</param>
-        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="long"/>.</returns>
+        /// <returns>A <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="long"/>.</returns>
         public static Func<object, object> ToInt64(Type input)
         {
             return ObjectToInt64;
@@ -663,10 +647,10 @@ namespace Utilities.Converters
         }
 
         /// <summary>
-        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="ushort"/>.
+        /// Gets a <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="ushort"/>.
         /// </summary>
         /// <param name="input">The input <see cref="Type"/>.</param>
-        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="ushort"/>.</returns>
+        /// <returns>A <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="ushort"/>.</returns>
         public static Func<object, object> ToUInt16(Type input)
         {
             return ObjectToUInt16;
@@ -691,10 +675,10 @@ namespace Utilities.Converters
         }
 
         /// <summary>
-        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="uint"/>.
+        /// Gets a <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="uint"/>.
         /// </summary>
         /// <param name="input">The input <see cref="Type"/>.</param>
-        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="uint"/>.</returns>
+        /// <returns>A <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="uint"/>.</returns>
         public static Func<object, object> ToUInt32(Type input)
         {
             return ObjectToUInt32;
@@ -719,10 +703,10 @@ namespace Utilities.Converters
         }
 
         /// <summary>
-        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="ulong"/>.
+        /// Gets a <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="ulong"/>.
         /// </summary>
         /// <param name="input">The input <see cref="Type"/>.</param>
-        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="ulong"/>.</returns>
+        /// <returns>A <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="ulong"/>.</returns>
         public static Func<object, object> ToUInt64(Type input)
         {
             return ObjectToUInt64;
@@ -747,10 +731,10 @@ namespace Utilities.Converters
         }
 
         /// <summary>
-        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="bool"/>.
+        /// Gets a <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="bool"/>.
         /// </summary>
         /// <param name="input">The input <see cref="Type"/>.</param>
-        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="bool"/>.</returns>
+        /// <returns>A <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="bool"/>.</returns>
         public static Func<object, object> ToBoolean(Type input)
         {
             return ObjectToBoolean;
@@ -783,10 +767,10 @@ namespace Utilities.Converters
         }
 
         /// <summary>
-        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="byte"/>.
+        /// Gets a <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="byte"/>.
         /// </summary>
         /// <param name="input">The input <see cref="Type"/>.</param>
-        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="byte"/>.</returns>
+        /// <returns>A <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="byte"/>.</returns>
         public static Func<object, object> ToByte(Type input)
         {
             return ObjectToByte;
@@ -811,10 +795,10 @@ namespace Utilities.Converters
         }
 
         /// <summary>
-        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to an <see cref="sbyte"/>.
+        /// Gets a <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to an <see cref="sbyte"/>.
         /// </summary>
         /// <param name="input">The input <see cref="Type"/>.</param>
-        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to an <see cref="sbyte"/>.</returns>
+        /// <returns>A <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to an <see cref="sbyte"/>.</returns>
         public static Func<object, object> ToSByte(Type input)
         {
             return ObjectToSByte;
@@ -839,10 +823,10 @@ namespace Utilities.Converters
         }
 
         /// <summary>
-        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="char"/>.
+        /// Gets a <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="char"/>.
         /// </summary>
         /// <param name="input">The input <see cref="Type"/>.</param>
-        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="char"/>.</returns>
+        /// <returns>A <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="char"/>.</returns>
         public static Func<object, object> ToChar(Type input)
         {
             return ObjectToChar;
@@ -867,10 +851,10 @@ namespace Utilities.Converters
         }
 
         /// <summary>
-        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="float"/>.
+        /// Gets a <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="float"/>.
         /// </summary>
         /// <param name="input">The input <see cref="Type"/>.</param>
-        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="float"/>.</returns>
+        /// <returns>A <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="float"/>.</returns>
         public static Func<object, object> ToSingle(Type input)
         {
             return ObjectToSingle;
@@ -895,10 +879,10 @@ namespace Utilities.Converters
         }
 
         /// <summary>
-        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="double"/>.
+        /// Gets a <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="double"/>.
         /// </summary>
         /// <param name="input">The input <see cref="Type"/>.</param>
-        /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="double"/>.</returns>
+        /// <returns>A <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="double"/>.</returns>
         public static Func<object, object> ToDouble(Type input)
         {
             return ObjectToDouble;
@@ -923,7 +907,7 @@ namespace Utilities.Converters
         }
 
         /// <summary>
-        /// Gets a <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="decimal"/>.
+        /// Gets a <see cref="Func{T, TResult}"/> that converts objects from a <see cref="Type"/> to a <see cref="decimal"/>.
         /// </summary>
         /// <param name="input">The input <see cref="Type"/>.</param>
         /// <returns>A <see cref="Converter{TInput, TOutput}"/> that converts objects from a <see cref="Type"/> to a <see cref="decimal"/>.</returns>

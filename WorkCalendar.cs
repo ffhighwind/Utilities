@@ -314,6 +314,7 @@ namespace Utilities
         /// </summary>
         /// <param name="year">The year (1-9999).</param>
         /// <returns>All holidays within a given year.</returns>
+        /// <see ref="https://stackoverflow.com/questions/3709584/business-holiday-date-handling"/>
         public static HashSet<DateTime> Holidays(int year)
         {
             HashSet<DateTime> holidays = new HashSet<DateTime> {
