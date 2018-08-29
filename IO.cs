@@ -1176,14 +1176,9 @@ namespace Utilities
             if (!fi.Exists)
                 throw new FileNotFoundException(inpath);
             FileInfo fo = new FileInfo(outpath);
-            if (fo.FullName == fi.FullName)
+            if (fo.FullName == fi.FullName || (!overwrite && fo.Exists))
                 return;
-            if (fo.Exists) {
-                if (!overwrite)
-                    return;
-                fo.Delete();
-            }
-            fi.MoveTo(outpath);
+            File.Move(inpath, outpath);
         }
 
         /// <summary>

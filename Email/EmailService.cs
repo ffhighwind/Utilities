@@ -15,6 +15,9 @@ namespace Utilities.Email
 
         public EmailService() { }
 
+        public EmailService(string email)
+            : this(email, null, null) { }
+
         public EmailService(string email, string username, string password)
         {
             Email = email;
@@ -31,6 +34,12 @@ namespace Utilities.Email
         public string Password { protected get; set; }
 
         public ExchangeService Service { get; private set; }
+
+        public bool Connect(string email, ExchangeVersion version = ExchangeVersion.Exchange2010_SP1)
+        {
+            Email = email;
+            return Connect(version);
+        }
 
         public bool Connect(string email, string username, string password, ExchangeVersion version = ExchangeVersion.Exchange2010_SP1)
         {
@@ -60,6 +69,16 @@ namespace Utilities.Email
                 IsConnected = false;
             }
             return IsConnected;
+        }
+
+        public EmailMessage CreateEmail(string recipient, string subject, params string[] files)
+        {
+            EmailMessage email = new EmailMessage(Service) { Subject = subject };
+            email.ToRecipients.Add(new EmailAddress(recipient));
+            foreach (string file in files) {
+                email.Attachments.AddFileAttachment(file);
+            }
+            return email;
         }
 
         public EmailMessage CreateEmail()
