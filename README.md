@@ -1,40 +1,38 @@
-# Description: 
+# Description:
 
-This project contains utilities for general purpose use. This includes 
-reading/writing files, emails, and databases. It also contains helpers for
-conversions between different types including lists of objects, classes, 
-and DataTables. Finally, it includes utilities for process generation, security,
-and localization.
+This project contains utilities for general purpose use. This includes
+reading/writing files, emails, and databases as well as converting between
+different types, process generation, security, and localization.
 
-# Installation: 
+# Installation:
 
-This project requires [Visual Studio](https://visualstudio.microsoft.com/) to compile. Once installed to install the 
-reqiured NuGet packages. Right click on "Utilities" in the Solution Explorer 
-and select "Manage NuGet Packages...". From here Visual Studio will prompt 
-you to install the missing packages.
+This project requires [Visual Studio](https://visualstudio.microsoft.com/) to compile.
+Once installed to install the reqiured NuGet packages. Right click on "Utilities" in the
+Solution Explorer and select "Manage NuGet Packages...". From here Visual Studio will
+prompt you to install the missing packages.
 
-You can add the library to another Visual Studio solution by adding it as a 
-reference. Right click on the Solution of your other project and 
-Add > Existing Project. Then right click on "References in the Solution Explorer 
+You can add the library to another Visual Studio solution by adding it as a
+reference. Right click on the Solution of your other project and
+Add > Existing Project. Then right click on "References in the Solution Explorer
 and add this as a project reference.
 
 # NuGet Packages:
 
-* CsvHelper
+* [CsvHelper](https://joshclose.github.io/CsvHelper/)
    For reading and writing comma/tab separated value (csv, tsv) files.
-* Dapper
+* [Dapper](https://github.com/StackExchange/Dapper)
    For querying SQL Databases in a type-safe way.
-* EPPlus
+* [EPPlus](https://github.com/JanKallman/EPPlus)
    For Excel (xlsx) file reading and writing via Excel.Spreadsheet and Excel.Worksheet.
-* Microsoft.Exchange.WebServices - 
+* [Microsoft.Exchange.WebServices](https://github.com/sherlock1982/ews-managed-api)
    For Microsoft Outlook access methods via Email.EmailService.
-* Newtonsoft.Json
+* [Newtonsoft.Json](https://www.newtonsoft.com/json)
    For pretty printing via Extensions.ToString.
-* MSTest.TestAdapter
+* [MSTest.TestAdapter](https://www.nuget.org/packages/MSTest.TestAdapter/)
    For unit testing.
-* MSTest.TestFramework
+* [MSTest.TestFramework](https://www.nuget.org/packages/MSTest.TestFramework/)
    For unit testing.
-* Costura.Fody
+* [Costura.Fody](https://github.com/Fody/Costura)
    Not required but this will reduce the size of the output executable and eliminate the dll files.
 
 # Credits:
