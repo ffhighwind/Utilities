@@ -68,18 +68,6 @@ namespace Utilities.Email
             return new EmailMessage(Service);
         }
 
-        public bool FolderExists(string folderName, FolderId parentFolder, FolderTraversal traversal = FolderTraversal.Shallow)
-        {
-            return FindItems(new SearchFilter.ContainsSubstring(FolderSchema.DisplayName, folderName), parentFolder, traversal).Any();
-        }
-
-        public bool FolderExists(string folderName, WellKnownFolderName parentFolder = WellKnownFolderName.Root,
-            FolderTraversal traversal = FolderTraversal.Shallow, string mailbox = null)
-        {
-            FolderId folderId = mailbox == null ? new FolderId(parentFolder) : new FolderId(parentFolder, mailbox);
-            return FindItems(new SearchFilter.ContainsSubstring(FolderSchema.DisplayName, folderName), folderId, traversal).Any();
-        }
-
         public IEnumerable<Item> FindItems(SearchFilter filter, WellKnownFolderName parentFolder = WellKnownFolderName.Root,
             FolderTraversal traversal = FolderTraversal.Shallow, string mailbox = null)
         {
@@ -213,7 +201,18 @@ namespace Utilities.Email
             } while (results.MoreAvailable);
         }
 
-        public IEnumerable<FileAttachment> GetFileAttachments(FolderId folderId, ItemTraversal traversal = ItemTraversal.Shallow, PropertySet properties = null)
+        /// <summary>
+        /// Returns a list of <see cref="FileAttachment"/> items contained within a <see cref="Folder"/>.
+        /// </summary>
+        /// <param name="folderId">The <see cref="FolderId"/> of the <see cref="Folder"/> to search.</param>
+        /// <param name="traversal">The search method to perform. By default this is only items within the
+        /// initial <see cref="Folder"/>.</param>
+        /// <param name="properties">The <see cref="EmailMessageSchema"/> details to load into the emails returned.
+        /// By default this is <see cref="PropertySet.FirstClassProperties"/>.
+        /// Use <see cref="PropertySets.EmailAll"/> or Load() on the <see cref="EmailMessage"/> to get more details.</param>
+        /// <returns></returns>
+        public IEnumerable<FileAttachment> GetFileAttachments(FolderId folderId, ItemTraversal traversal = ItemTraversal.Shallow,
+            PropertySet properties = null)
         {
             ItemView iview = new ItemView(PageSize, 0) {
                 PropertySet = properties ?? PropertySet.FirstClassProperties,
@@ -232,20 +231,29 @@ namespace Utilities.Email
             } while (results.MoreAvailable);
         }
 
-        public IEnumerable<EmailMessage> GetEmails(FolderId folderId, PropertySet properties = null)
+        /// <summary>
+        /// Returns a list of <see cref="EmailMessage"/> items contained within a <see cref="Folder"/>.
+        /// </summary>
+        /// <param name="folderId">The <see cref="FolderId"/> of the <see cref="Folder"/> to search.</param>
+        /// <param name="traversal"></param>
+        /// <param name="properties">The <see cref="EmailMessageSchema"/> details to load into the emails returned.
+        /// By default this is <see cref="PropertySet.FirstClassProperties"/>.
+        /// Use <see cref="PropertySets.EmailAll"/> or Load() on the <see cref="EmailMessage"/> to get more details.</param>
+        /// <returns>A list of <see cref="EmailMessage"/> items contained within a <see cref="Folder"/>.</returns>
+        public IEnumerable<EmailMessage> GetEmails(FolderId folderId, ItemTraversal traversal = ItemTraversal.Shallow,
+            PropertySet properties = null)
         {
-            if (properties == null)
-                properties = PropertySet.FirstClassProperties;
             ItemView iview = new ItemView(PageSize, 0) {
                 PropertySet = properties ?? PropertySet.FirstClassProperties,
+                Traversal = traversal
             };
             iview.OrderBy.Add(ItemSchema.DateTimeReceived, SortDirection.Descending);
             FindItemsResults<Item> results = Service.FindItems(folderId, new SearchFilter.IsEqualTo(ItemSchema.ItemClass, ItemClass.Email), iview);
             if (results.TotalCount > 0) {
                 do {
                     foreach (Item email in results) {
-                        //if (email is EmailMessage emailMsg)
-                        yield return (EmailMessage) email;
+                        if (email is EmailMessage emailMsg)
+                            yield return emailMsg;
                     }
                     if (results.NextPageOffset.HasValue)
                         iview.Offset = results.NextPageOffset.Value;
@@ -258,6 +266,11 @@ namespace Utilities.Email
             return GetNestedFileAttachments(email);
         }
 
+        /// <summary>
+        /// Gets <see cref="FileAttachment"/> items in nested emails.
+        /// </summary>
+        /// <param name="item">The <see cref="Item"/> to search for <see cref="FileAttachment"/> items.</param>
+        /// <returns>A list of <see cref="FileAttachment"/> items contained within the <see cref="Item"/>.</returns>
         private IEnumerable<FileAttachment> GetNestedFileAttachments(Item item)
         {
             if (item.HasAttachments) {
