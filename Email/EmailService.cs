@@ -15,11 +15,9 @@ namespace Utilities.Email
 
         public EmailService() { }
 
-        public EmailService(string email, string username, string password)
+        public EmailService(string email)
         {
             Email = email;
-            Username = username;
-            Password = password;
         }
 
         public string Email { get; private set; }
@@ -28,38 +26,41 @@ namespace Utilities.Email
 
         public bool IsConnected { get; private set; }
 
-        public string Password { protected get; set; }
-
         public ExchangeService Service { get; private set; }
 
-        public bool Connect(string email, string username, string password, ExchangeVersion version = ExchangeVersion.Exchange2010_SP1)
+        public bool Connect(string username, string password, ExchangeVersion version = ExchangeVersion.Exchange2010_SP1)
         {
-            Email = email;
             Username = username;
-            Password = password;
-            return Connect(version);
-        }
-
-        /// <summary>
-        /// Connect to the Exchange server with the given credentials.
-        /// </summary>
-        /// <param name="version">The version of the Exchange Service you are connecting to.</param>
-        public bool Connect(ExchangeVersion version = ExchangeVersion.Exchange2010_SP1)
-        {
             try {
                 // This will initialize the exchange web service object
                 Service = new ExchangeService(version) {
-                    Credentials = new WebCredentials(Username, Password),
-                    UseDefaultCredentials = string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password)
+                    Credentials = new WebCredentials(Username, password),
+                    UseDefaultCredentials = string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(password)
                 };
                 Service.AutodiscoverUrl(Email, RedirectionUrlValidationCallback);
                 IsConnected = Service.Url != null;
             }
             catch (Exception ex) {
                 Console.Error.WriteLine(ex.Message);
+                Service = null;
                 IsConnected = false;
             }
             return IsConnected;
+        }
+
+        public bool Connect(ExchangeVersion version = ExchangeVersion.Exchange2010_SP1)
+        {
+            return Connect(null, null, version);
+        }
+
+        /// <summary>
+        /// Connect to the Exchange server with the given credentials.
+        /// </summary>
+        /// <param name="version">The version of the Exchange Service you are connecting to.</param>
+        public bool Connect(string email, string username, string password, ExchangeVersion version = ExchangeVersion.Exchange2010_SP1)
+        {
+            Email = email;
+            return Connect(username, password, version);
         }
 
         public EmailMessage CreateEmail()
