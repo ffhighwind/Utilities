@@ -374,7 +374,7 @@ namespace Utilities
                     }
                     return str;
                 }
-                if (int.TryParse(str2, out int ival))
+                if (long.TryParse(str2, out long ival))
                     return ival;
             }
             else if (DateTime.TryParse(str2, out DateTime table))

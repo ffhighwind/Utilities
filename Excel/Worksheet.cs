@@ -779,9 +779,10 @@ namespace Utilities.Excel
                     }
                     return str;
                 }
-                int ival = int.Parse(str2);
-                cell.Style.Numberformat.Format = "0";
-                return ival;
+                if (long.TryParse(str2, out long ival)) {
+                    cell.Style.Numberformat.Format = "0";
+                    return ival;
+                }
             }
             else if (CurrencySymbols.Contains(c)) {
                 if (TryParseNumber(str2.Substring(1), out decimal d)) {

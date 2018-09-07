@@ -5,6 +5,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 using Dapper;
 using Utilities.Converters;
 
@@ -165,6 +166,31 @@ namespace Utilities
             }
             throw new ArgumentOutOfRangeException("maxRetries: " + maxRetries);
         }
+
+        /// <summary>
+        /// Executes an SQL query.
+        /// </summary>
+        /// <typeparam name="T">The type of object to return from the query.</typeparam>
+        /// <param name="conn">The database connection.</param>
+        /// <param name="cmd">The command to execute.</param>
+        /// <param name="param">The parameters to pass to the command.</param>
+        /// <param name="timeoutSecs">The timeout in seconds for the command. A value of 0 means no timeout.</param>
+        /// <param name="maxRetries">The number of attempts to retry the command.</param>
+        /// <returns>The results from the query, or null on error.</returns>
+        public static Task<IEnumerable<T>> QueryAsync<T>(SqlConnection conn, string cmd, object param = null, int timeoutSecs = 0, int maxRetries = 5)
+        {
+            for (int i = 0; i < maxRetries; i++) {
+                try {
+                    return conn.QueryAsync<T>(cmd, param, null, timeoutSecs);
+                }
+                catch {
+                    if (i == maxRetries - 1)
+                        throw; // keeps StackTrace
+                }
+            }
+            throw new ArgumentOutOfRangeException("maxRetries: " + maxRetries);
+        }
+
 
         /// <summary>
         /// Executes an SQL query.
