@@ -40,6 +40,7 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Comparers.cs" />
     <Compile Include="Converters\Converters.cs" />
     <Compile Include="Converters\DataTableConverter.cs">
       <ExcludeFromStyleCop>True</ExcludeFromStyleCop>
@@ -51,6 +52,7 @@
     <Compile Include="Extentions.cs" />
     <Compile Include="Converters\GenericDataReader.cs" />
     <Compile Include="IO.cs" />
+    <Compile Include="ListViewItemComparer.cs" />
     <Compile Include="Logging\Logger.cs" />
     <Compile Include="Email\NetworkConnection.cs" />
     <Compile Include="Processes.cs" />
@@ -98,6 +100,7 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.Security" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
