@@ -6,7 +6,7 @@ using Microsoft.Exchange.WebServices.Data;
 namespace Utilities.Email
 {
     /// <summary>
-    /// /// EWS Managed API Documentation:
+    /// EWS Managed API Documentation:
     /// https://docs.microsoft.com/en-us/previous-versions/office/developer/exchange-server-2010/dd633710(v=exchg.80)
     /// </summary>
     public class EmailService
@@ -32,7 +32,6 @@ namespace Utilities.Email
         {
             Username = username;
             try {
-                // This will initialize the exchange web service object
                 Service = new ExchangeService(version) {
                     Credentials = new WebCredentials(Username, password),
                     UseDefaultCredentials = string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(password)

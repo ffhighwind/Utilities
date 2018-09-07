@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -29,18 +30,12 @@ namespace Utilities.Converters
             where Tin : class
             where Tout : class, new()
         {
-            PropertyInfo[] pi = typeof(Tout).GetProperties(inFlags);
-            PropertyInfo[] po = typeof(Tout).GetProperties(outFlags);
-            List<string> names = pi.Select(p => p.Name).Where(piName => po.Select(pO => pO.Name).Contains(piName)).ToList();
+            IReadOnlyList<PropertyInfo> pi = typeof(Tin).GetProperties(inFlags);
+            IReadOnlyList<PropertyInfo> po = typeof(Tout).GetProperties(outFlags).Where(prop => pi.Select(p => p.Name).Contains(prop.Name)).ToList();
             if (propertyNames != null)
-                names = names.Where(name => propertyNames.Contains(name)).ToList();
-            List<PropertyInfo> piIntersect = pi.Where(p => names.Contains(p.Name)).ToList();
-            List<PropertyInfo> poIntersect = new List<PropertyInfo>();
-            for (int i = 0; i < piIntersect.Count; i++) {
-                string name = piIntersect[i].Name;
-                poIntersect.Add(po.First(p => p.Name == name));
-            }
-            return ObjectToObject<Tin, Tout>(piIntersect, poIntersect);
+                po = po.Where(p => propertyNames.Contains(p.Name)).ToList();
+            pi = pi.Where(prop => po.Select(p => p.Name).Contains(prop.Name)).ToList();
+            return ObjectToObject<Tin, Tout>(pi, po);
         }
 
         public static Func<Tin, Tout> ObjectToObject<Tin, Tout>(IReadOnlyList<PropertyInfo> pinfoIn, IReadOnlyList<PropertyInfo> pinfoOut)
@@ -88,24 +83,32 @@ namespace Utilities.Converters
                 PropertyInfo pinfo = pinfos.FirstOrDefault(pi => pi.Name == propertyNames[i]);
                 tmp.Add(pinfo);
             }
+            for (int i = tmp.Count - 1; i >= 0; i++) {
+                if (tmp[i] == null)
+                    tmp.RemoveAt(i);
+            }
             return CreateListToObject<Tin, Tout>(tmp);
         }
 
         private static Func<IReadOnlyList<Tin>, Tout> CreateListToObject<Tin, Tout>(IReadOnlyList<PropertyInfo> pinfos) where Tout : class, new()
         {
             Func<object, object>[] converters = new Func<object, object>[pinfos.Count];
+            Type notNullableTin = Nullable.GetUnderlyingType(typeof(Tin)) ?? typeof(Tin);
             for (int i = 0; i < pinfos.Count; i++) {
-                converters[i] = GetConverter(pinfos[i].PropertyType)(typeof(Tin));
+                if (pinfos[i] != null)
+                    converters[i] = GetConverter(pinfos[i].PropertyType)(notNullableTin);
             }
             Tout listToObj(IReadOnlyList<Tin> list)
             {
                 Tout obj = new Tout();
                 int count = Math.Min(list.Count, pinfos.Count);
                 for (int i = 0; i < count; i++) {
-                    object value = list[i];
-                    if (value != null)
-                        value = converters[i](list[i]);
-                    pinfos[i].SetValue(obj, value);
+                    if (pinfos[i] != null) {
+                        object value = list[i];
+                        if (value != null)
+                            value = converters[i](list[i]);
+                        pinfos[i].SetValue(obj, value);
+                    }
                 }
                 return obj;
             }
