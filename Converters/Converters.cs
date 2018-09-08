@@ -15,9 +15,9 @@ namespace Utilities.Converters
         /// </summary>
         private static readonly Encoding DefaultEncoding = Encoding.UTF8;
 
-        public static bool CanConvert(Type type1, Type type2)
+        public static bool CanConvert(Type input, Type output)
         {
-            return System.ComponentModel.TypeDescriptor.GetConverter(type1).CanConvertTo(type2);
+            return System.ComponentModel.TypeDescriptor.GetConverter(input).CanConvertTo(output);
         }
 
         public static Func<Tin, Tout> ObjectToObject<Tin, Tout>(

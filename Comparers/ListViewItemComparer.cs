@@ -40,18 +40,25 @@ namespace Utilities.Comparers
 
         public int Compare(object x, object y)
         {
-            if (Sorting == SortOrder.None || x == y)
+            if (Multiplier == 0)
                 return 0;
             string lx = (x as ListViewItem).SubItems[ColumnIndex].Text;
             string ly = (y as ListViewItem).SubItems[ColumnIndex].Text;
-            if (lx == null) {
+            if (lx == ly)
+                return 0;
+            else if (lx == null) {
                 if (ly == null)
                     return 0;
                 return -1;
             }
             else if (ly == null)
                 return 1;
-            return Multiplier * CompareFunc(lx, ly);
+            try {
+                return Multiplier * CompareFunc(lx, ly);
+            }
+            catch { // do nothing
+            }
+            return lx.CompareTo(ly);
         }
     }
 }
