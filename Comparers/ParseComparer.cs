@@ -25,7 +25,6 @@ namespace Utilities.Comparers
         public static readonly IComparer DateTimeOffset = new DateTimeOffsetParseComparer();
         public static readonly IComparer Guid = new GuidParseComparer();
         public static readonly IComparer BigInteger = new BigIntegerParseComparer();
-        public static readonly IComparer Object = new ObjectParseComparer();
 
         public static IComparer GetComparer(Type type)
         {
@@ -71,8 +70,6 @@ namespace Utilities.Comparers
                         return Guid;
                     else if (type == typeof(BigInteger))
                         return BigInteger;
-                    else if (typeof(IComparable).IsAssignableFrom(type))
-                        return Object;
                     break;
             }
             throw new InvalidOperationException("Invalid TypeCode: " + typeCode.ToString());
@@ -243,14 +240,6 @@ namespace Utilities.Comparers
             int IComparer.Compare(object x, object y)
             {
                 return System.Guid.Parse(x as string).CompareTo(System.Guid.Parse(y as string));
-            }
-        }
-
-        private class ObjectParseComparer : IComparer
-        {
-            int IComparer.Compare(object x, object y)
-            {
-                return ((IComparable) x).CompareTo((IComparable) y);
             }
         }
     }
