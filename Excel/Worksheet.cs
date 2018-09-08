@@ -795,11 +795,11 @@ namespace Utilities.Excel
                 return dt;
             }
             else {
-                if (string.Equals(str2, "false", StringComparison.OrdinalIgnoreCase))
+                if (str2.Equals("false", StringComparison.OrdinalIgnoreCase))
                     return false;
-                else if (string.Equals(str2, "true", StringComparison.OrdinalIgnoreCase))
+                else if (str2.Equals("true", StringComparison.OrdinalIgnoreCase))
                     return true;
-                else if (string.Equals(str2, "null", StringComparison.OrdinalIgnoreCase))
+                else if (str2.Equals("null", StringComparison.OrdinalIgnoreCase))
                     return null;
             }
             return str;

@@ -380,12 +380,11 @@ namespace Utilities
             else if (DateTime.TryParse(str2, out DateTime table))
                 return table;
             else {
-                string lower = str2.ToLower();
-                if (lower == "false")
+                if (str2.Equals("false", StringComparison.OrdinalIgnoreCase))
                     return false;
-                else if (lower == "true")
+                else if (str2.Equals("true", StringComparison.OrdinalIgnoreCase))
                     return true;
-                else if (lower == "null")
+                else if (str2.Equals("null", StringComparison.OrdinalIgnoreCase))
                     return null;
             }
             return str;
@@ -398,6 +397,25 @@ namespace Utilities
         public static void Print(object obj)
         {
             Extensions.Print(Console.Out, obj);
+        }
+
+        /// <summary>
+        /// Tries to cast an object to a specific <see cref="Type"/>.
+        /// </summary>
+        /// <typeparam name="Ty">The <see cref="Type"/> to cast the object to.</typeparam>
+        /// <param name="obj">The object to cast.</param>
+        /// <param name="result">The resulting object from the cast.</param>
+        /// <returns>True if the cast was successful; or false otherwise.</returns>
+        public static bool TryCast<Ty>(object obj, out Ty result)
+        {
+            if (obj is Ty) {
+                result = (Ty) obj;
+                return true;
+            }
+            else {
+                result = default(Ty);
+                return false;
+            }
         }
 
         /// <summary>

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Numerics;
 using System.Reflection;
 using System.Text;
 
@@ -13,6 +14,11 @@ namespace Utilities.Converters
         /// The default <see cref="Encoding"/> from <see cref="byte"/>[] to <see cref="char"/> and <see cref="string"/>.
         /// </summary>
         private static readonly Encoding DefaultEncoding = Encoding.UTF8;
+
+        public static bool CanConvert(Type type1, Type type2)
+        {
+            return System.ComponentModel.TypeDescriptor.GetConverter(type1).CanConvertTo(type2);
+        }
 
         public static Func<Tin, Tout> ObjectToObject<Tin, Tout>(
             BindingFlags inFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly,
@@ -203,6 +209,8 @@ namespace Utilities.Converters
                         return ToChars(value);
                     else if (type == typeof(byte[]))
                         return ToBytes(value);
+                    else if (type == typeof(BigInteger))
+                        return ToBigInteger(value);
                     return value;
                 case TypeCode.DBNull:
                     throw new InvalidCastException("Invalid cast: TypeCode.DBNull");
@@ -236,6 +244,7 @@ namespace Utilities.Converters
             { typeof(float), ToSingle }, // equivalent to Convert.ToSingle
             { typeof(double), ToDouble }, // equivalent to Convert.ToDouble
             { typeof(decimal), ToDecimal }, // equivalent to Convert.ToDecimal
+            { typeof(BigInteger), ToBigInteger }
         };
 
         /// <summary>
@@ -496,7 +505,7 @@ namespace Utilities.Converters
         }
         #endregion // ToChars
 
-        #region // ToBytes
+        #region ToBytes
         /// <summary>
         /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="byte"/>[] representation.
         /// </summary>
@@ -611,6 +620,8 @@ namespace Utilities.Converters
         #endregion // ToInt32
 
         #endregion ToInt64
+
+        #region ToInt64
         /// <summary>
         /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="long"/> representation.
         /// </summary>
@@ -636,6 +647,7 @@ namespace Utilities.Converters
         {
             return System.Convert.ToInt64(value);
         }
+        #endregion // ToInt64
 
         #region ToUInt16
         /// <summary>
@@ -663,7 +675,7 @@ namespace Utilities.Converters
         {
             return System.Convert.ToUInt16(value);
         }
-        #endregion
+        #endregion // ToUInt16
 
         #region ToUInt32
         /// <summary>
@@ -924,5 +936,154 @@ namespace Utilities.Converters
             return System.Convert.ToDecimal(value);
         }
         #endregion // ToDecimal
+
+        #region ToBigInteger
+        public static object ToBigInteger(object value)
+        {
+            Type type = value.GetType();
+            TypeCode typeCode = Type.GetTypeCode(type);
+            switch (typeCode) {
+                case TypeCode.Boolean:
+                    return new BigInteger((bool) value ? 1 : 0);
+                case TypeCode.Byte:
+                    return new BigInteger((byte) value);
+                case TypeCode.Decimal:
+                    return new BigInteger((decimal) value);
+                case TypeCode.Double:
+                    return new BigInteger((double) value);
+                case TypeCode.Int16:
+                    return new BigInteger((short) value);
+                case TypeCode.Int32:
+                    return new BigInteger((int) value);
+                case TypeCode.Int64:
+                    return new BigInteger((long) value);
+                case TypeCode.SByte:
+                    return new BigInteger((sbyte) value);
+                case TypeCode.Single:
+                    return new BigInteger((float) value);
+                case TypeCode.String:
+                    return BigInteger.Parse(value as string);
+                case TypeCode.UInt16:
+                    return new BigInteger((ushort) value);
+                case TypeCode.UInt32:
+                    return new BigInteger((uint) value);
+                case TypeCode.UInt64:
+                    return new BigInteger((ulong) value);
+                case TypeCode.Object:
+                    if (type == typeof(byte[]))
+                        return new BigInteger(value as byte[]);
+                    break;
+            }
+            throw new InvalidCastException("Cannot cast " + type.ToString() + " to System.Numerics.BigInteger");
+        }
+
+        public static Func<object, object> ToBigInteger(Type type)
+        {
+            TypeCode typeCode = Type.GetTypeCode(type);
+            switch (typeCode) {
+                case TypeCode.Boolean:
+                    return BooleanToBigInteger;
+                case TypeCode.Byte:
+                    return ByteToBigInteger;
+                case TypeCode.Decimal:
+                    return DecimalToBigInteger;
+                case TypeCode.Double:
+                    return DoubleToBigInteger;
+                case TypeCode.Int16:
+                    return Int16ToBigInteger;
+                case TypeCode.Int32:
+                    return Int32ToBigInteger;
+                case TypeCode.Int64:
+                    return Int64ToBigInteger;
+                case TypeCode.SByte:
+                    return SByteToBigInteger;
+                case TypeCode.Single:
+                    return SingleToBigInteger;
+                case TypeCode.String:
+                    return StringToBigInteger;
+                case TypeCode.UInt16:
+                    return UInt16ToBigInteger;
+                case TypeCode.UInt32:
+                    return UInt32ToBigInteger;
+                case TypeCode.UInt64:
+                    return UInt64ToBigInteger;
+                case TypeCode.Object:
+                    if (type == typeof(byte[]))
+                        return ByteArrayToBigInteger;
+                    break;
+            }
+            throw new InvalidCastException("Cannot cast " + type.ToString() + " to System.Numerics.BigInteger");
+        }
+
+        private static object BooleanToBigInteger(object value)
+        {
+            return new BigInteger((bool) value ? 1 : 0);
+        }
+
+        private static object ByteToBigInteger(object value)
+        {
+            return new BigInteger((byte) value);
+        }
+
+        private static object DecimalToBigInteger(object value)
+        {
+            return new BigInteger((decimal) value);
+        }
+
+        private static object DoubleToBigInteger(object value)
+        {
+            return new BigInteger((double) value);
+        }
+
+        private static object Int16ToBigInteger(object value)
+        {
+            return new BigInteger((short) value);
+        }
+
+        private static object Int32ToBigInteger(object value)
+        {
+            return new BigInteger((int) value);
+        }
+
+        private static object Int64ToBigInteger(object value)
+        {
+            return new BigInteger((long) value);
+        }
+
+        private static object SByteToBigInteger(object value)
+        {
+            return new BigInteger((sbyte) value);
+        }
+
+        private static object SingleToBigInteger(object value)
+        {
+            return new BigInteger((float) value);
+        }
+
+        private static object StringToBigInteger(object value)
+        {
+            return BigInteger.Parse(value as string);
+        }
+
+        private static object UInt16ToBigInteger(object value)
+        {
+            return new BigInteger((ushort) value);
+        }
+
+        private static object UInt32ToBigInteger(object value)
+        {
+            return new BigInteger((uint) value);
+        }
+
+        private static object UInt64ToBigInteger(object value)
+        {
+            return new BigInteger((ulong) value);
+        }
+
+        private static object ByteArrayToBigInteger(object value)
+        {
+            return new BigInteger((byte[]) value);
+        }
+        #endregion
     }
 }

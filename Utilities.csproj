@@ -40,7 +40,10 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Comparers.cs" />
+    <Compile Include="Comparers\Compare.cs" />
+    <Compile Include="Comparers\Comparer.cs" />
+    <Compile Include="Comparers\Comparers.cs" />
+    <Compile Include="Comparers\ParseComparer.cs" />
     <Compile Include="Converters\Converters.cs" />
     <Compile Include="Converters\DataTableConverter.cs">
       <ExcludeFromStyleCop>True</ExcludeFromStyleCop>
@@ -52,7 +55,7 @@
     <Compile Include="Extentions.cs" />
     <Compile Include="Converters\GenericDataReader.cs" />
     <Compile Include="IO.cs" />
-    <Compile Include="ListViewItemComparer.cs" />
+    <Compile Include="Comparers\ListViewItemComparer.cs" />
     <Compile Include="Logging\Logger.cs" />
     <Compile Include="Email\NetworkConnection.cs" />
     <Compile Include="Processes.cs" />
