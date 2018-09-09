@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 namespace Utilities.UnitTests
 {
     [TestClass]
@@ -8,24 +9,24 @@ namespace Utilities.UnitTests
         [TestMethod]
         public void Test()
         {
-            object x = 4;
-            object y = 5.0m;
-            object z = "6";
+            object a = 4;
+            object b = 5.0m;
+            object c = "6";
 
-            if (Utilities.Comparers.Compare.To(x, y) != -1)
+            if (Utilities.Comparers.Comparers.Compare(a, b) != -1)
                 throw new Exception();
-            if (Utilities.Comparers.Compare.To(x, z) != -1)
+            if (Utilities.Comparers.Comparers.Compare(a, c) != -1)
                 throw new Exception();
-            if (Utilities.Comparers.Compare.To(y, z) != -1)
+            if (Utilities.Comparers.Comparers.Compare(b, c) != -1)
                 throw new Exception();
-            if (Utilities.Comparers.Compare.To(y, y) != 0)
+            if (Utilities.Comparers.Comparers.Compare(b, b) != 0)
                 throw new Exception();
 
-            if (Utilities.Comparers.Compare.To(y, x) != 1)
+            if (Utilities.Comparers.Comparers.Compare(b, a) != 1)
                 throw new Exception();
-            if (Utilities.Comparers.Compare.To(z, x) != 1)
+            if (Utilities.Comparers.Comparers.Compare(c, a) != 1)
                 throw new Exception();
-            if (Utilities.Comparers.Compare.To(z, y) != 1)
+            if (Utilities.Comparers.Comparers.Compare(c, b) != 1)
                 throw new Exception();
         }
     }

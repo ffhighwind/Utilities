@@ -272,6 +272,14 @@ namespace Utilities.Excel
         /// Auto-filtering for all columns in the <see cref="Spreadsheet"/>. This allows sorting and filtering of data.
         /// </summary>
         public bool AutoFilter {
+            get {
+                for (int i = 0; i < Data.Workbook.Worksheets.Count; i++) {
+                    ExcelWorksheet worksheet = Data.Workbook.Worksheets[i + (Data.Compatibility.IsWorksheets1Based ? 1 : 0)];
+                    if (worksheet.Cells[worksheet.Dimension.Address].AutoFilter)
+                        return true;
+                }
+                return false;
+            }
             set {
                 for (int i = 0; i < Data.Workbook.Worksheets.Count; i++) {
                     ExcelWorksheet worksheet = Data.Workbook.Worksheets[i + (Data.Compatibility.IsWorksheets1Based ? 1 : 0)];
@@ -307,11 +315,13 @@ namespace Utilities.Excel
         /// <returns>The <see cref="Worksheet"/>.</returns>
         public Worksheet Add()
         {
-            for (int i = Data.Workbook.Worksheets.Count + 1; ; i++) {
+            int i = Data.Workbook.Worksheets.Count + 1;
+            while (true) {
                 string sheetName = "Sheet" + i.ToString();
                 if (Data.Workbook.Worksheets[sheetName] == null) {
                     return Add(sheetName);
                 }
+                i++;
             }
         }
 

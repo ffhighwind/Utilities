@@ -451,6 +451,7 @@ namespace Utilities
         /// </summary>
         /// <typeparam name="T">The Type to create the DataTable from.</typeparam>
         /// <param name="table">The DataTable to add columns to.</param>
+        /// <param name="flags">Filters on the properties to obtain.</param>
         /// <returns>The modified DataTable with new columns representing the getters/setters of a Type.</returns>
         public static DataTable DataTable<T>(
             DataTable table,
@@ -467,6 +468,7 @@ namespace Utilities
         /// Creates a <see cref="System.Data.DataTable"/> representing the getters/setters of a <see cref="Type"/>.
         /// </summary>
         /// <typeparam name="T">The <see cref="Type"/> to create a <see cref="System.Data.DataTable"/> from.</typeparam>
+        /// <param name="flags">Filters on the properties to obtain.</param>
         /// <returns>A <see cref="System.Data.DataTable"/> with columns representing the getters/setters of a <see cref="Type"/>.</returns>
         public static DataTable DataTable<T>(
             BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly) where T : class

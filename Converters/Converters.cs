@@ -67,9 +67,11 @@ namespace Utilities.Converters
         }
 
         /// <summary>
-        /// Creates a function that converts an <see cref="IEnumerable{T}"/> of Tin to a Tout.
+        /// Creates a function that converts an <see cref="IReadOnlyList{T}"/> of Tin to a Tout.
         /// </summary>
-        /// <typeparam name="T">The <see cref="Type>"/> of the object.</typeparam>
+        /// <typeparam name="Tin">The input <see cref="Type"/>.</typeparam>
+        /// <typeparam name="Tout">The output <see cref="Type"/>.</typeparam>
+        /// <param name="flags">Filters on the properties to obtain..</param>
         /// <returns>A function that converts an <see cref="IEnumerable{T}"/> Tin to a Tout.</returns>
         public static Func<IReadOnlyList<Tin>, Tout> ListToObject<Tin, Tout>(
             BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly)
@@ -155,7 +157,19 @@ namespace Utilities.Converters
         {
             if (ConverterMap.TryGetValue(output, out Func<Type, Func<object, object>> converter))
                 return converter;
+            if (output.IsSubclassOf(typeof(IConvertible))) {
+                return ToIConvertible;
+            }
             return NonConverter;
+        }
+
+        public static Func<object, object> ToIConvertible(Type output)
+        {
+            object converter(object value)
+            {
+                return Convert.ChangeType(value, output);
+            }
+            return converter;
         }
 
         /// <summary>
@@ -211,6 +225,8 @@ namespace Utilities.Converters
                         return ToBytes(value);
                     else if (type == typeof(BigInteger))
                         return ToBigInteger(value);
+                    else if (value is IConvertible conv)
+                        return Convert.ChangeType(value, type);
                     return value;
                 case TypeCode.DBNull:
                     throw new InvalidCastException("Invalid cast: TypeCode.DBNull");
@@ -270,8 +286,8 @@ namespace Utilities.Converters
         /// <summary>
         /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="string"/> representation.
         /// </summary>
-        /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
-        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="string"/> representation.</returns>
+        /// <param name="value">An <see cref="object"/> that supplies the value to convert.</param>
+        /// <returns>The <see cref="string"/> representation of the <see cref="object"/>.</returns>
         public static object ToString(object value)
         {
             return ToString(value.GetType())(value);
@@ -331,7 +347,7 @@ namespace Utilities.Converters
         /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="DateTime"/> representation.
         /// </summary>
         /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
-        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="DateTime"/> representation.</returns>
+        /// <returns>The <see cref="DateTime"/> representation of the <see cref="object"/> representation.</returns>
         public static object ToDateTime(object value)
         {
             return ToDateTime(value.GetType())(value);
@@ -381,7 +397,7 @@ namespace Utilities.Converters
         /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="DateTimeOffset"/> representation.
         /// </summary>
         /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
-        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="DateTimeOffset"/> representation.</returns>
+        /// <returns>The <see cref="DateTimeOffset"/> representation of the <see cref="object"/>.</returns>
         public static object ToDateTimeOffset(object value)
         {
             return ToDateTimeOffset(value.GetType())(value);
@@ -425,7 +441,7 @@ namespace Utilities.Converters
         /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="TimeSpan"/> representation.
         /// </summary>
         /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
-        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="TimeSpan"/> representation.</returns>
+        /// <returns>The <see cref="TimeSpan"/> representation of the <see cref="object"/>.</returns>
         public static object ToTimeSpan(object value)
         {
             return ToTimeSpan(value.GetType())(value);
@@ -471,7 +487,7 @@ namespace Utilities.Converters
         /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="char"/>[] representation.
         /// </summary>
         /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
-        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="char"/>[] representation.</returns>
+        /// <returns>The <see cref="char"/>[] representation of the <see cref="object"/>.</returns>
         public static object ToChars(object value)
         {
             return ToChars(value.GetType())(value);
@@ -510,7 +526,7 @@ namespace Utilities.Converters
         /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="byte"/>[] representation.
         /// </summary>
         /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
-        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="byte"/>[] representation.</returns>
+        /// <returns>The <see cref="byte"/>[] representation of the <see cref="object"/>.</returns>
         public static object ToBytes(object value)
         {
             return ToBytes(value.GetType())(value);
@@ -560,7 +576,7 @@ namespace Utilities.Converters
         /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="short"/> representation.
         /// </summary>
         /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
-        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="short"/> representation.</returns>
+        /// <returns>The <see cref="short"/> representation of the <see cref="object"/>.</returns>
         public static object ToInt16(object value)
         {
             return System.Convert.ToInt16(value);
@@ -587,7 +603,7 @@ namespace Utilities.Converters
         /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="int"/> representation.
         /// </summary>
         /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
-        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="int"/> representation.</returns>
+        /// <returns>The <see cref="int"/> representation of the <see cref="object"/>.</returns>
         public static object ToInt32(object value)
         {
             return ToInt32(value.GetType())(value);
@@ -626,7 +642,7 @@ namespace Utilities.Converters
         /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="long"/> representation.
         /// </summary>
         /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
-        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="long"/> representation.</returns>
+        /// <returns>The <see cref="long"/> representation of the <see cref="object"/>.</returns>
         public static object ToInt64(object value)
         {
             return System.Convert.ToInt64(value);
@@ -654,7 +670,7 @@ namespace Utilities.Converters
         /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="ushort"/> representation.
         /// </summary>
         /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
-        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="ushort"/> representation.</returns>
+        /// <returns>The <see cref="ushort"/> representation of the <see cref="object"/>.</returns>
         public static object ToUInt16(object value)
         {
             return System.Convert.ToUInt16(value);
@@ -682,7 +698,7 @@ namespace Utilities.Converters
         /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="uint"/> representation.
         /// </summary>
         /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
-        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="uint"/> representation.</returns>
+        /// <returns>The <see cref="uint"/> representation of the <see cref="object"/>.</returns>
         public static object ToUInt32(object value)
         {
             return System.Convert.ToUInt32(value);
@@ -710,7 +726,7 @@ namespace Utilities.Converters
         /// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="ulong"/> representation.
         /// </summary>
         /// <param name="value">An <see cref="object"/> that supplies the value to convert, or null.</param>
-        /// <returns>Converts the value of the specified <see cref="object"/> to its equivalent <see cref="ulong"/> representation.</returns>
+        /// <returns>The <see cref="ulong"/> representation of the <see cref="object"/>.</returns>
         public static object ToUInt64(object value)
         {
             return System.Convert.ToUInt64(value);
