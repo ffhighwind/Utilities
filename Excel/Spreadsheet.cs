@@ -396,6 +396,14 @@ namespace Utilities.Excel
             }
         }
 
+        public void UnFreezePanes()
+        {
+            for (int i = 0; i < Data.Workbook.Worksheets.Count; i++) {
+                ExcelWorksheet worksheet = Data.Workbook.Worksheets[i + (Data.Compatibility.IsWorksheets1Based ? 1 : 0)];
+                worksheet.View.UnFreezePanes();
+            }
+        }
+
         /// <summary>
         /// Properties of the <see cref="Spreadsheet"/>.
         /// </summary>
