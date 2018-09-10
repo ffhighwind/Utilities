@@ -67,6 +67,13 @@ namespace Utilities.Email
             return new EmailMessage(Service);
         }
 
+        public static void SendEmail(System.Net.Mail.MailMessage email, string host = null, int port = 0)
+        {
+            using (System.Net.Mail.SmtpClient client = new System.Net.Mail.SmtpClient(host, port)) {
+                client.Send(email);
+            }
+        }
+
         public IEnumerable<Item> FindItems(SearchFilter filter, WellKnownFolderName parentFolder = WellKnownFolderName.Root,
             FolderTraversal traversal = FolderTraversal.Shallow, string mailbox = null)
         {

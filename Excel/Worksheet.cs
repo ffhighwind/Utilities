@@ -4,6 +4,8 @@ using System.Data;
 using System.Globalization;
 using System.Linq;
 using OfficeOpenXml;
+using OfficeOpenXml.Table.PivotTable;
+using OfficeOpenXml.Drawing.Chart;
 
 namespace Utilities.Excel
 {
@@ -53,6 +55,37 @@ namespace Utilities.Excel
         public void FreezePanes(int rows, int cols)
         {
             Data.View.FreezePanes(rows + 1, cols + 1);
+        }
+
+        /// <summary>
+        /// Moves the <see cref="Worksheet"/> to the start of the <see cref="Spreadsheet"/>.
+        /// </summary>
+        public void MoveToStart()
+        {
+            Data.Workbook.Worksheets.MoveToStart(Data.Name);
+        }
+
+        /// <summary>
+        /// Moves the <see cref="Worksheet"/> to the end of the <see cref="Spreadsheet"/>.
+        /// </summary>
+        public void MoveToEnd()
+        {
+            Data.Workbook.Worksheets.MoveToEnd(Data.Name);
+        }
+
+        public void MoveAfter(string worksheetName)
+        {
+            Data.Workbook.Worksheets.MoveAfter(Data.Name, worksheetName);
+        }
+
+        public void MoveBefore(string worksheetName)
+        {
+            Data.Workbook.Worksheets.MoveBefore(Data.Name, worksheetName);
+        }
+
+        public void MoveBefore(int worksheet)
+        {
+            Data.Workbook.Worksheets.MoveBefore(Data.Index, worksheet);
         }
 
         /// <summary>

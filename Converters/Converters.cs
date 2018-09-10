@@ -87,11 +87,11 @@ namespace Utilities.Converters
         {
             PropertyInfo[] pinfos = typeof(Tout).GetProperties(flags);
             List<PropertyInfo> tmp = new List<PropertyInfo>(propertyNames.Count);
-            for (int i = 0; i < tmp.Count; i++) {
+            for (int i = 0; i < pinfos.Length; i++) {
                 PropertyInfo pinfo = pinfos.FirstOrDefault(pi => pi.Name == propertyNames[i]);
                 tmp.Add(pinfo);
             }
-            for (int i = tmp.Count - 1; i >= 0; i++) {
+            for (int i = tmp.Count - 1; i >= 0; i--) {
                 if (tmp[i] == null)
                     tmp.RemoveAt(i);
             }

@@ -132,11 +132,13 @@ namespace Utilities.Excel
         /// By default an empty <see cref="Worksheet"/> will be added to ensure that the file is valid.</param>
         public void Clear(bool removeAllSheets = false)
         {
-            for (int i = Data.Workbook.Worksheets.Count - 1; i >= 0; i--) {
+            for (int i = Data.Workbook.Worksheets.Count - 1; i > 0; i--) {
                 Data.Workbook.Worksheets.Delete(i + (Data.Compatibility.IsWorksheets1Based ? 1 : 0));
             }
-            if (!removeAllSheets)
-                Add();
+            if (removeAllSheets)
+                Data.Workbook.Worksheets.Delete(Data.Compatibility.IsWorksheets1Based ? 1 : 0);
+            else
+                Data.Workbook.Worksheets[Data.Compatibility.IsWorksheets1Based ? 1 : 0].Cells.Clear();
         }
 
         /// <summary>
@@ -396,12 +398,26 @@ namespace Utilities.Excel
             }
         }
 
+        /// <summary>
+        /// Unfreezes panes on every <see cref="Worksheet"/>.
+        /// </summary>
         public void UnFreezePanes()
         {
             for (int i = 0; i < Data.Workbook.Worksheets.Count; i++) {
                 ExcelWorksheet worksheet = Data.Workbook.Worksheets[i + (Data.Compatibility.IsWorksheets1Based ? 1 : 0)];
                 worksheet.View.UnFreezePanes();
             }
+        }
+
+
+        public PivotTable CreatePivotTable(Worksheet source, string name = "")
+        {
+            return new PivotTable(source, Add(), name);
+        }
+
+        public PivotTable CreatePivotTable(Worksheet source, Worksheet destination, string name = "")
+        {
+            return new PivotTable(source, destination, name);
         }
 
         /// <summary>
