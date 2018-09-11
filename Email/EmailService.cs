@@ -67,7 +67,7 @@ namespace Utilities.Email
             return new EmailMessage(Service);
         }
 
-        public static void SendEmail(System.Net.Mail.MailMessage email, string host = null, int port = 0)
+        public static void Send(System.Net.Mail.MailMessage email, string host = null, int port = 0)
         {
             using (System.Net.Mail.SmtpClient client = new System.Net.Mail.SmtpClient(host, port)) {
                 client.Send(email);

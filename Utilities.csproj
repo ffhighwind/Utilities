@@ -49,6 +49,7 @@
     </Compile>
     <Compile Include="Comparers\DataRowEqualityComparer.cs" />
     <Compile Include="DB.cs" />
+    <Compile Include="Email\Extensions.cs" />
     <Compile Include="Email\ItemClass.cs" />
     <Compile Include="Email\PropertySets.cs" />
     <Compile Include="Excel\DataFieldFunction.cs" />
