@@ -168,7 +168,7 @@ namespace Utilities
         }
 
         /// <summary>
-        /// Executes an SQL query.
+        /// Executes an SQL query asynchronously.
         /// </summary>
         /// <typeparam name="T">The type of object to return from the query.</typeparam>
         /// <param name="conn">The database connection.</param>
@@ -179,18 +179,10 @@ namespace Utilities
         /// <returns>The results from the query, or null on error.</returns>
         public static Task<IEnumerable<T>> QueryAsync<T>(SqlConnection conn, string cmd, object param = null, int timeoutSecs = 0, int maxRetries = 5)
         {
-            for (int i = 0; i < maxRetries; i++) {
-                try {
-                    return conn.QueryAsync<T>(cmd, param, null, timeoutSecs);
-                }
-                catch {
-                    if (i == maxRetries - 1)
-                        throw; // keeps StackTrace
-                }
-            }
-            throw new ArgumentOutOfRangeException("maxRetries: " + maxRetries);
+            return Task.Run(() => {
+                return Query<T>(conn, cmd, param, timeoutSecs, maxRetries);
+            });
         }
-
 
         /// <summary>
         /// Executes an SQL query.
@@ -220,6 +212,22 @@ namespace Utilities
         }
 
         /// <summary>
+        /// Executes an SQL query asynchronously.
+        /// </summary>
+        /// <param name="conn">The database connection.</param>
+        /// <param name="cmd">The command to execute.</param>
+        /// <param name="param">The parameters and values.</param>
+        /// <param name="timeoutSecs">The command timeout in seconds. A value of 0 means no timeout.</param>
+        /// <param name="maxRetries">The maximum number of attempts to retry the command on failure.</param>
+        /// <returns>The results from the query, or null on error.</returns>
+        public static Task<DataTable> QueryAsync(SqlConnection conn, string cmd, object param = null, int timeoutSecs = 0, int maxRetries = 5)
+        {
+            return Task.Run(() => {
+                return Query(conn, cmd, param, timeoutSecs, maxRetries);
+            });
+        }
+
+        /// <summary>
         /// Executes an SQL command.
         /// </summary>
         /// <param name="conn">The database connection.</param>
@@ -245,6 +253,22 @@ namespace Utilities
                 }
             }
             throw new ArgumentOutOfRangeException("maxRetries: " + maxRetries);
+        }
+
+        /// <summary>
+        /// Executes an SQL command asynchronously.
+        /// </summary>
+        /// <param name="conn">The database connection.</param>
+        /// <param name="cmd">The command to execute.</param>
+        /// <param name="param">The parameters and values.</param>
+        /// <param name="timeoutSecs">The command timeout in seconds. A value of 0 means no timeout.</param>
+        /// <param name="maxRetries">The maximum number of attempts to retry the command on failure.</param>
+        /// <returns>The number of rows affected, or -1 on error.</returns>
+        public static Task<int> ExecuteAsync(SqlConnection conn, string cmd, object param = null, int timeoutSecs = 0, int maxRetries = 5)
+        {
+            return Task.Run(() => {
+                return Execute(conn, cmd, param, timeoutSecs, maxRetries);
+            });
         }
 
         /// <summary>
@@ -386,18 +410,6 @@ namespace Utilities
             if (mappings.Length == 0)
                 mappings = CreateMappings(table);
             BulkUpsert(conn, table.TableName, (bc) => bc.WriteToServer(table), timeoutSecs, update, mappings);
-        }
-
-        /// <summary>
-        /// Validates an identifier such as a table name. If the identifier is invalid then an exception is thrown.
-        /// </summary>
-        /// <param name="identifier">The identifier to validate.</param>
-        public static void ValidateIdentifier(string identifier)
-        {
-            for (int i = 0; i < identifier.Length; i++) {
-                if (identifier[i] == ';')
-                    throw new FormatException("Invalid SQL identifier: " + identifier);
-            }
         }
 
         /// <summary>

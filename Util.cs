@@ -346,47 +346,33 @@ namespace Utilities
         /// <returns>The result of the string being parsed.</returns>
         public static object Parse(string str)
         {
-            if (str == null || str.Length == 0)
+            if (str == null)
                 return null;
             string str2 = str.Trim();
+            if (str2.Length == 0)
+                return str;
 
             char c = str2[0];
             if (char.IsDigit(c) || c == '-') {
-                for (int i = 1; i < str2.Length; i++) {
-                    c = str2[i];
-                    if (char.IsDigit(c))
-                        continue;
-                    else if (c == '.') {
-                        if (double.TryParse(str2, out double d))
-                            return d;
-                        if (TimeSpan.TryParse(str2, out TimeSpan ts))
-                            return ts;
-                    }
-                    else if (c == '/' || c == '-' || c == ',') {
-                        if (DateTime.TryParse(str2, out DateTime table))
-                            return table;
-                    }
-                    else if (c == ':') {
-                        if (TimeSpan.TryParse(str2, out TimeSpan ts))
-                            return ts;
-                        else if (DateTime.TryParse(str2, out DateTime table))
-                            return table;
-                    }
-                    return str;
+                if (str2.Length <= 19 && long.TryParse(str2, out long lval))
+                    return lval;
+                else if (str.Length <= 29) {
+                    if (decimal.TryParse(str2, out decimal dec))
+                        return dec;
                 }
-                if (long.TryParse(str2, out long ival))
-                    return ival;
+                else if (double.TryParse(str2, out double doub))
+                    return doub;
+                if (TimeSpan.TryParse(str2, out TimeSpan ts))
+                    return ts;
             }
-            else if (DateTime.TryParse(str2, out DateTime table))
-                return table;
-            else {
-                if (str2.Equals("false", StringComparison.OrdinalIgnoreCase))
-                    return false;
-                else if (str2.Equals("true", StringComparison.OrdinalIgnoreCase))
-                    return true;
-                else if (str2.Equals("null", StringComparison.OrdinalIgnoreCase))
-                    return null;
-            }
+            else if (str2.Equals("false", StringComparison.OrdinalIgnoreCase))
+                return false;
+            else if (str2.Equals("true", StringComparison.OrdinalIgnoreCase))
+                return true;
+            else if (str2.Equals("null", StringComparison.OrdinalIgnoreCase))
+                return null;
+            if (DateTime.TryParse(str2, out DateTime dt))
+                return dt;
             return str;
         }
 
@@ -402,18 +388,18 @@ namespace Utilities
         /// <summary>
         /// Tries to cast an object to a specific <see cref="Type"/>.
         /// </summary>
-        /// <typeparam name="Ty">The <see cref="Type"/> to cast the object to.</typeparam>
+        /// <typeparam name="T">The <see cref="Type"/> to cast the object to.</typeparam>
         /// <param name="obj">The object to cast.</param>
         /// <param name="result">The resulting object from the cast.</param>
         /// <returns>True if the cast was successful; or false otherwise.</returns>
-        public static bool TryCast<Ty>(object obj, out Ty result)
+        public static bool TryCast<T>(object obj, out T result)
         {
-            if (obj is Ty) {
-                result = (Ty) obj;
+            if (obj is T) {
+                result = (T) obj;
                 return true;
             }
             else {
-                result = default(Ty);
+                result = default(T);
                 return false;
             }
         }

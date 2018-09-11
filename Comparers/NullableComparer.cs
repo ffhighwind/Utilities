@@ -3,7 +3,7 @@ using System.Collections;
 
 namespace Utilities.Comparers
 {
-    public class NullableComparer<Ty> : IComparer where Ty : class, IComparable
+    public class NullableComparer<T> : IComparer where T : class, IComparable
     {
         int IComparer.Compare(object x, object y)
         {
@@ -14,7 +14,7 @@ namespace Utilities.Comparers
             }
             else if (y == null)
                 return 1;
-            return ((Ty) x).CompareTo((Ty) y);
+            return ((T) x).CompareTo((T) y);
         }
     }
 }

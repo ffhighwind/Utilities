@@ -173,7 +173,7 @@ namespace Utilities.Comparers
             return x.CompareTo(y);
         }
 
-        public static int Compare<Ty>(Ty x, Ty y) where Ty : IComparable<Ty>
+        public static int Compare<T>(T x, T y) where T : IComparable<T>
         {
             return x.CompareTo(y);
         }

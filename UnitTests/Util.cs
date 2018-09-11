@@ -1,6 +1,5 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Utilities;
 
 namespace Utilities.UnitTests
 {
@@ -10,22 +9,18 @@ namespace Utilities.UnitTests
         [TestMethod]
         public void Parse()
         {
-            if (!Util.Parse("500").Equals(500))
+            if ((long) Util.Parse("500") != 500)
                 throw new Exception();
-            if (Util.Parse("5001").Equals(5000))
+            if ((long) Util.Parse("5001") == 5000)
                 throw new Exception();
-            if (!Util.Parse("500.0").Equals(500.0))
+            if (!Util.Parse("500.0").Equals(500.0m))
                 throw new Exception();
-            if (!Util.Parse("-500.00001").Equals(-500.00001))
+            if (!Util.Parse("-500.00001").Equals(-500.00001m))
                 throw new Exception();
             if (Util.Parse("-500.00001").Equals(400.00001))
                 throw new Exception();
-
             if (!Util.Parse("-0string blah").Equals("-0string blah"))
                 throw new Exception();
-            if (!Util.Parse("-0string blah").Equals("-0string blah"))
-                throw new Exception();
-
             if (!Util.Parse("6/5/2018").Equals(new DateTime(2018, 6, 5)))
                 throw new Exception();
             if (!Util.Parse("6/5/2018 6:33:15 PM").Equals(new DateTime(2018, 6, 5, 6 + 12, 33, 15)))
@@ -39,10 +34,7 @@ namespace Utilities.UnitTests
                 throw new Exception();
             if (!Util.Parse("TRue").Equals(true))
                 throw new Exception();
-
-            unchecked {
-                long x = Convert.ToInt64(ulong.MaxValue);
-            }
+            ulong x = (ulong) Utilities.Converters.Converters.ChangeType(long.MaxValue, typeof(ulong));
         }
     }
 }
