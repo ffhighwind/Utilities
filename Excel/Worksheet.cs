@@ -4,8 +4,6 @@ using System.Data;
 using System.Globalization;
 using System.Linq;
 using OfficeOpenXml;
-using OfficeOpenXml.Table.PivotTable;
-using OfficeOpenXml.Drawing.Chart;
 
 namespace Utilities.Excel
 {
@@ -812,9 +810,13 @@ namespace Utilities.Excel
                     }
                     return str;
                 }
-                if (long.TryParse(str2, out long ival)) {
+                if (str2.Length < 19 && long.TryParse(str2, out long ival)) {
                     cell.Style.Numberformat.Format = "0";
                     return ival;
+                }
+                else if (double.TryParse(str2, out double dval)) {
+                    cell.Style.Numberformat.Format = "0";
+                    return dval;
                 }
             }
             else if (CurrencySymbols.Contains(c)) {

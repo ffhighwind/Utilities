@@ -1,6 +1,5 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Utilities;
 
 namespace Utilities.UnitTests
 {
@@ -10,11 +9,11 @@ namespace Utilities.UnitTests
         [TestMethod]
         public void Parse()
         {
-            if (!Util.Parse("500").Equals(500))
+            if ((long) Util.Parse("500") != 500)
                 throw new Exception();
-            if (Util.Parse("5001").Equals(5000))
+            if ((long) Util.Parse("5001") == 5000)
                 throw new Exception();
-            if (!Util.Parse("500.0").Equals(500.0))
+            if ((double) Util.Parse("500.0") != 500.0)
                 throw new Exception();
             if (!Util.Parse("-500.00001").Equals(-500.00001))
                 throw new Exception();
@@ -39,10 +38,7 @@ namespace Utilities.UnitTests
                 throw new Exception();
             if (!Util.Parse("TRue").Equals(true))
                 throw new Exception();
-
-            unchecked {
-                long x = Convert.ToInt64(ulong.MaxValue);
-            }
+            ulong x = Convert.ToUInt64(long.MaxValue);
         }
     }
 }

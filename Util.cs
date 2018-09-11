@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Reflection;
 using System.Text;
 using Newtonsoft.Json;
@@ -374,8 +375,12 @@ namespace Utilities
                     }
                     return str;
                 }
-                if (long.TryParse(str2, out long ival))
-                    return ival;
+                if (str2.Length < 19 && long.TryParse(str2, out long lval)) //9,223,372,036,854,775,807
+                    return lval;
+                else if (str.Length <= 50 && System.Numerics.BigInteger.TryParse(str2, out BigInteger bigval))
+                    return bigval;
+                else if (double.TryParse(str2, out double dval))
+                    return dval;
             }
             else if (DateTime.TryParse(str2, out DateTime table))
                 return table;
