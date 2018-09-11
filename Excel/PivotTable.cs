@@ -17,14 +17,14 @@ namespace Utilities.Excel
     {
         public ExcelPivotTable Data { get; private set; } = null;
 
-        public PivotTable(Worksheet source, Worksheet destination, string name = "Pivot")
+        public PivotTable(Worksheet source, Worksheet destination, string name = " ")
         : this(source.Data.Cells[source.Data.Dimension.Address], destination, name) { }
 
-        public PivotTable(ExcelRangeBase source, Worksheet destination, string name = "aPivotTable")
+        public PivotTable(ExcelRangeBase source, Worksheet destination, string name = " ")
         {
             Data = destination.Data.PivotTables.Add(destination.Data.Cells["B2"], source, name);
             Data.ShowHeaders = true;
-            Data.RowHeaderCaption = "Pivot";
+            Data.RowHeaderCaption = name;
             Data.UseAutoFormatting = true;
             Data.ApplyWidthHeightFormats = true;
             Data.ShowDrill = true;
