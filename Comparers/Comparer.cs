@@ -3,11 +3,11 @@ using System.Collections;
 
 namespace Utilities.Comparers
 {
-    public class Comparer<Ty> : IComparer where Ty : struct, IComparable
+    public class Comparer<T> : IComparer where T : struct, IComparable
     {
         int IComparer.Compare(object x, object y)
         {
-            return ((Ty) x).CompareTo((Ty) y);
+            return ((T) x).CompareTo((T) y);
         }
     }
 }

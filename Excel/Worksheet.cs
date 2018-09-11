@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Globalization;
 using System.Linq;
 using OfficeOpenXml;
 
@@ -754,105 +753,66 @@ namespace Utilities.Excel
             char c = str2[0];
             if (char.IsDigit(c) || c == '-') {
                 char last = str2.Last();
-                if (last == '%') {
-                    if (TryParseNumber(str2.Substring(0, str2.Length - 1), out decimal d)) {
-                        cell.Style.Numberformat.Format = "0.00%";
-                        return d / 100m;
+                if (last == '%' || CurrencySymbols.Contains(last)) {
+                    str2 = str2.Substring(0, str.Length - 1);
+                    if (str2.Length <= 29) {
+                        if (decimal.TryParse(str2, out decimal dec)) {
+                            cell.Style.Numberformat.Format = "0.00" + last;
+                            return dec / 100m;
+                        }
                     }
-                    return str;
-                }
-                if (CurrencySymbols.Contains(last)) {
-                    if (TryParseNumber(str2.Substring(0, str2.Length - 1), out decimal d)) {
+                    else if (double.TryParse(str2, out double doub)) {
                         cell.Style.Numberformat.Format = "0.00" + last;
-                        return d;
+                        return doub / 100.0;
                     }
                     return str;
                 }
-                for (int i = 1; i < str2.Length; i++) {
-                    c = str2[i];
-                    if (char.IsDigit(c))
-                        continue;
-                    else if (c == '.') {
-                        if (TimeSpan.TryParse(str2, out TimeSpan ts)) {
-                            cell.Style.Numberformat.Format = "h:mm:ss";
-                            return ts;
-                        }
-                        if (TryParseNumber(str2, out decimal d)) {
-                            cell.Style.Numberformat.Format = "0.0#";
-                            return d;
-                        }
-                    }
-                    else if (c == '/' || c == '-') {
-                        if (DateTime.TryParse(str2, out DateTime dt)) {
-                            cell.Style.Numberformat.Format = "M/d/yyyy H:mm:ss AM/PM";
-                            return dt;
-                        }
-                    }
-                    else if (c == ':') {
-                        if (TimeSpan.TryParse(str2, out TimeSpan ts)) {
-                            cell.Style.Numberformat.Format = "h:mm:ss";
-                            return ts;
-                        }
-                        if (DateTime.TryParse(str2, out DateTime dt)) {
-                            cell.Style.Numberformat.Format = "M/d/yyyy H:mm:ss AM/PM";
-                            return dt;
-                        }
-                    }
-                    else if (c == '/') {
-                        if (DateTime.TryParse(str2, out DateTime dt)) {
-                            cell.Style.Numberformat.Format = "M/d/yyyy H:mm:ss AM/PM";
-                            return dt;
-                        }
-                        if (TryParseFraction(str2, out decimal d)) {
-                            cell.Style.Numberformat.Format = "#/#########################";
-                            return d;
-                        }
-                    }
-                    return str;
-                }
-                if (str2.Length < 19 && long.TryParse(str2, out long ival)) {
+                if (str2.Length <= 19 && long.TryParse(str2, out long lval)) {
                     cell.Style.Numberformat.Format = "0";
-                    return ival;
+                    return lval;
                 }
-                else if (double.TryParse(str2, out double dval)) {
-                    cell.Style.Numberformat.Format = "0";
-                    return dval;
-                }
-            }
-            else if (CurrencySymbols.Contains(c)) {
-                if (TryParseNumber(str2.Substring(1), out decimal d)) {
-                    cell.Style.Numberformat.Format = c + "0.00";
+                else if (str2.Length <= 29 && decimal.TryParse(str2, out decimal d)) {
+                    cell.Style.Numberformat.Format = "0.0#####";
                     return d;
                 }
+                else if (double.TryParse(str2, out double doub)) {
+                    cell.Style.Numberformat.Format = "0.0#####";
+                    return doub;
+                }
+                else if (TryParseFraction(str2, out d)) {
+                    cell.Style.Numberformat.Format = "#/######";
+                    return d;
+                }
+                else if (TimeSpan.TryParse(str2, out TimeSpan ts)) {
+                    cell.Style.Numberformat.Format = "h:mm:ss";
+                    return ts;
+                }
             }
-            else if (DateTime.TryParse(str2, out DateTime dt)) {
-                cell.Style.Numberformat.Format = "M-d-yyyy H:mm:ss AM/PM";
+            else if (str2.Equals("false", StringComparison.OrdinalIgnoreCase))
+                return false;
+            else if (str2.Equals("true", StringComparison.OrdinalIgnoreCase))
+                return true;
+            else if (str2.Equals("null", StringComparison.OrdinalIgnoreCase))
+                return null;
+            else if (CurrencySymbols.Contains(c)) {
+                str2 = str2.Substring(1);
+                if (str2.Length <= 29) {
+                    if (decimal.TryParse(str2, out decimal dec)) {
+                        cell.Style.Numberformat.Format = c + "0.00";
+                        return dec;
+                    }
+                }
+                else if (double.TryParse(str2, out double doub)) {
+                    cell.Style.Numberformat.Format = c + "0.00";
+                    return doub;
+                }
+                return str;
+            }
+            if (DateTime.TryParse(str2, out DateTime dt)) {
+                cell.Style.Numberformat.Format = "M/d/yyyy H:mm:ss AM/PM";
                 return dt;
             }
-            else {
-                if (str2.Equals("false", StringComparison.OrdinalIgnoreCase))
-                    return false;
-                else if (str2.Equals("true", StringComparison.OrdinalIgnoreCase))
-                    return true;
-                else if (str2.Equals("null", StringComparison.OrdinalIgnoreCase))
-                    return null;
-            }
             return str;
-        }
-
-        private static readonly NumberStyles style = NumberStyles.Number | NumberStyles.AllowCurrencySymbol;
-        private static readonly CultureInfo culture = new CultureInfo("en-US");
-
-        public static bool TryParseNumber(string str, out decimal d)
-        {
-            try {
-                d = decimal.Parse(str, style, culture);
-                return true;
-            }
-            catch { // ignore
-            }
-            d = 0;
-            return false;
         }
 
         private static bool TryParseFraction(string str, out decimal d)
