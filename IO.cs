@@ -964,6 +964,8 @@ namespace Utilities
         /// <returns>The Enumerable rows in the file.</returns>
         public static IEnumerable<string[]> XlsxForeach(string path, string sheetName = null, bool includeHeaders = true)
         {
+            if (!File.Exists(path))
+                throw new IOException("File does not exist: " + path);
             using (Spreadsheet ss = new Spreadsheet(path)) {
                 Worksheet worksheet = sheetName == null ? ss[0] : ss[sheetName];
                 IEnumerable<string[]> rows = worksheet.AsEnumerable();
@@ -987,6 +989,8 @@ namespace Utilities
         /// <returns>The Enumerable rows in the file.</returns>
         public static IEnumerable<T> XlsxForeach<T>(string path, string sheetName = null, bool hasHeaders = true) where T : class, new()
         {
+            if (!File.Exists(path))
+                throw new IOException("File does not exist: " + path);
             using (Spreadsheet ss = new Spreadsheet(path)) {
                 Worksheet worksheet = sheetName == null ? ss[0] : ss[sheetName];
                 foreach (T obj in worksheet.AsEnumerable<T>(hasHeaders)) {
@@ -1008,6 +1012,8 @@ namespace Utilities
         /// <returns>The Enumerable rows in the file.</returns>
         public static IEnumerable<T> XlsxForeach<T>(string path, Func<string[], T> constructor, string sheetName = null, bool hasHeaders = true)
         {
+            if (!File.Exists(path))
+                throw new IOException("File does not exist: " + path);
             using (Spreadsheet ss = new Spreadsheet(path)) {
                 Worksheet worksheet = sheetName == null ? ss[0] : ss[sheetName];
                 IEnumerable<string[]> rows = worksheet.AsEnumerable();
@@ -1048,6 +1054,8 @@ namespace Utilities
         /// <returns>A Collection with data from the file.</returns>
         public static ICollection<T> ReadXlsx<T>(this ICollection<T> list, string path, string sheetName = null, bool includeHeaders = true) where T : class, new()
         {
+            if (!File.Exists(path))
+                throw new IOException("File does not exist: " + path);
             using (Spreadsheet ss = new Spreadsheet(path)) {
                 if (!ss.IsOpen)
                     throw new IOException(path);
@@ -1064,6 +1072,8 @@ namespace Utilities
         /// <returns>A DataSet with data from the file.</returns>
         public static DataSet ReadXlsx(this DataSet dataset, string path, bool hasHeaders = true)
         {
+            if (!File.Exists(path))
+                throw new IOException("File does not exist: " + path);
             using (Spreadsheet ss = new Spreadsheet(path)) {
                 if (!ss.IsOpen)
                     throw new IOException(path);
@@ -1082,6 +1092,8 @@ namespace Utilities
         /// <returns>A DataTable with data from the file.</returns>
         public static DataTable ReadXlsx(this DataTable table, string path, string sheetName = null, bool hasHeaders = true)
         {
+            if (!File.Exists(path))
+                throw new IOException("File does not exist: " + path);
             using (Spreadsheet ss = new Spreadsheet(path)) {
                 if (!ss.IsOpen)
                     throw new IOException(path);
