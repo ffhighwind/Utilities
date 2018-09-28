@@ -688,7 +688,6 @@ namespace Utilities.Excel
         /// <returns>An <see cref="IEnumerable{T}"/> of objects representing the rows in the <see cref="Worksheet"/>.</returns>
         public IEnumerable<T> AsEnumerable<T>(bool hasHeaders = true) where T : class, new()
         {
-            List<string> list = Data.Cells[1, 1, 1, Columns].Select(cell => cell.Value?.ToString()).ToList();
             Func<string[], T> converter = hasHeaders
                 ? Converters.Converters.ListToObject<string, T>(Data.Cells[1, 1, 1, Columns].Select(cell => cell.Value?.ToString()).ToList())
                 : Converters.Converters.ListToObject<string, T>();

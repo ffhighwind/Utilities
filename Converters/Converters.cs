@@ -89,11 +89,15 @@ namespace Utilities.Converters
             List<PropertyInfo> tmp = new List<PropertyInfo>(propertyNames.Count);
             for (int i = 0; i < propertyNames.Count; i++) {
                 PropertyInfo pinfo = pinfos.FirstOrDefault(pi => pi.Name == propertyNames[i]);
+                if (pinfo == null) {
+                    pinfo = pinfos.FirstOrDefault(pi => pi.Name.Equals(propertyNames[i], StringComparison.OrdinalIgnoreCase));
+                }
                 tmp.Add(pinfo);
             }
             for (int i = tmp.Count - 1; i >= 0; i--) {
-                if (tmp[i] == null)
+                if (tmp[i] == null) {
                     tmp.RemoveAt(i);
+                }
             }
             return CreateListToObject<Tin, Tout>(tmp);
         }
