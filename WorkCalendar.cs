@@ -9,7 +9,15 @@ namespace Utilities
     /// </summary>
     public static class WorkCalendar
     {
+        /// <summary>
+        /// Start of the work week
+        /// </summary>
         private const DayOfWeek Monday = DayOfWeek.Monday;
+
+        public static int Quarter(int month)
+        {
+            return ((month - 1) / 3) + 1;
+        }
 
         /// <summary>
         /// Gets the number of weeks in a given month/year. This is always 4 or 5.

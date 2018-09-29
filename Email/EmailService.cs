@@ -111,7 +111,8 @@ namespace Utilities.Email
             return folder;
         }
 
-        public Folder CreateFolder(string folderName, WellKnownFolderName parentFolder = WellKnownFolderName.MsgFolderRoot, string mailbox = null)
+        public Folder CreateFolder(string folderName, WellKnownFolderName parentFolder = WellKnownFolderName.MsgFolderRoot,
+            string mailbox = null)
         {
             FolderId folderId = mailbox == null ? new FolderId(parentFolder) : new FolderId(parentFolder, mailbox);
             return CreateFolder(folderName, folderId);

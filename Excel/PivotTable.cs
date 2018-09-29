@@ -25,6 +25,7 @@ namespace Utilities.Excel
             Data.FirstDataCol = 1;
             Data.FirstDataRow = 2;
             Data.DataOnRows = false;
+            Data.DataCaption = " ";
 
             Data.TableStyle = OfficeOpenXml.Table.TableStyles.Medium9;
 

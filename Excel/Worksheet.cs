@@ -604,6 +604,17 @@ namespace Utilities.Excel
                 for (int col = 1; col <= maxCol; col++) {
                     Type ty = ColumnType(col);
                     string header = hasHeaders ? Data.Cells[1, col].Value?.ToString() : "Column" + col;
+                    if (header == null)
+                        header = new string(' ', col);
+                    if (table.Columns.Contains(header)) {
+                        int index = 1;
+                        if (header == "Column" + col)
+                            header = "Column";
+                        while(table.Columns.Contains(header + index)) {
+                            index++;
+                        }
+                        header = header + index;
+                    }
                     table.Columns.Add(header ?? new string(' ', col), ty);
                 }
             }

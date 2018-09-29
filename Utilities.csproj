@@ -40,6 +40,10 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ActiveDirectory\ActiveDirectory.cs" />
+    <Compile Include="ActiveDirectory\ADConstants.cs" />
+    <Compile Include="ActiveDirectory\ADProperties.cs" />
+    <Compile Include="ActiveDirectory\ADUser.cs" />
     <Compile Include="Comparers\Comparer.cs" />
     <Compile Include="Comparers\Comparers.cs" />
     <Compile Include="Comparers\NullableComparer.cs" />
@@ -105,6 +109,8 @@
     <Reference Include="System.configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.DirectoryServices" />
+    <Reference Include="System.DirectoryServices.AccountManagement" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.Security" />
