@@ -165,8 +165,9 @@ namespace Utilities.Excel
             if (!list.Any())
                 return;
             List<Type> types = new List<Type>();
-            foreach (object obj in list) {
-                types.Add(obj.GetType());
+            object[] first = list.First();
+            for (int i = 0; i < first.Length; i++) {
+                types.Add(first[i]?.GetType() ?? typeof(string));
             }
             FixColumnTypes(types);
         }
@@ -610,7 +611,7 @@ namespace Utilities.Excel
                         int index = 1;
                         if (header == "Column" + col)
                             header = "Column";
-                        while(table.Columns.Contains(header + index)) {
+                        while (table.Columns.Contains(header + index)) {
                             index++;
                         }
                         header = header + index;
