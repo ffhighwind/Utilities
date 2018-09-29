@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{236D1929-AADA-47EC-9450-D353852C7153}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Utilities</RootNamespace>
     <AssemblyName>Utilities</AssemblyName>
@@ -44,7 +44,6 @@
     <Compile Include="ActiveDirectory\ADConstants.cs" />
     <Compile Include="ActiveDirectory\ADProperties.cs" />
     <Compile Include="ActiveDirectory\ADUser.cs" />
-    <Compile Include="Class1.cs" />
     <Compile Include="Comparers\Comparer.cs" />
     <Compile Include="Comparers\Comparers.cs" />
     <Compile Include="Comparers\NullableComparer.cs" />
