@@ -34,7 +34,7 @@ namespace Utilities.UnitTests
                 throw new Exception();
             if (!Util.Parse("TRue").Equals(true))
                 throw new Exception();
-            ulong x = (ulong) Utilities.Converters.Convert.ChangeType(long.MaxValue, typeof(ulong));
+            ulong x = (ulong) Utilities.Converters.Converters.ChangeType(long.MaxValue, typeof(ulong));
         }
     }
 }

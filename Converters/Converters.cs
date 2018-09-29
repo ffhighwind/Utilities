@@ -8,7 +8,7 @@ using System.Text;
 
 namespace Utilities.Converters
 {
-    public static class Convert
+    public static class Converters
     {
         /// <summary>
         /// The default <see cref="Encoding"/> from <see cref="byte"/>[] to <see cref="char"/> and <see cref="string"/>.
@@ -179,7 +179,7 @@ namespace Utilities.Converters
         {
             object converter(object value)
             {
-                return Convert.ChangeType(value, output);
+                return Converters.ChangeType(value, output);
             }
             return converter;
         }
@@ -199,29 +199,29 @@ namespace Utilities.Converters
                 case TypeCode.Boolean:
                     return ToBoolean(value);
                 case TypeCode.Char:
-                    return Convert.ToChar(value);
+                    return Converters.ToChar(value);
                 case TypeCode.SByte:
-                    return Convert.ToSByte(value);
+                    return Converters.ToSByte(value);
                 case TypeCode.Byte:
-                    return Convert.ToByte(value);
+                    return Converters.ToByte(value);
                 case TypeCode.Int16:
-                    return Convert.ToInt16(value);
+                    return Converters.ToInt16(value);
                 case TypeCode.UInt16:
-                    return Convert.ToUInt16(value);
+                    return Converters.ToUInt16(value);
                 case TypeCode.Int32:
-                    return Convert.ToInt32(value);
+                    return Converters.ToInt32(value);
                 case TypeCode.UInt32:
-                    return Convert.ToUInt32(value);
+                    return Converters.ToUInt32(value);
                 case TypeCode.Int64:
-                    return Convert.ToInt64(value);
+                    return Converters.ToInt64(value);
                 case TypeCode.UInt64:
-                    return Convert.ToUInt64(value);
+                    return Converters.ToUInt64(value);
                 case TypeCode.Single:
-                    return Convert.ToSingle(value);
+                    return Converters.ToSingle(value);
                 case TypeCode.Double:
-                    return Convert.ToDouble(value);
+                    return Converters.ToDouble(value);
                 case TypeCode.Decimal:
-                    return Convert.ToDecimal(value);
+                    return Converters.ToDecimal(value);
                 case TypeCode.DateTime:
                     return ToDateTime(value);
                 case TypeCode.String:

@@ -48,9 +48,6 @@ namespace Utilities
             proc.RedirectStandardError = redirectOutput;
             proc.FileName = path;
             proc.Arguments = args;
-            ////proc.FileName = @"C:\Windows\System32\cmd.exe";
-            ////proc.Arguments = "/C " + command; // /C terminates the process when it's done executing the command
-            ////proc.WorkingDirectory = Directory.GetCurrentDirectory();
             return Process.Start(proc);
         }
 
@@ -71,7 +68,7 @@ namespace Utilities
                 };
                 if (process.Start())
                     process.WaitForExit(); // sleep calling process thread until evoked process exit
-                System.Environment.Exit(process.ExitCode);
+                Environment.Exit(process.ExitCode);
             }
         }
 

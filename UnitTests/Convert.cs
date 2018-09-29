@@ -33,10 +33,10 @@ namespace Utilities.UnitTests
                 UnitsSold = 2.6m,
                 Year = 2017
             };
-            Test6 test6 = Converters.Convert.ObjectToObject<Test16, Test6>()(test16);
-            Test16S test16s = Converters.Convert.ObjectToObject<Test16, Test16S>()(test16);
-            Test16 test16from6 = Converters.Convert.ObjectToObject<Test6, Test16>()(test6);
-            Test16 test16from16s = Converters.Convert.ObjectToObject<Test16S, Test16>()(test16s);
+            Test6 test6 = Converters.Converters.ObjectToObject<Test16, Test6>()(test16);
+            Test16S test16s = Converters.Converters.ObjectToObject<Test16, Test16S>()(test16);
+            Test16 test16from6 = Converters.Converters.ObjectToObject<Test6, Test16>()(test6);
+            Test16 test16from16s = Converters.Converters.ObjectToObject<Test16S, Test16>()(test16s);
             TestEquality(test6, test16);
             TestEquality(test16, test6);
             TestEquality(test16, test16s);
@@ -56,8 +56,8 @@ namespace Utilities.UnitTests
                 object val1 = pinfo1.GetValue(o1);
                 object val2 = pinfo2.GetValue(o2);
                 if (val1 != val2 && val1.ToString() != val2.ToString()) {
-                    object val1to2 = Converters.Convert.ChangeType(val1, pinfo2.PropertyType);
-                    object val2to1 = Converters.Convert.ChangeType(val2, pinfo1.PropertyType);
+                    object val1to2 = Converters.Converters.ChangeType(val1, pinfo2.PropertyType);
+                    object val2to1 = Converters.Converters.ChangeType(val2, pinfo1.PropertyType);
                     if (!val1to2.Equals(val2) && !val2to1.Equals(val1)) {
                         throw new InvalidOperationException();
                     }
@@ -132,14 +132,14 @@ namespace Utilities.UnitTests
                 "BAD DATA 2",
             };
 
-            Test16 test16 = Converters.Convert.ListToObject<object, Test16>(names)(values);
-            Test16 test16B = Converters.Convert.ListToObject<string, Test16>(names)(valuesStr);
+            Test16 test16 = Converters.Converters.ListToObject<object, Test16>(names)(values);
+            Test16 test16B = Converters.Converters.ListToObject<string, Test16>(names)(valuesStr);
 
-            Test16S test16s = Converters.Convert.ListToObject<object, Test16S>(names)(values);
-            Test16S test16sB = Converters.Convert.ListToObject<string, Test16S>(names)(valuesStr);
+            Test16S test16s = Converters.Converters.ListToObject<object, Test16S>(names)(values);
+            Test16S test16sB = Converters.Converters.ListToObject<string, Test16S>(names)(valuesStr);
 
-            Test6 test6 = Converters.Convert.ListToObject<object, Test6>(names)(values);
-            Test6 test6B = Converters.Convert.ListToObject<string, Test6>(names)(valuesStr);
+            Test6 test6 = Converters.Converters.ListToObject<object, Test6>(names)(values);
+            Test6 test6B = Converters.Converters.ListToObject<string, Test6>(names)(valuesStr);
         }
     }
 }

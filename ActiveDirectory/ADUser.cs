@@ -124,7 +124,7 @@ namespace Utilities.ActiveDirectory
 
         public string DSCorePropagationData => this["dSCorePropagationData"]?.ToString();
 
-        public string lastLogonTimestamp => this["lastLogonTimestamp"]?.ToString();
+        public string LastLogonTimestamp => this["lastLogonTimestamp"]?.ToString();
 
         public string EmailAddress => this["mail"]?.ToString();
 

@@ -7,7 +7,7 @@ different types, process generation, security, and localization.
 # Installation:
 
 This project requires [Visual Studio](https://visualstudio.microsoft.com/) to compile.
-Once installed to install the reqiured NuGet packages. Right click on "Utilities" in the
+Once installed to install the required NuGet packages. Right click on "Utilities" in the
 Solution Explorer and select "Manage NuGet Packages...". From here Visual Studio will
 prompt you to install the missing packages.
 

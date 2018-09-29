@@ -42,7 +42,7 @@ namespace Utilities.Comparers
                     Comparer = DefaultCompareFunc;
                 }
                 else {
-                    Converter = Converters.Convert.GetConverter(value)(typeof(string));
+                    Converter = Converters.Converters.GetConverter(value)(typeof(string));
                     Comparer = ConvertedComparer;
                 }
             }

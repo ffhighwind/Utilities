@@ -8,6 +8,7 @@ namespace Utilities.Email
     /// <summary>
     /// EWS Managed API Documentation:
     /// https://docs.microsoft.com/en-us/previous-versions/office/developer/exchange-server-2010/dd633710(v=exchg.80)
+    /// https://docs.microsoft.com/en-us/exchange/client-developer/exchange-server-development
     /// </summary>
     public class EmailService
     {
@@ -73,9 +74,16 @@ namespace Utilities.Email
             return new EmailMessage(Service);
         }
 
-        public static void Send(System.Net.Mail.MailMessage email, string host = null, int port = 0)
+        public static void Send(System.Net.Mail.MailMessage email, string host, int port = 0)
         {
             using (System.Net.Mail.SmtpClient client = new System.Net.Mail.SmtpClient(host, port)) {
+                client.Send(email);
+            }
+        }
+
+        public void Send(System.Net.Mail.MailMessage email, int port = 0)
+        {
+            using (System.Net.Mail.SmtpClient client = new System.Net.Mail.SmtpClient(Service.Url.AbsolutePath, port)) {
                 client.Send(email);
             }
         }
@@ -265,8 +273,9 @@ namespace Utilities.Email
             if (results.TotalCount > 0) {
                 do {
                     foreach (Item email in results) {
-                        if (email is EmailMessage emailMsg)
+                        if (email is EmailMessage emailMsg) {
                             yield return emailMsg;
+                        }
                     }
                     if (results.NextPageOffset.HasValue)
                         iview.Offset = results.NextPageOffset.Value;

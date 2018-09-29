@@ -690,8 +690,8 @@ namespace Utilities.Excel
         public IEnumerable<T> AsEnumerable<T>(bool hasHeaders = true) where T : class, new()
         {
             Func<string[], T> converter = hasHeaders
-                ? Converters.Convert.ListToObject<string, T>(Data.Cells[1, 1, 1, Columns].Select(cell => cell.Value?.ToString()).ToList())
-                : Converters.Convert.ListToObject<string, T>();
+                ? Converters.Converters.ListToObject<string, T>(Data.Cells[1, 1, 1, Columns].Select(cell => cell.Value?.ToString()).ToList())
+                : Converters.Converters.ListToObject<string, T>();
 
             bool[] isTimespan = new bool[Columns];
             for (int i = 0; i < isTimespan.Length; i++) {

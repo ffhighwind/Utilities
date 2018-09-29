@@ -36,7 +36,7 @@ namespace Utilities.Converters
             converters = new Action<object>[Math.Min(input.Count, output.Length)];
             for (int i = 0; i < converters.Length; i++) {
                 if (output[i] != null) {
-                    Func<object, object> converter = Converters.Convert.GetConverter(input[i], output[i].PropertyType);
+                    Func<object, object> converter = Utilities.Converters.Converters.GetConverter(input[i], output[i].PropertyType);
                     converters[i] = (inp) => { output[i]?.SetValue(inp, inp == DBNull.Value ? null : converter(inp)); };
                 }
             }

@@ -7,14 +7,20 @@ namespace Utilities.Email
 {
     public static class Extensions
     {
-        /// https://www.codeproject.com/KB/IP/smtpclientext.aspx?display=PrintAll&fid=1533533&df=90&mpp=25&noise=3&sort=Position&view=Quick&select=2876398
-        public static void Save(this MailMessage Message, string FileName)
+
+        /// <summary>
+        /// Allows saving of file attachments from a MailMessage.
+        /// </summary>
+        /// <param name="message">The email.</param>
+        /// <param name="filename">Tht file to save.</param>
+        /// <see href="https://www.codeproject.com/KB/IP/smtpclientext.aspx?display=PrintAll&fid=1533533&df=90&mpp=25&noise=3&sort=Position&view=Quick&select=2876398"/>
+        public static void Save(this MailMessage message, string filename)
         {
             Assembly assembly = typeof(SmtpClient).Assembly;
 
             Type mailWriterType = assembly.GetType("System.Net.Mail.MailWriter");
 
-            using (FileStream _fileStream = new FileStream(FileName, FileMode.Create)) {
+            using (FileStream _fileStream = new FileStream(filename, FileMode.Create)) {
                 // Get reflection info for MailWriter contructor
                 ConstructorInfo mailWriterContructor =
                     mailWriterType.GetConstructor(
@@ -34,7 +40,7 @@ namespace Utilities.Email
 
                 // Call method passing in MailWriter
                 sendMethod.Invoke(
-                    Message,
+                    message,
                     BindingFlags.Instance | BindingFlags.NonPublic,
                     null,
                     new object[] { mailWriter, true },
