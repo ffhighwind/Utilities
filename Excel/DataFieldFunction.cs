@@ -1,25 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using OfficeOpenXml.Table.PivotTable;
+﻿using OfficeOpenXml.Table.PivotTable;
 
 namespace Utilities.Excel
 {
+    /// <summary>
+    /// Functions for PivotTables. This reduces the need to include EPPlus in using statements and references.
+    /// </summary>
     public enum DataFieldFunction
     {
-        Average = OfficeOpenXml.Table.PivotTable.DataFieldFunctions.Average,
-        Count = OfficeOpenXml.Table.PivotTable.DataFieldFunctions.Count,
-        CountNums = OfficeOpenXml.Table.PivotTable.DataFieldFunctions.CountNums,
-        Max = OfficeOpenXml.Table.PivotTable.DataFieldFunctions.Max,
-        Min = OfficeOpenXml.Table.PivotTable.DataFieldFunctions.Min,
-        None = OfficeOpenXml.Table.PivotTable.DataFieldFunctions.None,
-        Product = OfficeOpenXml.Table.PivotTable.DataFieldFunctions.Product,
-        StdDev = OfficeOpenXml.Table.PivotTable.DataFieldFunctions.StdDev,
-        StdDevP = OfficeOpenXml.Table.PivotTable.DataFieldFunctions.StdDevP,
-        Sum = OfficeOpenXml.Table.PivotTable.DataFieldFunctions.Sum,
-        Var = OfficeOpenXml.Table.PivotTable.DataFieldFunctions.Var,
-        VarP = OfficeOpenXml.Table.PivotTable.DataFieldFunctions.VarP,
+        Average = DataFieldFunctions.Average,
+        Count = DataFieldFunctions.Count,
+        CountNums = DataFieldFunctions.CountNums,
+        Max = DataFieldFunctions.Max,
+        Min = DataFieldFunctions.Min,
+        None = DataFieldFunctions.None,
+        Product = DataFieldFunctions.Product,
+        StdDev = DataFieldFunctions.StdDev,
+        StdDevP = DataFieldFunctions.StdDevP,
+        Sum = DataFieldFunctions.Sum,
+        Var = DataFieldFunctions.Var,
+        VarP = DataFieldFunctions.VarP,
     }
 }

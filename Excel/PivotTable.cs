@@ -1,12 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using OfficeOpenXml;
+﻿using OfficeOpenXml;
 using OfficeOpenXml.Table.PivotTable;
-using OfficeOpenXml.Drawing.Chart;
-using System.Windows.Forms;
 
 namespace Utilities.Excel
 {
@@ -50,39 +43,35 @@ namespace Utilities.Excel
         }
 
         public string Name {
-            get {
-                return Data.Name;
-            }
-            set {
-                Data.Name = value;
-            }
+            get => Data.Name;
+            set => Data.Name = value;
         }
 
-        public ExcelPivotTableField AddRow(string row, eSortType sorting = eSortType.Ascending)
+        public ExcelPivotTableField AddRow(string row, Sorting sorting = Sorting.Ascending)
         {
             ExcelPivotTableField field = Data.Fields[row];
-            field.Sort = sorting;
+            field.Sort = (eSortType) sorting;
             return Data.RowFields.Add(field);
         }
 
-        public ExcelPivotTableField AddRow(string row, string format, eSortType sorting = eSortType.Ascending)
+        public ExcelPivotTableField AddRow(string row, string format, Sorting sorting = Sorting.Ascending)
         {
             ExcelPivotTableField field = Data.Fields[row];
-            field.Sort = sorting;
+            field.Sort = (eSortType) sorting;
             return Data.RowFields.Add(field);
         }
 
-        public ExcelPivotTableField AddRow(int row, eSortType sorting = eSortType.Ascending)
+        public ExcelPivotTableField AddRow(int row, Sorting sorting = Sorting.Ascending)
         {
             ExcelPivotTableField field = Data.Fields[row];
-            field.Sort = sorting;
+            field.Sort = (eSortType) sorting;
             return Data.RowFields.Add(field);
         }
 
-        public void AddRow(int row, string format, eSortType sorting = eSortType.Ascending)
+        public void AddRow(int row, string format, Sorting sorting = Sorting.Ascending)
         {
             ExcelPivotTableField field = Data.Fields[row];
-            field.Sort = sorting;
+            field.Sort = (eSortType) sorting;
             Data.RowFields.Add(field);
         }
 

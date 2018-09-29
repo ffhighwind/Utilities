@@ -54,6 +54,7 @@
     <Compile Include="Email\PropertySets.cs" />
     <Compile Include="Excel\DataFieldFunction.cs" />
     <Compile Include="Excel\PivotTable.cs" />
+    <Compile Include="Excel\Sorting.cs" />
     <Compile Include="Extentions.cs" />
     <Compile Include="Converters\GenericDataReader.cs" />
     <Compile Include="IO.cs" />

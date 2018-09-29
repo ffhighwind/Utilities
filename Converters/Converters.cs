@@ -26,7 +26,10 @@ namespace Utilities.Converters
             where Tin : class
             where Tout : class, new()
         {
-            return ObjectToObject<Tin, Tout>(null, inFlags, outFlags);
+            return ObjectToObject<Tin, Tout>(
+                propertyNames: null,
+                inFlags: inFlags,
+                outFlags: outFlags);
         }
 
         public static Func<Tin, Tout> ObjectToObject<Tin, Tout>(
@@ -37,11 +40,16 @@ namespace Utilities.Converters
             where Tout : class, new()
         {
             IReadOnlyList<PropertyInfo> pi = typeof(Tin).GetProperties(inFlags);
-            IReadOnlyList<PropertyInfo> po = typeof(Tout).GetProperties(outFlags).Where(prop => pi.Select(p => p.Name).Contains(prop.Name)).ToList();
+            IReadOnlyList<PropertyInfo> po = typeof(Tout).GetProperties(outFlags)
+                .Where(prop => pi.Select(p => p.Name).Contains(prop.Name)).ToList();
             if (propertyNames != null)
                 po = po.Where(p => propertyNames.Contains(p.Name)).ToList();
-            pi = pi.Where(prop => po.Select(p => p.Name).Contains(prop.Name)).ToList();
-            return ObjectToObject<Tin, Tout>(pi, po);
+            List<PropertyInfo> piUnion = new List<PropertyInfo>();
+            for (int i = 0; i < po.Count; i++) {
+                string name = po[i].Name;
+                piUnion.Add(pi.First(p => p.Name == name));
+            }
+            return ObjectToObject<Tin, Tout>(piUnion, po);
         }
 
         public static Func<Tin, Tout> ObjectToObject<Tin, Tout>(IReadOnlyList<PropertyInfo> pinfoIn, IReadOnlyList<PropertyInfo> pinfoOut)
@@ -180,7 +188,7 @@ namespace Utilities.Converters
         /// <returns>An object whose type is conversionType and whose value is equivalent to value.</returns>
         public static object ChangeType(object value, Type type)
         {
-            if (value == null || value == DBNull.Value)
+            if (value == null)
                 return null;
             TypeCode typeCode = Type.GetTypeCode(type);
             switch (typeCode) {
@@ -229,9 +237,12 @@ namespace Utilities.Converters
                         return Convert.ChangeType(value, type);
                     return value;
                 case TypeCode.DBNull:
+                    if (value == DBNull.Value)
+                        return DBNull.Value;
                     throw new InvalidCastException("Invalid cast: TypeCode.DBNull");
-                case TypeCode.Empty:
-                    throw new InvalidCastException("Invalid Cast: TypeCode.Empty");
+                //case TypeCode.Empty:
+                //cannot get here
+                //    throw new InvalidCastException("Invalid Cast: TypeCode.Empty");
                 default:
                     throw new ArgumentException("Argument: unknown TypeCode " + typeCode.ToString());
             }
