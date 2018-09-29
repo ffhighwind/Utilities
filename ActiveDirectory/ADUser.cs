@@ -1,18 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections;
 using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Utilities.ActiveDirectory
 {
-    public class ADUser
+    public class ADUser : IDisposable
     {
         public ADUser(UserPrincipal principal)
         {
-            this.Principal = principal;
+            Principal = principal;
             DirectoryEntry = (DirectoryEntry) principal.GetUnderlyingObject();
         }
 
@@ -27,172 +24,203 @@ namespace Utilities.ActiveDirectory
             }
         }
 
-        public string ObjectClass { get { return this["objectClass"]?.ToString(); } }
+        public ICollection PropertyNames => DirectoryEntry.Properties.PropertyNames;
 
-        public string ContainerName { get { return this["cn"]?.ToString(); } }
+        public string ObjectClass => this["objectClass"]?.ToString();
 
-        public string LastName { get { return this["sn"]?.ToString(); } }
+        public string ContainerName => this["cn"]?.ToString();
 
-        public string CountryNotation { get { return this["c"]?.ToString(); } }
+        public string LastName => this["sn"]?.ToString();
 
-        public string City { get { return this["l"]?.ToString(); } }
+        public string CountryNotation => this["c"]?.ToString();
 
-        public string State { get { return this["st"]?.ToString(); } }
+        public string City => this["l"]?.ToString();
 
-        public string Title { get { return this["title"]?.ToString(); } }
+        public string State => this["st"]?.ToString();
 
-        public string PostalCode { get { return this["postalCode"]?.ToString(); } }
+        public string Title => this["title"]?.ToString();
 
-        public string PhysicalDeliveryOfficeName { get { return this["physicalDeliveryOfficeName"]?.ToString(); } }
+        public string PostalCode => this["postalCode"]?.ToString();
 
-        public string FirstName { get { return this["givenName"]?.ToString(); } }
+        public string PhysicalDeliveryOfficeName => this["physicalDeliveryOfficeName"]?.ToString();
 
-        public string MiddleName { get { return this["initials"]?.ToString(); } }
+        public string FirstName => this["givenName"]?.ToString();
 
-        public string DistinguishedName { get { return this["distinguishedName"]?.ToString(); } }
+        public string MiddleName => this["initials"]?.ToString();
 
-        public string InstanceType { get { return this["instanceType"]?.ToString(); } }
+        public string DistinguishedName => this["distinguishedName"]?.ToString();
 
-        public string WhenCreated { get { return this["whenCreated"]?.ToString(); } }
+        public string InstanceType => this["instanceType"]?.ToString();
 
-        public string WhenChanged { get { return this["whenChanged"]?.ToString(); } }
+        public string WhenCreated => this["whenCreated"]?.ToString();
 
-        public string DisplayName { get { return this["displayName"]?.ToString(); } }
+        public string WhenChanged => this["whenChanged"]?.ToString();
 
-        public string USNCreated { get { return this["uSNCreated"]?.ToString(); } }
+        public string DisplayName => this["displayName"]?.ToString();
 
-        public string MemberOf { get { return this["memberOf"]?.ToString(); } }
+        public string USNCreated => this["uSNCreated"]?.ToString();
 
-        public string USNChanged { get { return this["uSNChanged"]?.ToString(); } }
+        public string MemberOf => this["memberOf"]?.ToString();
 
-        public string Country { get { return this["co"]?.ToString(); } }
+        public string USNChanged => this["uSNChanged"]?.ToString();
 
-        public string Department { get { return this["department"]?.ToString(); } }
+        public string Country => this["co"]?.ToString();
 
-        public string Company { get { return this["company"]?.ToString(); } }
+        public string Department => this["department"]?.ToString();
 
-        public string ProxyAddresses { get { return this["proxyAddresses"]?.ToString(); } }
+        public string Company => this["company"]?.ToString();
 
-        public string StreetAddress { get { return this["streetAddress"]?.ToString(); } }
+        public string ProxyAddresses => this["proxyAddresses"]?.ToString();
 
-        public string DirectReports { get { return this["directReports"]?.ToString(); } }
+        public string StreetAddress => this["streetAddress"]?.ToString();
 
-        public string Name { get { return this["name"]?.ToString(); } }
+        public string DirectReports => this["directReports"]?.ToString();
 
-        public string ObjectGuid { get { return this["objectGUID"]?.ToString(); } }
+        public string Name => this["name"]?.ToString();
 
-        public string UserAccountControl { get { return this["userAccountControl"]?.ToString(); } }
+        public string ObjectGuid => this["objectGUID"]?.ToString();
 
-        public string BadPwdCount { get { return this["badPwdCount"]?.ToString(); } }
+        public string UserAccountControl => this["userAccountControl"]?.ToString();
 
-        public string CodePage { get { return this["codePage"]?.ToString(); } }
+        public string BadPwdCount => this["badPwdCount"]?.ToString();
 
-        public string CountryCode { get { return this["countryCode"]?.ToString(); } }
+        public string CodePage => this["codePage"]?.ToString();
 
-        public string BadPasswordTime { get { return this["badPasswordTime"]?.ToString(); } }
+        public string CountryCode => this["countryCode"]?.ToString();
 
-        public string LastLogoff { get { return this["lastLogoff"]?.ToString(); } }
+        public string BadPasswordTime => this["badPasswordTime"]?.ToString();
 
-        public string LastLogon { get { return this["lastLogon"]?.ToString(); } }
+        public string LastLogoff => this["lastLogoff"]?.ToString();
 
-        public string PasswordLastSet { get { return this["pwdLastSet"]?.ToString(); } }
+        public string LastLogon => this["lastLogon"]?.ToString();
 
-        public string PrimaryGroupID { get { return this["primaryGroupID"]?.ToString(); } }
+        public string PasswordLastSet => this["pwdLastSet"]?.ToString();
 
-        public string ObjectSid { get { return this["objectSid"]?.ToString(); } }
+        public string PrimaryGroupID => this["primaryGroupID"]?.ToString();
 
-        public string AdminCount { get { return this["adminCount"]?.ToString(); } }
+        public string ObjectSid => this["objectSid"]?.ToString();
 
-        public string AccountExpires { get { return this["accountExpires"]?.ToString(); } }
+        public string AdminCount => this["adminCount"]?.ToString();
 
-        public string LogonCount { get { return this["logonCount"]?.ToString(); } }
+        public string AccountExpires => this["accountExpires"]?.ToString();
 
-        public string LoginName { get { return this["sAMAccountName"]?.ToString(); } }
+        public string LogonCount => this["logonCount"]?.ToString();
 
-        public string SAMAccountType { get { return this["sAMAccountType"]?.ToString(); } }
+        public string LoginName => this["sAMAccountName"]?.ToString();
 
-        public string ShowInAddressBook { get { return this["showInAddressBook"]?.ToString(); } }
+        public string SAMAccountType => this["sAMAccountType"]?.ToString();
 
-        public string LegacyExchangeDN { get { return this["legacyExchangeDN"]?.ToString(); } }
+        public string ShowInAddressBook => this["showInAddressBook"]?.ToString();
 
-        public string UserPrincipalName { get { return this["userPrincipalName"]?.ToString(); } }
+        public string LegacyExchangeDN => this["legacyExchangeDN"]?.ToString();
 
-        public string Extension { get { return this["ipPhone"]?.ToString(); } }
+        public string UserPrincipalName => this["userPrincipalName"]?.ToString();
 
-        public string ServicePrincipalName { get { return this["servicePrincipalName"]?.ToString(); } }
+        public string Extension => this["ipPhone"]?.ToString();
 
-        public string ObjectCategory { get { return this["objectCategory"]?.ToString(); } }
+        public string ServicePrincipalName => this["servicePrincipalName"]?.ToString();
 
-        public string DSCorePropagationData { get { return this["dSCorePropagationData"]?.ToString(); } }
+        public string ObjectCategory => this["objectCategory"]?.ToString();
 
-        public string lastLogonTimestamp { get { return this["lastLogonTimestamp"]?.ToString(); } }
+        public string DSCorePropagationData => this["dSCorePropagationData"]?.ToString();
 
-        public string EmailAddress { get { return this["mail"]?.ToString(); } }
+        public string lastLogonTimestamp => this["lastLogonTimestamp"]?.ToString();
 
-        public string Manager { get { return this["manager"]?.ToString(); } }
+        public string EmailAddress => this["mail"]?.ToString();
 
-        public string Mobile { get { return this["mobile"]?.ToString(); } }
+        public string Manager => this["manager"]?.ToString();
 
-        public string Pager { get { return this["pager"]?.ToString(); } }
+        public string Mobile => this["mobile"]?.ToString();
 
-        public string Fax { get { return this["facsimileTelephoneNumber"]?.ToString(); } }
+        public string Pager => this["pager"]?.ToString();
 
-        public string HomePhone { get { return this["homePhone"]?.ToString(); } }
+        public string Fax => this["facsimileTelephoneNumber"]?.ToString();
 
-        public string MSExchUserAccountControl { get { return this["msExchUserAccountControl"]?.ToString(); } }
+        public string HomePhone => this["homePhone"]?.ToString();
 
-        public string MDBUuseDefaults { get { return this["mDBUseDefaults"]?.ToString(); } }
+        public string MSExchUserAccountControl => this["msExchUserAccountControl"]?.ToString();
 
-        public string MSExchMailboxSecurityDescriptor { get { return this["msExchMailboxSecurityDescriptor"]?.ToString(); } }
+        public string MDBUuseDefaults => this["mDBUseDefaults"]?.ToString();
 
-        public string HomeMDB { get { return this["homeMDB"]?.ToString(); } }
+        public string MSExchMailboxSecurityDescriptor => this["msExchMailboxSecurityDescriptor"]?.ToString();
 
-        public string MSExchPoliciesIncluded { get { return this["msExchPoliciesIncluded"]?.ToString(); } }
+        public string HomeMDB => this["homeMDB"]?.ToString();
 
-        public string HomeMTA { get { return this["homeMTA"]?.ToString(); } }
+        public string MSExchPoliciesIncluded => this["msExchPoliciesIncluded"]?.ToString();
 
-        public string MSExchRecipientTypeDetails { get { return this["msExchRecipientTypeDetails"]?.ToString(); } }
+        public string HomeMTA => this["homeMTA"]?.ToString();
 
-        public string MailNickname { get { return this["mailNickname"]?.ToString(); } }
+        public string MSExchRecipientTypeDetails => this["msExchRecipientTypeDetails"]?.ToString();
 
-        public string MSExchHomeServerName { get { return this["msExchHomeServerName"]?.ToString(); } }
+        public string MailNickname => this["mailNickname"]?.ToString();
 
-        public string MSExchVersion { get { return this["msExchVersion"]?.ToString(); } }
+        public string MSExchHomeServerName => this["msExchHomeServerName"]?.ToString();
 
-        public string MSExchRecipientDisplayType { get { return this["msExchRecipientDisplayType"]?.ToString(); } }
+        public string MSExchVersion => this["msExchVersion"]?.ToString();
 
-        public string MSExchMailboxGuid { get { return this["msExchMailboxGuid"]?.ToString(); } }
+        public string MSExchRecipientDisplayType => this["msExchRecipientDisplayType"]?.ToString();
 
-        public string NTSecurityDescriptor { get { return this["nTSecurityDescriptor"]?.ToString(); } }
+        public string MSExchMailboxGuid => this["msExchMailboxGuid"]?.ToString();
 
-        public string Description { get { return this["description"]?.ToString(); } }
+        public string NTSecurityDescriptor => this["nTSecurityDescriptor"]?.ToString();
 
-        public string ScriptPath { get { return this["scriptPath"]?.ToString(); } }
+        public string Description => this["description"]?.ToString();
+
+        public string ScriptPath => this["scriptPath"]?.ToString();
 
         //New?
-        public string MSMQSignCertificates { get { return this["mSMQSignCertificates"]?.ToString(); } }
+        public string MSMQSignCertificates => this["mSMQSignCertificates"]?.ToString();
 
-        public string MSMQDigests { get { return this["mSMQDigests"]?.ToString(); } }
+        public string MSMQDigests => this["mSMQDigests"]?.ToString();
 
-        public string MSTSExpireDate { get { return this["msTSExpireDate"]?.ToString(); } }
+        public string MSTSExpireDate => this["msTSExpireDate"]?.ToString();
 
-        public string MSTSLicenseVersion { get { return this["msTSLicenseVersion"]?.ToString(); } }
+        public string MSTSLicenseVersion => this["msTSLicenseVersion"]?.ToString();
 
-        public string MSTSManagingLS { get { return this["msTSManagingLS"]?.ToString(); } }
+        public string MSTSManagingLS => this["msTSManagingLS"]?.ToString();
 
-        public string MSExchMailboxTemplateLink { get { return this["msExchMailboxTemplateLink"]?.ToString(); } }
+        public string MSExchMailboxTemplateLink => this["msExchMailboxTemplateLink"]?.ToString();
 
-        public string MSExchUMDtmfMap { get { return this["msExchUMDtmfMap"]?.ToString(); } }
+        public string MSExchUMDtmfMap => this["msExchUMDtmfMap"]?.ToString();
 
-        public string MSExchTextMessagingState { get { return this["msExchTextMessagingState"]?.ToString(); } }
+        public string MSExchTextMessagingState => this["msExchTextMessagingState"]?.ToString();
 
-"msExchUserCulture"
+        public string MSExchUserCulture => this["msExchUserCulture"]?.ToString();
 
-        "msExchUserBL"
-"msExchELCMailboxFlags"
-"msExchWhenMailboxCreated"
+        public string MSExchUserBL => this["msExchUserBL"]?.ToString();
 
-"msExchRBACPolicyLink"
+        public string MSExchELCMailboxFlags => this["msExchELCMailboxFlags"]?.ToString();
 
+        public string MSExchWhenMailboxCreated => this["msExchWhenMailboxCreated"]?.ToString();
+
+        public string MSExchRBACPolicyLink => this["msExchRBACPolicyLink"]?.ToString();
+
+        #region IDisposable Support
+        private bool disposedValue = false; // To detect redundant calls
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue) {
+                if (disposing) {
+                    Principal.Dispose();
+                }
+                Principal = null;
+                DirectoryEntry = null;
+                disposedValue = true;
+            }
+        }
+
+        ~ADUser()
+        {
+            Dispose(false);
+        }
+
+        // This code added to correctly implement the disposable pattern.
+        void IDisposable.Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
     }
 }

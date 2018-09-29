@@ -8,7 +8,7 @@ using System.Text;
 
 namespace Utilities.Converters
 {
-    public static class Converters
+    public static class Convert
     {
         /// <summary>
         /// The default <see cref="Encoding"/> from <see cref="byte"/>[] to <see cref="char"/> and <see cref="string"/>.
@@ -103,9 +103,9 @@ namespace Utilities.Converters
                 tmp.Add(pinfo);
             }
             for (int i = tmp.Count - 1; i >= 0; i--) {
-                if (tmp[i] == null) {
-                    tmp.RemoveAt(i);
-                }
+                if (tmp[i] != null)
+                    break;
+                tmp.RemoveAt(i);
             }
             return CreateListToObject<Tin, Tout>(tmp);
         }
@@ -237,8 +237,8 @@ namespace Utilities.Converters
                         return ToBytes(value);
                     else if (type == typeof(BigInteger))
                         return ToBigInteger(value);
-                    else if (value is IConvertible conv)
-                        return Convert.ChangeType(value, type);
+                    ////else if (value is IConvertible conv)
+                    ////   return value;
                     return value;
                 case TypeCode.DBNull:
                     if (value == DBNull.Value)

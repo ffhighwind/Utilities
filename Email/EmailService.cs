@@ -28,6 +28,12 @@ namespace Utilities.Email
 
         public ExchangeService Service { get; private set; }
 
+        public bool Connect(string email, ExchangeVersion version = ExchangeVersion.Exchange2010_SP1)
+        {
+            Email = email;
+            return Connect(version);
+        }
+
         public bool Connect(string username, string password, ExchangeVersion version = ExchangeVersion.Exchange2010_SP1)
         {
             Username = username;

@@ -4,6 +4,7 @@ namespace Utilities.UnitTests
 {
     public class Test16
     {
+        public int Year { get; set; }
         public string Segment { get; set; }
         public string Country { get; set; }
         public string Product { get; set; }
@@ -19,6 +20,5 @@ namespace Utilities.UnitTests
         public DateTime Date { get; set; }
         public int MonthNumber { get; set; }
         public string MonthName { get; set; }
-        public int Year { get; set; }
     }
 }

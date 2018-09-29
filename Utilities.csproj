@@ -47,7 +47,7 @@
     <Compile Include="Comparers\Comparer.cs" />
     <Compile Include="Comparers\Comparers.cs" />
     <Compile Include="Comparers\NullableComparer.cs" />
-    <Compile Include="Converters\Converters.cs" />
+    <Compile Include="Converters\Convert.cs" />
     <Compile Include="Converters\DataTableConverter.cs">
       <ExcludeFromStyleCop>True</ExcludeFromStyleCop>
     </Compile>

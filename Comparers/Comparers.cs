@@ -87,11 +87,11 @@ namespace Utilities.Comparers
                 Type xTy = x.GetType();
                 Type yTy = y.GetType();
                 if (TypeDescriptor.GetConverter(xTy).CanConvertTo(yTy)) {
-                    y = Converters.Converters.ChangeType(y, xTy);
+                    y = Converters.Convert.ChangeType(y, xTy);
                     return xCmp.CompareTo(y);
                 }
                 else if (TypeDescriptor.GetConverter(yTy).CanConvertTo(xTy)) {
-                    x = Converters.Converters.ChangeType(x, yTy);
+                    x = Converters.Convert.ChangeType(x, yTy);
                     return (x as IComparable).CompareTo(y);
                 }
             }
