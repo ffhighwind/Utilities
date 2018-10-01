@@ -163,18 +163,18 @@ namespace Utilities.ActiveDirectory
         public string MSExchRBACPolicyLink => this["msExchRBACPolicyLink"]?.ToString();
 
         #region ShadowAccount
-        private readonly shadowExpire
-        shadowFlag
-        private readonly shadowInactive
-        shadowLastChange
-        private readonly shadowMax
-        shadowMin
-        private readonly shadowWarning
+        //shadowExpire
+        //shadowFlag
+        //shadowInactive
+        //shadowLastChange
+        //shadowMax
+        //shadowMin
+        //shadowWarning
         #endregion
 
-        uidNumber
-        private readonly unixHomeDirectory
-        unixUserPassword
+        //uidNumber
+        //unixHomeDirectory
+        //unixUserPassword
 
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls

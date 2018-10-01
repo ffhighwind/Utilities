@@ -39,34 +39,33 @@
         //Organization-Name
         //Other-Mailbox
         //Other-Name
-
-        Personal-Title
-Phone-Fax-Other
-Phone-Home-Other
-Phone-Home-Primary
-Phone-Ip-Other
-Phone-Ip-Primary
-Phone-ISDN-Primary
-Phone-Mobile-Other
-Phone-Mobile-Primary
-Phone-Office-Other
-Phone-Pager-Other
-Phone-Pager-Primary
-Physical-Delivery-Office-Name
-Picture
-Postal-Address
-Postal-Code
-Post-Office-Box
-Preferred-Delivery-Method
-Registered-Address
-State-Or-Province-Name
-Street-Address
-Teletex-Terminal-Identifier
-Telex-Number
-Telex-Primary
-Text-Country
-Title
-User-Comment
-X121-Address
+        //Personal-Title
+        //Phone-Fax-Other
+        //Phone-Home-Other
+        //Phone-Home-Primary
+        //Phone-Ip-Other
+        //Phone-Ip-Primary
+        //Phone-ISDN-Primary
+        //Phone-Mobile-Other
+        //Phone-Mobile-Primary
+        //Phone-Office-Other
+        //Phone-Pager-Other
+        //Phone-Pager-Primary
+        //Physical-Delivery-Office-Name
+        //Picture
+        //Postal-Address
+        //Postal-Code
+        //Post-Office-Box
+        //Preferred-Delivery-Method
+        //Registered-Address
+        //State-Or-Province-Name
+        //Street-Address
+        //Teletex-Terminal-Identifier
+        //Telex-Number
+        //Telex-Primary
+        //Text-Country
+        //Title
+        //User-Comment
+        //X121-Address
     }
 }

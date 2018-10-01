@@ -16,8 +16,8 @@
         //Show-In-Address-Book
         //Telephone-Number
         //Text-Encoded-OR-Address
-        User-Cert
-        User-SMIME-Certificate
-        X509-Cert
+        //User-Cert
+        //User-SMIME-Certificate
+        //X509-Cert
     }
 }

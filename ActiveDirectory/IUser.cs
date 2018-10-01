@@ -65,98 +65,97 @@
         //ms-IIS-FTP-Dir
         //ms-IIS-FTP-Root
 
-        ms-IIS-FTP-Dir
-ms-IIS-FTP-Root
-MSMQ-Digests
-MSMQ-Digests-Mig
-MSMQ-Sign-Certificates
-MSMQ-Sign-Certificates-Mig
-msNPAllowDialin
-msNPCallingStationID
-msNPSavedCallingStationID
-ms-PKI-AccountCredentials
-ms-PKI-Credential-Roaming-Tokens
-ms-PKI-DPAPIMasterKeys
-ms-PKI-RoamingTimeStamp
-msRADIUSCallbackNumber
-ms-RADIUS-FramedInterfaceId
-msRADIUSFramedIPAddress
-ms-RADIUS-FramedIpv6Prefix
-ms-RADIUS-FramedIpv6Route
-msRADIUSFramedRoute
-ms-RADIUS-SavedFramedInterfaceId
-ms-RADIUS-SavedFramedIpv6Prefix
-ms-RADIUS-SavedFramedIpv6Route
-msRADIUSServiceType
-msRASSavedCallbackNumber
-msRASSavedFramedIPAddress
-msRASSavedFramedRoute
-msSFU-30-Name
-msSFU-30-Nis-Domain
-ms-TS-Allow-Logon
-ms-TS-Broken-Connection-Action
-ms-TS-Connect-Client-Drives
-ms-TS-Connect-Printer-Drives
-ms-TS-Default-To-Main-Printer
-MS-TS-ExpireDate
-MS-TS-ExpireDate2
-MS-TS-ExpireDate3
-MS-TS-ExpireDate4
-ms-TS-Home-Directory
-ms-TS-Home-Drive
-ms-TS-Initial-Program
-MS-TS-LicenseVersion
-MS-TS-LicenseVersion2
-MS-TS-LicenseVersion3
-MS-TS-LicenseVersion4
-MS-TSLS-Property01
-MS-TSLS-Property02
-MS-TS-ManagingLS
-MS-TS-ManagingLS2
-MS-TS-ManagingLS3
-MS-TS-ManagingLS4
-ms-TS-Max-Connection-Time
-ms-TS-Max-Disconnection-Time
-ms-TS-Max-Idle-Time
-ms-TS-Primary-Desktop
-ms-TS-Profile-Path
-MS-TS-Property01
-MS-TS-Property02
-ms-TS-Reconnection-Action
-ms-TS-Remote-Control
-ms-TS-Secondary-Desktops
-ms-TS-Work-Directory
-Network-Address
-Nt-Pwd-History
-Operator-Count
-Organization-Name
-Other-Login-Workstations
-Phone-Home-Primary
-Phone-Mobile-Primary
-Phone-Pager-Primary
-photo
-
-preferredLanguage
-Preferred-OU
-Primary-Group-ID
-Profile-Path
-Pwd-Last-Set
-roomNumber
-Script-Path
-secretary
-Service-Principal-Name
-Terminal-Server
-uid
-Unicode-Pwd
-User-Account-Control
-User-Parameters
-userPKCS12
-User-Principal-Name
-User-Shared-Folder
-User-Shared-Folder-Other
-User-SMIME-Certificate
-User-Workstations
-x500uniqueIdentifier
-X509-Cert
+        //ms-IIS-FTP-Dir
+        //ms-IIS-FTP-Root
+        //MSMQ-Digests
+        //MSMQ-Digests-Mig
+        //MSMQ-Sign-Certificates
+        //MSMQ-Sign-Certificates-Mig
+        //msNPAllowDialin
+        //msNPCallingStationID
+        //msNPSavedCallingStationID
+        //ms-PKI-AccountCredentials
+        //ms-PKI-Credential-Roaming-Tokens
+        //ms-PKI-DPAPIMasterKeys
+        //ms-PKI-RoamingTimeStamp
+        //msRADIUSCallbackNumber
+        //ms-RADIUS-FramedInterfaceId
+        //msRADIUSFramedIPAddress
+        //ms-RADIUS-FramedIpv6Prefix
+        //ms-RADIUS-FramedIpv6Route
+        //msRADIUSFramedRoute
+        //ms-RADIUS-SavedFramedInterfaceId
+        //ms-RADIUS-SavedFramedIpv6Prefix
+        //ms-RADIUS-SavedFramedIpv6Route
+        //msRADIUSServiceType
+        //msRASSavedCallbackNumber
+        //msRASSavedFramedIPAddress
+        //msRASSavedFramedRoute
+        //msSFU-30-Name
+        //msSFU-30-Nis-Domain
+        //ms-TS-Allow-Logon
+        //ms-TS-Broken-Connection-Action
+        //ms-TS-Connect-Client-Drives
+        //ms-TS-Connect-Printer-Drives
+        //ms-TS-Default-To-Main-Printer
+        //MS-TS-ExpireDate
+        //MS-TS-ExpireDate2
+        //MS-TS-ExpireDate3
+        //MS-TS-ExpireDate4
+        //ms-TS-Home-Directory
+        //ms-TS-Home-Drive
+        //ms-TS-Initial-Program
+        //MS-TS-LicenseVersion
+        //MS-TS-LicenseVersion2
+        //MS-TS-LicenseVersion3
+        //MS-TS-LicenseVersion4
+        //MS-TSLS-Property01
+        //MS-TSLS-Property02
+        //MS-TS-ManagingLS
+        //MS-TS-ManagingLS2
+        //MS-TS-ManagingLS3
+        //MS-TS-ManagingLS4
+        //ms-TS-Max-Connection-Time
+        //ms-TS-Max-Disconnection-Time
+        //ms-TS-Max-Idle-Time
+        //ms-TS-Primary-Desktop
+        //ms-TS-Profile-Path
+        //MS-TS-Property01
+        //MS-TS-Property02
+        //ms-TS-Reconnection-Action
+        //ms-TS-Remote-Control
+        //ms-TS-Secondary-Desktops
+        //ms-TS-Work-Directory
+        //Network-Address
+        //Nt-Pwd-History
+        //Operator-Count
+        //Organization-Name
+        //Other-Login-Workstations
+        //Phone-Home-Primary
+        //Phone-Mobile-Primary
+        //Phone-Pager-Primary
+        //photo
+        //preferredLanguage
+        //Preferred-OU
+        //Primary-Group-ID
+        //Profile-Path
+        //Pwd-Last-Set
+        //roomNumber
+        //Script-Path
+        //secretary
+        //Service-Principal-Name
+        //Terminal-Server
+        //uid
+        //Unicode-Pwd
+        //User-Account-Control
+        //User-Parameters
+        //userPKCS12
+        //User-Principal-Name
+        //User-Shared-Folder
+        //User-Shared-Folder-Other
+        //User-SMIME-Certificate
+        //User-Workstations
+        //x500uniqueIdentifier
+        //X509-Cert
     }
 }

@@ -8,15 +8,15 @@
         //Account-Name-History
         //Alt-Security-Identities
         //ms-DS-KeyVersionNumber
-        string Object-Sid
+        //string Object-Sid
         //Rid
         //SAM-Account-Name
         //SAM-Account-Type
         //Security-Identifier
         //SID-History
         //Supplemental-Credentials
-        Token-Groups
-        Token-Groups-Global-And-Universal
-        Token-Groups-No-GC-Acceptable
+        //Token-Groups
+        //Token-Groups-Global-And-Universal
+        //Token-Groups-No-GC-Acceptable
     }
 }
