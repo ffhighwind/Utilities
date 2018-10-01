@@ -394,8 +394,8 @@ namespace Utilities
         /// <returns>True if the cast was successful; or false otherwise.</returns>
         public static bool TryCast<T>(object obj, out T result)
         {
-            if (obj is T) {
-                result = (T) obj;
+            if (obj is T objT) {
+                result = objT;
                 return true;
             }
             else {

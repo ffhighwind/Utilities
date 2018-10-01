@@ -1,34 +1,32 @@
 ﻿using System;
-using System.Collections;
 using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
 
 namespace Utilities.ActiveDirectory
 {
-    public class ADUser : IDisposable
+    public class ADUser : ADBase, IDisposable, IUser, IMailRecipient, IOrganizationalPerson, ISecurityPrincipal
     {
+        public ADUser() { }
         public ADUser(UserPrincipal principal)
         {
             Principal = principal;
-            DirectoryEntry = (DirectoryEntry) principal.GetUnderlyingObject();
         }
 
-        public UserPrincipal Principal { get; private set; }
-        public DirectoryEntry DirectoryEntry { get; private set; }
+        private UserPrincipal principal;
 
-        public object this[string property] {
-            get {
-                if (DirectoryEntry.Properties.Contains(property))
-                    return DirectoryEntry.Properties[property].Value;
-                return null;
+        public UserPrincipal Principal {
+            get => principal;
+            set {
+                principal = value;
+                DirectoryEntry = (DirectoryEntry) value.GetUnderlyingObject();
             }
         }
 
-        public ICollection PropertyNames => DirectoryEntry.Properties.PropertyNames;
+        public string GECOS => this["gecos"]?.ToString();
 
-        public string ObjectClass => this["objectClass"]?.ToString();
+        public int? GidNumber => (int?) this["gidNumber"];
 
-        public string ContainerName => this["cn"]?.ToString();
+        public int? LoginShell => (int?) this["loginShell"];
 
         public string LastName => this["sn"]?.ToString();
 
@@ -48,35 +46,11 @@ namespace Utilities.ActiveDirectory
 
         public string MiddleName => this["initials"]?.ToString();
 
-        public string DistinguishedName => this["distinguishedName"]?.ToString();
-
-        public string InstanceType => this["instanceType"]?.ToString();
-
-        public string WhenCreated => this["whenCreated"]?.ToString();
-
-        public string WhenChanged => this["whenChanged"]?.ToString();
-
-        public string DisplayName => this["displayName"]?.ToString();
-
-        public string USNCreated => this["uSNCreated"]?.ToString();
-
-        public string MemberOf => this["memberOf"]?.ToString();
-
-        public string USNChanged => this["uSNChanged"]?.ToString();
-
         public string Country => this["co"]?.ToString();
 
         public string Department => this["department"]?.ToString();
 
         public string Company => this["company"]?.ToString();
-
-        public string ProxyAddresses => this["proxyAddresses"]?.ToString();
-
-        public string StreetAddress => this["streetAddress"]?.ToString();
-
-        public string DirectReports => this["directReports"]?.ToString();
-
-        public string Name => this["name"]?.ToString();
 
         public string ObjectGuid => this["objectGUID"]?.ToString();
 
@@ -120,10 +94,6 @@ namespace Utilities.ActiveDirectory
 
         public string ServicePrincipalName => this["servicePrincipalName"]?.ToString();
 
-        public string ObjectCategory => this["objectCategory"]?.ToString();
-
-        public string DSCorePropagationData => this["dSCorePropagationData"]?.ToString();
-
         public string LastLogonTimestamp => this["lastLogonTimestamp"]?.ToString();
 
         public string EmailAddress => this["mail"]?.ToString();
@@ -162,10 +132,6 @@ namespace Utilities.ActiveDirectory
 
         public string MSExchMailboxGuid => this["msExchMailboxGuid"]?.ToString();
 
-        public string NTSecurityDescriptor => this["nTSecurityDescriptor"]?.ToString();
-
-        public string Description => this["description"]?.ToString();
-
         public string ScriptPath => this["scriptPath"]?.ToString();
 
         //New?
@@ -194,6 +160,20 @@ namespace Utilities.ActiveDirectory
         public string MSExchWhenMailboxCreated => this["msExchWhenMailboxCreated"]?.ToString();
 
         public string MSExchRBACPolicyLink => this["msExchRBACPolicyLink"]?.ToString();
+
+        #region ShadowAccount
+        private readonly shadowExpire
+        shadowFlag
+        private readonly shadowInactive
+        shadowLastChange
+        private readonly shadowMax
+        shadowMin
+        private readonly shadowWarning
+        #endregion
+
+        uidNumber
+        private readonly unixHomeDirectory
+        unixUserPassword
 
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls

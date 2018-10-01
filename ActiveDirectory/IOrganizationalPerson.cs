@@ -1,0 +1,72 @@
+﻿namespace Utilities.ActiveDirectory
+{
+    /// <summary>
+    /// https://docs.microsoft.com/en-us/windows/desktop/ADSchema/c-organizationalperson#windows-server-2012-attributes
+    /// </summary>
+    public interface IOrganizationalPerson : IPerson
+    {
+        //Address
+        //Address-Home
+        //Assistant
+        //Company
+        //Country-Code
+        //Country-Name
+        //Department
+        //Destination-Indicator
+        //Division
+        //E-mail-Addresses
+        //Employee-ID
+        //Facsimile-Telephone-Number
+        //Generation-Qualifier
+        //Given-Name
+        //houseIdentifier
+        //Initials
+        //International-ISDN-Number
+        //Locality-Name
+        //Logo
+        //Manager
+        //MHS-OR-Address
+        //ms-DS-Allowed-To-Act-On-Behalf-Of-Other-Identity
+        //ms-DS-Allowed-To-Delegate-To
+        //ms-DS-HAB-Seniority-Index
+        //ms-DS-Phonetic-Company-Name
+        //ms-DS-Phonetic-Department
+        //ms-DS-Phonetic-Display-Name
+        //ms-DS-Phonetic-First-Name
+        //ms-DS-Phonetic-Last-Name
+        //ms-Exch-House-Identifier
+        //Organizational-Unit-Name
+        //Organization-Name
+        //Other-Mailbox
+        //Other-Name
+
+        Personal-Title
+Phone-Fax-Other
+Phone-Home-Other
+Phone-Home-Primary
+Phone-Ip-Other
+Phone-Ip-Primary
+Phone-ISDN-Primary
+Phone-Mobile-Other
+Phone-Mobile-Primary
+Phone-Office-Other
+Phone-Pager-Other
+Phone-Pager-Primary
+Physical-Delivery-Office-Name
+Picture
+Postal-Address
+Postal-Code
+Post-Office-Box
+Preferred-Delivery-Method
+Registered-Address
+State-Or-Province-Name
+Street-Address
+Teletex-Terminal-Identifier
+Telex-Number
+Telex-Primary
+Text-Country
+Title
+User-Comment
+X121-Address
+    }
+}
