@@ -4,17 +4,18 @@ using System.DirectoryServices.AccountManagement;
 
 namespace Utilities.ActiveDirectory
 {
-    public class ADUser : ADBase, IDisposable, IUser, IMailRecipient, IOrganizationalPerson, ISecurityPrincipal
+    public class ADUser : ADOrganizationalPerson, IDisposable, IUser, ISecurityPrincipal, IMailRecipient
     {
         public ADUser() { }
+
         public ADUser(UserPrincipal principal)
         {
             Principal = principal;
         }
 
-        private UserPrincipal principal;
+        private AuthenticablePrincipal principal;
 
-        public UserPrincipal Principal {
+        public AuthenticablePrincipal Principal {
             get => principal;
             set {
                 principal = value;

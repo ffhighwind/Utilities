@@ -3,7 +3,7 @@
     /// <summary>
     /// https://docs.microsoft.com/en-us/windows/desktop/ADSchema/c-user#windows-server-2012-attributes
     /// </summary>
-    public interface IUser : IPerson
+    public interface IUser
     {
         //Account-Expires
         //ACS-Policy-Name

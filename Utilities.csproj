@@ -46,7 +46,10 @@
     <Compile Include="ActiveDirectory\ADConstants.cs" />
     <Compile Include="ActiveDirectory\ADGroup.cs" />
     <Compile Include="ActiveDirectory\ADBase.cs" />
+    <Compile Include="ActiveDirectory\ADOrganizationalPerson.cs" />
+    <Compile Include="ActiveDirectory\ADPerson.cs" />
     <Compile Include="ActiveDirectory\IComputer.cs" />
+    <Compile Include="ActiveDirectory\IGroup.cs" />
     <Compile Include="ActiveDirectory\IMailRecipient.cs" />
     <Compile Include="ActiveDirectory\IOrganizationalPerson.cs" />
     <Compile Include="ActiveDirectory\IPerson.cs" />

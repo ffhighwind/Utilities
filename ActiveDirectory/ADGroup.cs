@@ -8,7 +8,7 @@ namespace Utilities.ActiveDirectory
     /// <summary>
     /// https://docs.microsoft.com/en-us/windows/desktop/ADSchema/c-group#windows-server-2012-attributes
     /// </summary>
-    public class ADGroup : ADBase, ISecurityPrincipal, IMailRecipient, IGroup
+    public class ADGroup : ADBase, IGroup, ISecurityPrincipal, IMailRecipient
     {
         public ADGroup(GroupPrincipal principal)
         {
@@ -16,18 +16,15 @@ namespace Utilities.ActiveDirectory
             DirectoryEntry = (DirectoryEntry) principal.GetUnderlyingObject();
         }
 
-        public GroupPrincipal Principal { get; private set; }
-        public DirectoryEntry DirectoryEntry { get; private set; }
+        private GroupPrincipal principal;
 
-        public object this[string property] {
-            get {
-                if (DirectoryEntry.Properties.Contains(property))
-                    return DirectoryEntry.Properties[property].Value;
-                return null;
+        public GroupPrincipal Principal {
+            get => principal;
+            set {
+                principal = value;
+                DirectoryEntry = (DirectoryEntry) value.GetUnderlyingObject();
             }
         }
-
-        public ICollection PropertyNames => DirectoryEntry.Properties.PropertyNames;
 
     "accountNameHistory",
     "adminCount",
