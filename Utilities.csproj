@@ -41,6 +41,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="ActiveDirectory\AccountType.cs" />
+    <Compile Include="ActiveDirectory\SamAccountType.cs" />
     <Compile Include="ActiveDirectory\ActiveDirectory.cs" />
     <Compile Include="ActiveDirectory\ADComputer.cs" />
     <Compile Include="ActiveDirectory\ADConstants.cs" />
@@ -48,17 +49,18 @@
     <Compile Include="ActiveDirectory\ADBase.cs" />
     <Compile Include="ActiveDirectory\ADOrganizationalPerson.cs" />
     <Compile Include="ActiveDirectory\ADPerson.cs" />
-    <Compile Include="ActiveDirectory\IComputer.cs" />
-    <Compile Include="ActiveDirectory\IGroup.cs" />
-    <Compile Include="ActiveDirectory\IMailRecipient.cs" />
-    <Compile Include="ActiveDirectory\IOrganizationalPerson.cs" />
-    <Compile Include="ActiveDirectory\IPerson.cs" />
-    <Compile Include="ActiveDirectory\ISecurityPrincipal.cs" />
+    <Compile Include="ActiveDirectory\Interfaces\IComputer.cs" />
+    <Compile Include="ActiveDirectory\Interfaces\IGroup.cs" />
+    <Compile Include="ActiveDirectory\Interfaces\IMailRecipient.cs" />
+    <Compile Include="ActiveDirectory\Interfaces\IOrganizationalPerson.cs" />
+    <Compile Include="ActiveDirectory\Interfaces\IPerson.cs" />
+    <Compile Include="ActiveDirectory\Interfaces\ISecurityPrincipal.cs" />
     <Compile Include="ActiveDirectory\ADUser.cs" />
     <Compile Include="ActiveDirectory\EffectiveRights.cs" />
     <Compile Include="ActiveDirectory\InstanceType.cs" />
-    <Compile Include="ActiveDirectory\IUser.cs" />
+    <Compile Include="ActiveDirectory\Interfaces\IUser.cs" />
     <Compile Include="ActiveDirectory\SystemFlags.cs" />
+    <Compile Include="ActiveDirectory\UserAccess.cs" />
     <Compile Include="ActiveDirectory\WellKnownObjects.cs" />
     <Compile Include="Comparers\Comparer.cs" />
     <Compile Include="Comparers\Comparers.cs" />

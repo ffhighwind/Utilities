@@ -5,7 +5,7 @@ namespace Utilities.ActiveDirectory
 {
     /// <summary>
     /// Top class
-    /// https://docs.microsoft.com/en-us/windows/desktop/ADSchema/c-top#windows-server-2008-r2-attributes
+    /// https://docs.microsoft.com/en-us/windows/desktop/ADSchema/c-top#windows-server-2012-attributes
     /// </summary>
     public abstract class ADBase
     {

@@ -1,21 +1,15 @@
 ﻿namespace Utilities.ActiveDirectory
 {
     /// <summary>
-    /// https://docs.microsoft.com/en-us/windows/desktop/ADSchema/a-samaccounttype
+    /// https://docs.microsoft.com/en-us/windows/desktop/api/lmaccess/ns-lmaccess-_user_info_1008
     /// </summary>
-    public enum AccountType
+    public enum AccountType : ulong
     {
-        Domain = 0x0,
-        Group = 0x10000000,
-        NonSecurityGroup = 0x10000001,
-        Alias = 0x20000000,
-        NonSecurityAlias = 0x20000001,
-        User = 0x30000000,
-        NormalUserAccount = 0x30000000,
-        Machine = 0x30000001,
-        TrustAccount = 0x30000002,
-        AppBasicGroup = 0x40000000,
-        AppQueryGroup = 0x40000001,
-        Max = 0x7fffffff,
+        Normal = 0x200, // UF_NORMAL_ACCOUNT
+        TempDuplicate = 0x100, // UF_TEMP_DUPLICATE_ACCOUNT
+        InterDomainTrust = 0x800, // UF_INTERDOMAIN_TRUST_ACCOUNT
+        WorkstationTrust = 0x1000, // UF_WORKSTATION_TRUST_ACCOUNT
+        ServerTrust = 0x2000, // UF_SERVER_TRUST_ACCOUNT
+        MajorityNodeSet = 0x20000 // UF_MNS_LOGON_ACCOUNT
     }
 }

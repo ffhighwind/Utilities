@@ -1,5 +1,6 @@
 ﻿using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
+using Utilities.ActiveDirectory.Interfaces;
 
 namespace Utilities.ActiveDirectory
 {

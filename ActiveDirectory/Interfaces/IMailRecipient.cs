@@ -1,4 +1,4 @@
-﻿namespace Utilities.ActiveDirectory
+﻿namespace Utilities.ActiveDirectory.Interfaces
 {
     public interface IMailRecipient
     {

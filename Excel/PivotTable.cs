@@ -10,12 +10,12 @@ namespace Utilities.Excel
     {
         public ExcelPivotTable Data { get; private set; } = null;
 
-        public PivotTable(Worksheet source, Worksheet destination, string name = " ")
-        : this(source.Data.Cells[source.Data.Dimension.Address], destination, name) { }
+        public PivotTable(Worksheet source, Worksheet destination, string destAddress = "B2", string name = " ")
+        : this(source.Data.Cells[source.Data.Dimension.Address], destination, destAddress, name) { }
 
-        public PivotTable(ExcelRangeBase source, Worksheet destination, string name = " ")
+        public PivotTable(ExcelRangeBase source, Worksheet destination, string destAddress = "B2", string name = " ")
         {
-            Data = destination.Data.PivotTables.Add(destination.Data.Cells["B2"], source, name);
+            Data = destination.Data.PivotTables.Add(destination.Data.Cells[destAddress], source, name);
             Data.ShowHeaders = true;
             Data.RowHeaderCaption = name;
             Data.UseAutoFormatting = true;
@@ -26,21 +26,7 @@ namespace Utilities.Excel
             Data.FirstDataRow = 2;
             Data.DataOnRows = false;
             Data.DataCaption = " ";
-
             Data.TableStyle = OfficeOpenXml.Table.TableStyles.Medium9;
-
-            ////Data.MultipleFieldFilters = true;
-            ////Data.RowGrandTotals = true;
-            ////Data.ColumGrandTotals = true;
-            ////Data.Compact = true;
-            ////Data.CompactData = true;
-            ////Data.GridDropZones = false;
-            ////Data.Outline = false;
-            ////Data.OutlineData = false;
-
-            ////Data.ShowError = true;
-            ////Data.ErrorCaption = "[error]";
-            ////Data.RowHeaderCaption = "Claims";
         }
 
         public string Name {
@@ -69,6 +55,12 @@ namespace Utilities.Excel
             return Data.RowFields.Add(field);
         }
 
+        /// <summary>
+        /// Adds row data to the PivotTable.
+        /// </summary>
+        /// <param name="row">The row index of the source worksheet.</param>
+        /// <param name="format">The format for the data (e.g. mm-dd-yyyy).</param>
+        /// <param name="sorting">The sort order for the data.</param>
         public void AddRow(int row, string format, Sorting sorting = Sorting.Ascending)
         {
             ExcelPivotTableField field = Data.Fields[row];

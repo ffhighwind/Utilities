@@ -1,4 +1,4 @@
-﻿namespace Utilities.ActiveDirectory
+﻿namespace Utilities.ActiveDirectory.Interfaces
 {
     /// <summary>
     /// https://docs.microsoft.com/en-us/windows/desktop/ADSchema/c-organizationalperson#windows-server-2012-attributes
