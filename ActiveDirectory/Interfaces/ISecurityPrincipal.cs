@@ -5,18 +5,18 @@
     /// </summary>
     public interface ISecurityPrincipal
     {
-        //Account-Name-History
-        //Alt-Security-Identities
-        //ms-DS-KeyVersionNumber
-        //string Object-Sid
-        //Rid
-        //SAM-Account-Name
-        //SAM-Account-Type
-        //Security-Identifier
-        //SID-History
-        //Supplemental-Credentials
-        //Token-Groups
-        //Token-Groups-Global-And-Universal
-        //Token-Groups-No-GC-Acceptable
+        string AccountNameHistory { get; } // Account-Name-History
+        string AltSecurityIdentities { get; } // Alt-Security-Identities
+        string MSDSKeyVersionNumber { get; } // ms-DS-KeyVersionNumber
+        string ObjectSid { get; } // Object-Sid
+        string Rid { get; } // Rid
+        string SAMAccountName { get; } // SAM-Account-Name
+        string SAMAccountType { get; } // SAM-Account-Type
+        string SecurityIdentifier { get; } // Security-Identifier
+        string SIDHistory { get; } // SID-History
+        string SupplementalCredentials { get; } // Supplemental-Credentials
+        string TokenGroups { get; } // Token-Groups
+        string TokenGroupsGlobalAndUniversal { get; } // Token-Groups-Global-And-Universal
+        string TokenGroupsNoGCAcceptable { get; } // Token-Groups-No-GC-Acceptable
     }
 }

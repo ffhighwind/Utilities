@@ -13,55 +13,110 @@ namespace Utilities.ActiveDirectory
             Principal = principal;
         }
 
-        //ipHost
+        string IComputer.Catalogs => throw new NotImplementedException();
 
-        //Catalogs
-        //Default-Local-Policy-Object
-        //DNS-Host-Name
-        //ipHostNumber
-        //Local-Policy-Flags
-        //Location
-        //Machine-Role
-        //Managed-By
-        //ms-DS-Additional-Dns-Host-Name
-        //ms-DS-Additional-Sam-Account-Name
-        //ms-DS-ExecuteScriptPassword
-        //ms-DS-Generation-Id
-        //ms-DS-Host-Service-Account
-        //ms-DS-isGC
-        //ms-DS-isRODC
-        //ms-DS-Is-User-Cachable-At-Rodc
-        //ms-DS-KrbTgt-Link
-        //ms-DS-Never-Reveal-Group
-        //ms-DS-Promotion-Settings
-        //ms-DS-Revealed-List
-        //ms-DS-Revealed-Users
-        //ms-DS-Reveal-OnDemand-Group
-        //ms-DS-SiteName
-        //ms-Imaging-Hash-Algorithm
-        //ms-Imaging-Thumbprint-Hash
-        //msSFU-30-Aliases
-        //ms-TPM-OwnerInformation
-        //ms-TPM-Tpm-Information-For-Computer
-        //ms-TS-Endpoint-Data
-        //ms-TS-Endpoint-Plugin
-        //ms-TS-Endpoint-Type
-        //ms-TS-Primary-Desktop-BL
-        //ms-TS-Secondary-Desktop-BL
-        //Netboot-GUID
-        //Netboot-Initialization
-        //Netboot-Machine-File-Path
-        //Netboot-Mirror-Data-File
-        //Netboot-SIF-File
-        //nisMapName
-        //Operating-System
-        //Operating-System-Hotfix
-        //Operating-System-Service-Pack
-        //Operating-System-Version
-        //Physical-Location-Object
-        //Policy-Replication-Flags
-        //RID-Set-References
-        //Site-GUID
-        //Volume-Count
+        string IComputer.DefaultLocalPolicyObject => throw new NotImplementedException();
+
+        string IComputer.DNSHostName => throw new NotImplementedException();
+
+        string IComputer.LocalPolicyFlags => throw new NotImplementedException();
+
+        string IComputer.Location => throw new NotImplementedException();
+
+        string IComputer.MachineRole => throw new NotImplementedException();
+
+        string IComputer.ManagedBy => throw new NotImplementedException();
+
+        string IComputer.MSDSAdditionalDnsHostName => throw new NotImplementedException();
+
+        string IComputer.MSDSAdditionalSamAccountName => throw new NotImplementedException();
+
+        string IComputer.MSDSAuthenticatedAtDC => throw new NotImplementedException();
+
+        string IComputer.MSDSExecuteScriptPassword => throw new NotImplementedException();
+
+        string IComputer.MSDSGenerationId => throw new NotImplementedException();
+
+        string IComputer.MSDSHostServiceAccount => throw new NotImplementedException();
+
+        string IComputer.MSDSisGC => throw new NotImplementedException();
+
+        string IComputer.MSDSisRODC => throw new NotImplementedException();
+
+        string IComputer.MSDSIsUserCachableAtRodc => throw new NotImplementedException();
+
+        string IComputer.MSDSKrbTgtLink => throw new NotImplementedException();
+
+        string IComputer.MSDSNeverRevealGroup => throw new NotImplementedException();
+
+        string IComputer.MSDSPromotionSettings => throw new NotImplementedException();
+
+        string IComputer.MSDSRevealedList => throw new NotImplementedException();
+
+        string IComputer.MSDSRevealedUsers => throw new NotImplementedException();
+
+        string IComputer.MSDSRevealOnDemandGroup => throw new NotImplementedException();
+
+        string IComputer.MSDSSiteName => throw new NotImplementedException();
+
+        string IComputer.MSImagingHashAlgorithm => throw new NotImplementedException();
+
+        string IComputer.MSImagingThumbprintHash => throw new NotImplementedException();
+
+        string IComputer.MSSFU30Aliases => throw new NotImplementedException();
+
+        string IComputer.MSSFU30Name => throw new NotImplementedException();
+
+        string IComputer.MSSFU30NisDomain => throw new NotImplementedException();
+
+        string IComputer.MSTPMOwnerInformation => throw new NotImplementedException();
+
+        string IComputer.MSTPMTpmInformationForComputer => throw new NotImplementedException();
+
+        string IComputer.MSTSEndpointData => throw new NotImplementedException();
+
+        string IComputer.MSTSEndpointPlugin => throw new NotImplementedException();
+
+        string IComputer.MSTSEndpointType => throw new NotImplementedException();
+
+        string IComputer.MSTSPrimaryDesktopBL => throw new NotImplementedException();
+
+        string IComputer.MSTSProperty01 => throw new NotImplementedException();
+
+        string IComputer.MSTSProperty02 => throw new NotImplementedException();
+
+        string IComputer.MSTSSecondaryDesktopBL => throw new NotImplementedException();
+
+        string IComputer.NetbootGUID => throw new NotImplementedException();
+
+        string IComputer.NetbootInitialization => throw new NotImplementedException();
+
+        string IComputer.NetbootMachineFilePath => throw new NotImplementedException();
+
+        string IComputer.NetbootMirrorDataFile => throw new NotImplementedException();
+
+        string IComputer.NetbootSIFFile => throw new NotImplementedException();
+
+        string IComputer.NetworkAddress => throw new NotImplementedException();
+
+        string IComputer.NisMapName => throw new NotImplementedException();
+
+        string IComputer.OperatingSystem => throw new NotImplementedException();
+
+        string IComputer.OperatingSystemHotfix => throw new NotImplementedException();
+
+        string IComputer.OperatingSystemServicePack => throw new NotImplementedException();
+
+        string IComputer.OperatingSystemVersion => throw new NotImplementedException();
+
+        string IComputer.PhysicalLocationObject => throw new NotImplementedException();
+
+        string IComputer.PolicyReplicationFlags => throw new NotImplementedException();
+
+        string IComputer.RIDSetReferences => throw new NotImplementedException();
+
+        string IComputer.SiteGUID => throw new NotImplementedException();
+
+        string IComputer.VolumeCount => throw new NotImplementedException();
     }
 }

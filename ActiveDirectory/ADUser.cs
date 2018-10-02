@@ -293,6 +293,66 @@ namespace Utilities.ActiveDirectory
 
         public string MSExchRBACPolicyLink => this["msExchRBACPolicyLink"]?.ToString();
 
+        string ISecurityPrincipal.AccountNameHistory => throw new NotImplementedException();
+
+        string ISecurityPrincipal.AltSecurityIdentities => throw new NotImplementedException();
+
+        string ISecurityPrincipal.MSDSKeyVersionNumber => throw new NotImplementedException();
+
+        string ISecurityPrincipal.ObjectSid => throw new NotImplementedException();
+
+        string ISecurityPrincipal.Rid => throw new NotImplementedException();
+
+        string ISecurityPrincipal.SAMAccountName => throw new NotImplementedException();
+
+        string ISecurityPrincipal.SAMAccountType => throw new NotImplementedException();
+
+        string ISecurityPrincipal.SecurityIdentifier => throw new NotImplementedException();
+
+        string ISecurityPrincipal.SIDHistory => throw new NotImplementedException();
+
+        string ISecurityPrincipal.SupplementalCredentials => throw new NotImplementedException();
+
+        string ISecurityPrincipal.TokenGroups => throw new NotImplementedException();
+
+        string ISecurityPrincipal.TokenGroupsGlobalAndUniversal => throw new NotImplementedException();
+
+        string ISecurityPrincipal.TokenGroupsNoGCAcceptable => throw new NotImplementedException();
+
+        string IMailRecipient.Comment => throw new NotImplementedException();
+
+        string IMailRecipient.GarbageCollPeriod => throw new NotImplementedException();
+
+        string IMailRecipient.LabeledURI => throw new NotImplementedException();
+
+        string IMailRecipient.LegacyExchangeDN => throw new NotImplementedException();
+
+        string IMailRecipient.MSDSGeoCoordinatesAltitude => throw new NotImplementedException();
+
+        string IMailRecipient.MSDSGeoCoordinatesLatitude => throw new NotImplementedException();
+
+        string IMailRecipient.MSDSGeoCoordinatesLongitude => throw new NotImplementedException();
+
+        string IMailRecipient.MSDSPhoneticDisplayName => throw new NotImplementedException();
+
+        string IMailRecipient.MSExchAssistantName => throw new NotImplementedException();
+
+        string IMailRecipient.MSExchLabeledURI => throw new NotImplementedException();
+
+        string IMailRecipient.Secretary => throw new NotImplementedException();
+
+        string IMailRecipient.ShowInAddressBook => throw new NotImplementedException();
+
+        string IMailRecipient.TelephoneNumber => throw new NotImplementedException();
+
+        string IMailRecipient.TextEncodedOrAddress => throw new NotImplementedException();
+
+        string IMailRecipient.UserCert => throw new NotImplementedException();
+
+        string IMailRecipient.UserSMIMECertificate => throw new NotImplementedException();
+
+        string IMailRecipient.X509Cert => throw new NotImplementedException();
+
         #region ShadowAccount
         //shadowExpire
         //shadowFlag

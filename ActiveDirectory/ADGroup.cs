@@ -25,183 +25,118 @@ namespace Utilities.ActiveDirectory
             }
         }
 
-        //"accountNameHistory",
-        //"adminCount",
-        //"adminDescription",
-        //"adminDisplayName",
-        //"allowedAttributes",
-        //"allowedAttributesEffective",
-        //"allowedChildClasses"
-        //"altSecurityIdentities"
-        //"bridgeheadServerListBL"
-        //"canonicalName"
-        //"info" // Comment
-        //"cn" // Common-Name
-        //"controlAccessRights"
-        //"createTimeStamp"
-        //"description"
-        //"desktopProfile"
-        //"displayName"
-        //"displayNamePrintable"
-        //"dSASignature"
-        //"dSCorePropagationData"
-        //"mail"
-        //"extensionName"
-        //"flags"
-        //"fromEntry"
-        //"frsComputerReferenceBL"
-        //"fRSMemberReferenceBL"
-        //"fSMORoleOwner"
-        //"garbageCollPeriod"
-        //"gidNumber
-        //"groupAttributes"
-        //"groupMembershipSAM"
-        //"groupType"
-        //"instanceType"
-        //"isCriticalSystemObject"
-        //"isDeleted"
-        //"memberOf"
-        //"isPrivilegeHolder"
-        //"isRecycled"
-        //"labeledURI"
-        //"lastKnownParent"
-        //"legacyExchangeDN"
-        //"managedBy"
-        //"managedObjects"
-        //"managedBy"
-        //"member"
-        //"memberUid"
-        //"modifyTimeStamp"
+        #region IGroup
+        string IGroup.ControlAccessRights => throw new System.NotImplementedException();
 
-        //"msCOM-PartitionSetLink"
-        //"msCOM-UserLink"
-        //"msDFSR-ComputerReferenceBL"
-        //"msDFSR-MemberReferenceBL"
-        //"msDS-Approx-Immed-Subordinates"
-        //"msDS-AuthenticatedToAccountlist"
-        //"msDS-AzApplicationData"
-        //"msDS-AzBizRule"
-        //"msDS-AzBizRuleLanguage"
-        //"msDS-AzGenericData"
-        //"msDS-AzLastImportedBizRulePath"
+        string IGroup.DesktopProfile => throw new System.NotImplementedException();
 
-        //"msDS-AzLDAPQuery"
-        //"msDS-AzObjectGuid"
-        //"msDS-ClaimSharesPossibleValuesWithBL"
-        //"mS-DS-ConsistencyChildCount"
-        //"mS-DS-ConsistencyGuid"
-        //"msDS-EnabledFeatureBL"
-        //"msDS-GeoCoordinatesAltitude"
-        //"msDS-GeoCoordinatesLatitude"
-        //"msDS-GeoCoordinatesLongitude"
-        //"msDS-HostServiceAccountBL"
-        //"msDS-IsDomainFor"
-        //"msDS-IsPartialReplicaFor"
-        //"msDS-IsPartialReplicaFor"
-        //"msDS-IsPrimaryComputerFor"
-        //"msDS-KeyVersionNumber"
-        //"msDS-KrbTgtLinkBl"
-        //"msDS-LastKnownRDN"
-        //"msDS-LocalEffectiveDeletionTime"
-        //"msDS-LocalEffectiveRecycleTime"
-        //"msDs-masteredBy"
-        //"msDS-MembersForAzRoleBL"
-        //"msDS-MembersOfResourcePropertyListBL"
-        //"msDS-NCReplCursors"
-        //"msDS-NCReplInboundNeighbors"
-        //"msDS-NCReplOutboundNeighbors"
-        //"msDS-NC-RO-Replica-Locations-BL"
-        //"msDS-NcType"
-        //"msDS-NonMembers"
-        //"msDS-NonMembersBL"
-        //"msDS-ObjectReferenceBL"
-        //"msDS-OIDToGroupLinkBl"
-        //"msDS-OperationsForAzRoleBL"
-        //"msDS-OperationsForAzTaskBL"
-        //"msDS-PhoneticDisplayName"
-        //"msDS-PrimaryComputer"
-        //"msDS-PrincipalName"
-        //"msDS-PSOApplied"
-        //"msDS-ReplAttributeMetaData"
-        //"msDS-ReplValueMetaData"
-        //"msDS-RevealedDSAs"
-        //"msDS-RevealedListBL"
-        //"msDS-TasksForAzRoleBL"
-        //"msDS-TasksForAzTaskBL"
-        //"msDS-TDOEgressBL"
-        //"msDS-TDOIngressBL"
-        //"msDS-ValueTypeReferenceBL"
-        //"msExchAssistantName"
-        //"msExchLabeledURI"
-        //"ownerBL" // 	ms-Exch-Owner-BL
-        //"msSFU30Name"
-        //"msSFU30NisDomain"
-        //"msSFU30PosixMember"
-        //"msSFU30PosixMemberOf"
-        //"netbootSCPBL"
-        //"nonSecurityMember"
-        //"nonSecurityMemberBL"
-        //"nTGroupMembers"
-        //"nTSecurityDescriptor"
-        //"distinguishedName"
-        //"objectCategory"
-        //"objectClass"
-        //"objectGUID"
-        //"objectSid"
-        //"objectVersion"
-        //"operatorCount"
-        //"otherWellKnownObjects"
-        //"partialAttributeDeletionList"
-        //"partialAttributeSet"
-        //"possibleInferiors"
-        //"primaryGroupToken"
-        //"proxiedObjectName"
-        //"proxyAddresses"
-        //"queryPolicyBL"
-        //"name" // Relative Distinguished Name
-        //"replPropertyMetaData"
-        //"replUpToDateVector"
-        //"directReports"
-        //"repsFrom"
-        //"repsTo"
-        //"revision" //  revision level
-        //"rid" // relative Identifier
-        //"sAMAccountName"
-        //sAMAccountType
-        //sDRightsEffective
-        //secretary
-        //securityIdentifier
-        //serverReferenceBL
-        //showInAddressBook
-        //showInAdvancedViewOnly
-        //sIDHistory
-        //siteObjectBL
-        //structuralObjectClass
-        //subRefs
-        //subSchemaSubEntry
-        //supplementalCredentials
-        //systemFlags
-        //telephoneNumber
-        //textEncodedORAddress
-        //tokenGroups
-        //tokenGroupsGlobalAndUniversal
-        //tokenGroupsNoGCAcceptable
-        //unixUserPassword
-        //userCert // Certificate
-        //userPassword
-        //userSMIMECertificate
-        //uSNChanged
-        //uSNCreated
-        //uSNDSALastObjRemoved
-        //USNIntersite
-        //USN-Last-Obj-Rem
-        //USN-Source
-        //Wbem-Path
-        //Well-Known-Objects
-        //When-Changed
-        //When-Created
-        //WWW-Home-Page
-        //WWW-Page-Other
-        //X509-Cert
+        string IGroup.EmailAddresses => throw new System.NotImplementedException();
+
+        string IGroup.GroupAttributes => throw new System.NotImplementedException();
+
+        string IGroup.GroupMembershipSAM => throw new System.NotImplementedException();
+
+        string IGroup.GroupType => throw new System.NotImplementedException();
+
+        string IGroup.ManagedBy => throw new System.NotImplementedException();
+
+        string IGroup.Member => throw new System.NotImplementedException();
+
+        string IGroup.MSDSAzApplicationData => throw new System.NotImplementedException();
+
+        string IGroup.MSDSAzBizRule => throw new System.NotImplementedException();
+
+        string IGroup.MSDSAzBizRuleLanguage => throw new System.NotImplementedException();
+
+        string IGroup.MSDSAzGenericData => throw new System.NotImplementedException();
+
+        string IGroup.MSDSAzLastImportedBizRulePath => throw new System.NotImplementedException();
+
+        string IGroup.MSDSAzLDAPQuery => throw new System.NotImplementedException();
+
+        string IGroup.MSDSAzObjectGuid => throw new System.NotImplementedException();
+
+        string IGroup.MSDSNonMembers => throw new System.NotImplementedException();
+
+        string IGroup.MSDSPrimaryComputer => throw new System.NotImplementedException();
+
+        string IGroup.MSSFU30Name => throw new System.NotImplementedException();
+
+        string IGroup.MSSFU30NisDomain => throw new System.NotImplementedException();
+
+        string IGroup.MSSFU30PosixMember => throw new System.NotImplementedException();
+
+        string IGroup.NonSecurityMember => throw new System.NotImplementedException();
+
+        string IGroup.NTGroupMembers => throw new System.NotImplementedException();
+
+        string IGroup.OperatorCount => throw new System.NotImplementedException();
+
+        string IGroup.PrimaryGroupToken => throw new System.NotImplementedException();
+        #endregion // IGroup
+
+        #region ISecurityPrincipal
+        string ISecurityPrincipal.AccountNameHistory => throw new System.NotImplementedException();
+
+        string ISecurityPrincipal.AltSecurityIdentities => throw new System.NotImplementedException();
+
+        string ISecurityPrincipal.MSDSKeyVersionNumber => throw new System.NotImplementedException();
+
+        string ISecurityPrincipal.ObjectSid => throw new System.NotImplementedException();
+
+        string ISecurityPrincipal.Rid => throw new System.NotImplementedException();
+
+        string ISecurityPrincipal.SAMAccountName => throw new System.NotImplementedException();
+
+        string ISecurityPrincipal.SAMAccountType => throw new System.NotImplementedException();
+
+        string ISecurityPrincipal.SecurityIdentifier => throw new System.NotImplementedException();
+
+        string ISecurityPrincipal.SIDHistory => throw new System.NotImplementedException();
+
+        string ISecurityPrincipal.SupplementalCredentials => throw new System.NotImplementedException();
+
+        string ISecurityPrincipal.TokenGroups => throw new System.NotImplementedException();
+
+        string ISecurityPrincipal.TokenGroupsGlobalAndUniversal => throw new System.NotImplementedException();
+
+        string ISecurityPrincipal.TokenGroupsNoGCAcceptable => throw new System.NotImplementedException();
+        #endregion // ISecurityPrincipal
+
+        #region // IMailRecipient
+        string IMailRecipient.Comment => throw new System.NotImplementedException();
+
+        string IMailRecipient.GarbageCollPeriod => throw new System.NotImplementedException();
+
+        string IMailRecipient.LabeledURI => throw new System.NotImplementedException();
+
+        string IMailRecipient.LegacyExchangeDN => throw new System.NotImplementedException();
+
+        string IMailRecipient.MSDSGeoCoordinatesAltitude => throw new System.NotImplementedException();
+
+        string IMailRecipient.MSDSGeoCoordinatesLatitude => throw new System.NotImplementedException();
+
+        string IMailRecipient.MSDSGeoCoordinatesLongitude => throw new System.NotImplementedException();
+
+        string IMailRecipient.MSDSPhoneticDisplayName => throw new System.NotImplementedException();
+
+        string IMailRecipient.MSExchAssistantName => throw new System.NotImplementedException();
+
+        string IMailRecipient.MSExchLabeledURI => throw new System.NotImplementedException();
+
+        string IMailRecipient.Secretary => throw new System.NotImplementedException();
+
+        string IMailRecipient.ShowInAddressBook => throw new System.NotImplementedException();
+
+        string IMailRecipient.TelephoneNumber => throw new System.NotImplementedException();
+
+        string IMailRecipient.TextEncodedOrAddress => throw new System.NotImplementedException();
+
+        string IMailRecipient.UserCert => throw new System.NotImplementedException();
+
+        string IMailRecipient.UserSMIMECertificate => throw new System.NotImplementedException();
+
+        string IMailRecipient.X509Cert => throw new System.NotImplementedException();
+        #endregion // IMailRecipient
     }
 }
