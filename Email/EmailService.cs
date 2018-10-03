@@ -269,7 +269,7 @@ namespace Utilities.Email
                 Traversal = traversal
             };
             iview.OrderBy.Add(ItemSchema.DateTimeReceived, SortDirection.Descending);
-            FindItemsResults<Item> results = Service.FindItems(folderId, new SearchFilter.IsEqualTo(ItemSchema.ItemClass, ItemClass.Email), iview);
+            FindItemsResults<Item> results = Service.FindItems(folderId, new SearchFilter.IsEqualTo(ItemSchema.ItemClass, "IPM.Note"), iview);
             if (results.TotalCount > 0) {
                 do {
                     foreach (Item email in results) {

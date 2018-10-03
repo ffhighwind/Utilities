@@ -1059,7 +1059,8 @@ namespace Utilities
             using (Spreadsheet ss = new Spreadsheet(path)) {
                 if (!ss.IsOpen)
                     throw new IOException(path);
-                return ss[0].ToList(list, includeHeaders);
+                Worksheet worksheet = sheetName == null ? ss[0] : ss[sheetName];
+                return worksheet.ToList(list, includeHeaders);
             }
         }
 
