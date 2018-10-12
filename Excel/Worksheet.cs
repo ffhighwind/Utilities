@@ -461,7 +461,7 @@ namespace Utilities.Excel
         public void Trim()
         {
             int colCount = Data.Dimension.Columns;
-            for (int row = Rows; row > 0; row++) {
+            for (int row = Rows; row > 0; row--) {
                 for (int col = 1; col <= colCount; col++) {
                     ExcelRange cell = Data.Cells[row, col];
                     if (cell.Value != null && cell.Value.ToString().Length > 0)
@@ -693,16 +693,28 @@ namespace Utilities.Excel
                 ? Converters.Converters.ListToObject<string, T>(Data.Cells[1, 1, 1, Columns].Select(cell => cell.Value?.ToString()).ToList())
                 : Converters.Converters.ListToObject<string, T>();
 
-            bool[] isTimespan = new bool[Columns];
-            for (int i = 0; i < isTimespan.Length; i++) {
-                isTimespan[i] = ColumnType(i + 1) == typeof(TimeSpan);
+            Type[] colTypes = new Type[Columns];
+            for (int i = 0; i < colTypes.Length; i++) {
+                colTypes[i] = ColumnType(i + 1);
             }
             for (int row = hasHeaders ? 2 : 1; row <= Rows; row++) {
                 string[] line = new string[Columns];
                 for (int col = 1; col <= Columns; col++) {
                     // Excel stores all numbers as double including int
                     ExcelRange cell = Data.Cells[row, col];
-                    line[col - 1] = isTimespan[col - 1] ? DateTime.FromOADate(cell.GetValue<double>()).ToString("h:mm:ss") : cell.GetValue<string>();
+                    if (colTypes[col - 1] == typeof(TimeSpan)) {
+                        line[col - 1] = DateTime.FromOADate(cell.GetValue<double>()).ToString("h:mm:ss");
+                    }
+                    else if (colTypes[col - 1] == typeof(DateTime)) {
+                        try {
+                            line[col - 1] = DateTime.FromOADate(cell.GetValue<double>()).ToString();
+                        }
+                        catch {
+                            line[col - 1] = cell.GetValue<string>();
+                        }
+                    }
+                    else
+                        line[col - 1] = cell.GetValue<string>();
                 }
                 yield return converter(line);
             }
@@ -837,6 +849,24 @@ namespace Utilities.Excel
             if (numerator != 0)
                 d = ((decimal) numerator) / denominator;
             return true;
+        }
+
+        public void SetValue(int row, int col, object value)
+        {
+            Data.SetValue(row, col, value);
+        }
+
+        public void SetValue(string address, object value)
+        {
+            Data.SetValue(address, value);
+        }
+
+        public void AddRow(params object[] values)
+        {
+            int row = Data.Dimension.Rows + 1;
+            for (int col = 0; col < values.Length; col++) {
+                Data.SetValue(row, col + 1, values[col]);
+            }
         }
 
         /// <summary>
