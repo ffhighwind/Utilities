@@ -655,7 +655,7 @@ namespace Utilities
                         xml.GetElementsByTagName("defaultValue")[0].InnerText);
                 }
                 catch {
-                    // Handle
+                    // ignore
                 }
             }
         }
@@ -687,15 +687,15 @@ namespace Utilities
     SELECT 1 FROM INFORMATION_SCHEMA.TABLES
     WHERE TABLE_NAME = @tablename
 )
-SELECT 1 ELSE SELECT 0", new { tablename = tablename });
+SELECT 1 ELSE SELECT 0", new { tablename });
             }
-            catch (Exception ex) {
+            catch {
                 try {
                     // Other RDBMS.  Graceful degradation
-                    return 1 == conn.ExecuteScalar<int>("SELECT 1 FROM @tablename WHERE 1 = 0", new { tablename = tablename });
+                    return 1 == conn.ExecuteScalar<int>("SELECT 1 FROM @tablename WHERE 1 = 0", new { tablename });
                 }
                 catch {
-                    PrintError(ex, "DB.TableExists", conn, tablename);
+                    // ignore
                 }
             }
             return false;
@@ -724,20 +724,8 @@ FROM @tablename
 WHERE DuplicateRows > 1
 IF @@ROWCOUNT < 4000
     BREAK;
-END", new { tablename = tablename, columns = distinctColumns.Length > 0 ? string.Join(",", distinctColumns) : "*" }, trans);
+END", new { tablename, columns = distinctColumns.Length > 0 ? string.Join(",", distinctColumns) : "*" }, trans);
             }
-        }
-
-        private static void PrintError(Exception ex, string methodName, SqlConnection conn, string tablename = null)
-        {
-            string arg = string.Format("{0}.{1}{2}", conn.DataSource ?? "null", conn.Database ?? "null", tablename == null ? "" : "." + tablename);
-            Console.Error.WriteLine(
-                "Error {0}{1}: {2}\n{3}{4}",
-                methodName ?? "null",
-                arg == null ? "" : "(" + arg + ")",
-                ex.GetType().ToString(),
-                ex.Message,
-                ex.InnerException == null ? "" : "\n  " + ex.InnerException.Message);
         }
     }
 }
