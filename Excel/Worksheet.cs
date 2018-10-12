@@ -460,14 +460,24 @@ namespace Utilities.Excel
         /// </summary>
         public void Trim()
         {
-            int colCount = Data.Dimension.Columns;
-            for (int row = Rows; row > 0; row--) {
-                for (int col = 1; col <= colCount; col++) {
-                    ExcelRange cell = Data.Cells[row, col];
-                    if (cell.Value != null && cell.Value.ToString().Length > 0)
-                        return;
-                }
+            int lastRow = LastRowWithData;
+            for (int row = Rows; row > lastRow; row--) {
                 Data.DeleteRow(row);
+            }
+        }
+
+        private int LastRowWithData
+        {
+            get {
+                int colCount = Data.Dimension.Columns;
+                for (int row = Rows; row > 0; row--) {
+                    for (int col = 1; col <= colCount; col++) {
+                        ExcelRange cell = Data.Cells[row, col];
+                        if (cell.Value != null && cell.Value.ToString().Length > 0)
+                            return row;
+                    }
+                }
+                return 0;
             }
         }
 
@@ -697,24 +707,22 @@ namespace Utilities.Excel
             for (int i = 0; i < colTypes.Length; i++) {
                 colTypes[i] = ColumnType(i + 1);
             }
-            for (int row = hasHeaders ? 2 : 1; row <= Rows; row++) {
+            int lastRow = LastRowWithData;
+            for (int row = hasHeaders ? 2 : 1; row <= lastRow; row++) {
                 string[] line = new string[Columns];
                 for (int col = 1; col <= Columns; col++) {
                     // Excel stores all numbers as double including int
                     ExcelRange cell = Data.Cells[row, col];
-                    if (colTypes[col - 1] == typeof(TimeSpan)) {
-                        line[col - 1] = DateTime.FromOADate(cell.GetValue<double>()).ToString("h:mm:ss");
-                    }
-                    else if (colTypes[col - 1] == typeof(DateTime)) {
-                        try {
-                            line[col - 1] = DateTime.FromOADate(cell.GetValue<double>()).ToString();
-                        }
-                        catch {
-                            line[col - 1] = cell.GetValue<string>();
-                        }
-                    }
+                    string value = null;
+                    if (colTypes[col - 1] == typeof(TimeSpan))
+                        value = DateTime.FromOADate(cell.GetValue<double>()).ToString("h:mm:ss");
+                    else if (colTypes[col - 1] == typeof(DateTime) && cell.Value is double d)
+                        value = DateTime.FromOADate(cell.GetValue<double>()).ToString();
                     else
-                        line[col - 1] = cell.GetValue<string>();
+                        value = cell.GetValue<string>();
+                    if (value != null && value.Length == 0)
+                        value = null;
+                    line[col - 1] = value;
                 }
                 yield return converter(line);
             }

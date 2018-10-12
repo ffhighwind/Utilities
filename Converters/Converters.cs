@@ -116,7 +116,7 @@ namespace Utilities.Converters
             Type notNullableTin = Nullable.GetUnderlyingType(typeof(Tin)) ?? typeof(Tin);
             for (int i = 0; i < pinfos.Count; i++) {
                 if (pinfos[i] != null)
-                    converters[i] = GetConverter(pinfos[i].PropertyType)(notNullableTin);
+                    converters[i] = GetNullableConverter(notNullableTin, pinfos[i].PropertyType);
             }
             Tout listToObj(IReadOnlyList<Tin> list)
             {
@@ -125,8 +125,9 @@ namespace Utilities.Converters
                 for (int i = 0; i < count; i++) {
                     if (pinfos[i] != null) {
                         object value = list[i];
-                        if (value != null)
+                        if (value != null) {
                             value = converters[i](list[i]);
+                        }
                         pinfos[i].SetValue(obj, value);
                     }
                 }
@@ -155,9 +156,11 @@ namespace Utilities.Converters
         /// <returns>A function that converts objects from one type to another.</returns>
         public static Func<object, object> GetNullableConverter(Type input, Type output)
         {
-            if (!output.IsNullable())
-                return GetConverter(input, output);
-            Func<object, object> converter = GetConverter(output)(input);
+            if (!output.IsNullable()) {
+                return GetConverter(output)(input);
+            }
+            Type notNullableTout = Nullable.GetUnderlyingType(output) ?? output;
+            Func<object, object> converter = GetConverter(notNullableTout)(input);
             object nullableConverter(object value)
             {
                 return value == null ? null : converter(value);
