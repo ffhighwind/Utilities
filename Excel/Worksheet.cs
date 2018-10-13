@@ -608,7 +608,7 @@ namespace Utilities.Excel
         /// <returns>The <see cref="DataTable"/>.</returns>
         public DataTable ToDataTable(DataTable table, bool hasHeaders = true)
         {
-            int maxRow = Rows;
+            int maxRow = LastRowWithData;
             int maxCol = Columns;
             if (table.Columns.Count == 0) {
                 for (int col = 1; col <= maxCol; col++) {
