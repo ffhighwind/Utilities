@@ -144,23 +144,22 @@ namespace Utilities.Converters
         /// <returns>A <see cref="Func{T, TResult}"/> that converts from one type to another.</returns>
         public static Func<object, object> GetConverter(Type input, Type output)
         {
-            return GetConverter(output)(input);
+            return GetConverter(output)(Nullable.GetUnderlyingType(input) ?? input);
         }
 
         /// <summary>
-        /// Creates a converter that accepts null values. This should be used if the input type
-        /// and output type are <see cref="Nullable"/>.
+        /// Creates a converter that accepts null values. This should be used if the either the input
+        /// or output types are <see cref="Nullable"/>.
         /// </summary>
         /// <param name="input">The input <see cref="Type"/>.</param>
         /// <param name="output">The output <see cref="Type"/>.</param>
         /// <returns>A function that converts objects from one type to another.</returns>
         public static Func<object, object> GetNullableConverter(Type input, Type output)
         {
-            if (!output.IsNullable()) {
+            if (!output.IsNullable() || !input.IsNullable()) {
                 return GetConverter(output)(input);
             }
-            Type notNullableTout = Nullable.GetUnderlyingType(output) ?? output;
-            Func<object, object> converter = GetConverter(notNullableTout)(input);
+            Func<object, object> converter = GetConverter(input, output);
             object nullableConverter(object value)
             {
                 return value == null ? null : converter(value);
@@ -170,6 +169,7 @@ namespace Utilities.Converters
 
         public static Func<Type, Func<object, object>> GetConverter(Type output)
         {
+            output = Nullable.GetUnderlyingType(output) ?? output;
             if (ConverterMap.TryGetValue(output, out Func<Type, Func<object, object>> converter))
                 return converter;
             if (output.IsSubclassOf(typeof(IConvertible))) {

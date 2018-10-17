@@ -466,8 +466,7 @@ namespace Utilities.Excel
             }
         }
 
-        private int LastRowWithData
-        {
+        private int LastRowWithData {
             get {
                 int colCount = Data.Dimension.Columns;
                 for (int row = Rows; row > 0; row--) {
@@ -609,7 +608,7 @@ namespace Utilities.Excel
         /// <returns>The <see cref="DataTable"/>.</returns>
         public DataTable ToDataTable(DataTable table, bool hasHeaders = true)
         {
-            int maxRow = Rows;
+            int maxRow = LastRowWithData;
             int maxCol = Columns;
             if (table.Columns.Count == 0) {
                 for (int col = 1; col <= maxCol; col++) {
@@ -635,29 +634,17 @@ namespace Utilities.Excel
                     maxCol));
 
             List<Type> colTypes = table.Columns.Cast<DataColumn>().Select(col => col.DataType).ToList();
+            Func<object, object>[] converters = new Func<object, object>[colTypes.Count];
+            for (int i = 0; i < converters.Length; i++) {
+                converters[i] = Converters.Converters.GetConverter(typeof(object), colTypes[i]);
+            }
             for (int row = hasHeaders ? 2 : 1; row <= maxRow; row++) {
                 DataRow newRow = table.NewRow();
                 for (int col = 1; col <= maxCol; col++) {
                     Type colType = colTypes[col - 1];
                     ExcelRangeBase cell = Data.Cells[row, col];
-                    if (colType == typeof(string))
-                        newRow[col - 1] = cell.Text;
-                    else if (cell.Value != null) {
-                        try {
-                            if (colType.IsIntegral())
-                                newRow[col - 1] = cell.GetValue<long>();
-                            else if (colType.IsFloatingPoint())
-                                newRow[col - 1] = cell.GetValue<decimal>();
-                            else if (colType == typeof(DateTime) || colType == typeof(DateTimeOffset))
-                                newRow[col - 1] = cell.GetValue<DateTime>();
-                            else if (colType == typeof(TimeSpan))
-                                newRow[col - 1] = cell.GetValue<TimeSpan>();
-                            else
-                                newRow[col - 1] = cell.Value;
-                        }
-                        catch { // ignore
-                        }
-                    }
+                    if(cell.Text != "")
+                        newRow[col - 1] = converters[col - 1](cell.Value);
                 }
                 table.Rows.Add(newRow);
             }
@@ -681,7 +668,7 @@ namespace Utilities.Excel
         public IEnumerable<string[]> AsEnumerable()
         {
             int columns = Columns;
-            int rows = Rows;
+            int rows = LastRowWithData;
             for (int row = 1; row <= rows; row++) {
                 string[] vals = new string[columns];
                 for (int col = 0; col < columns; col++) {
@@ -707,8 +694,8 @@ namespace Utilities.Excel
             for (int i = 0; i < colTypes.Length; i++) {
                 colTypes[i] = ColumnType(i + 1);
             }
-            int lastRow = LastRowWithData;
-            for (int row = hasHeaders ? 2 : 1; row <= lastRow; row++) {
+            int rows = LastRowWithData;
+            for (int row = hasHeaders ? 2 : 1; row <= rows; row++) {
                 string[] line = new string[Columns];
                 for (int col = 1; col <= Columns; col++) {
                     // Excel stores all numbers as double including int
