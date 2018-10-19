@@ -641,9 +641,8 @@ namespace Utilities.Excel
             for (int row = hasHeaders ? 2 : 1; row <= maxRow; row++) {
                 DataRow newRow = table.NewRow();
                 for (int col = 1; col <= maxCol; col++) {
-                    Type colType = colTypes[col - 1];
                     ExcelRangeBase cell = Data.Cells[row, col];
-                    if(cell.Text != "")
+                    if (cell.Text != "")
                         newRow[col - 1] = converters[col - 1](cell.Value);
                 }
                 table.Rows.Add(newRow);
@@ -828,7 +827,10 @@ namespace Utilities.Excel
                 return str;
             }
             if (DateTime.TryParse(str2, out DateTime dt)) {
-                cell.Style.Numberformat.Format = "M/d/yyyy H:mm:ss AM/PM";
+                if (dt.TimeOfDay == TimeSpan.Zero)
+                    cell.Style.Numberformat.Format = "M/d/yyyy";
+                else
+                    cell.Style.Numberformat.Format = "M/d/yyyy H:mm:ss AM/PM";
                 return dt;
             }
             return str;
@@ -858,7 +860,7 @@ namespace Utilities.Excel
 
         public void AddRow(params object[] values)
         {
-            int row = Data.Dimension.Rows + 1;
+            int row = Data.Dimension?.Rows + 1 ?? 1;
             for (int col = 0; col < values.Length; col++) {
                 Data.SetValue(row, col + 1, values[col]);
             }
