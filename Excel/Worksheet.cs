@@ -456,13 +456,21 @@ namespace Utilities.Excel
         }
 
         /// <summary>
-        /// Trims the empty rows at the end of the <see cref="Worksheet"/>.
+        /// Trims  empty rows from the <see cref="Worksheet"/>.
         /// </summary>
-        public void Trim()
+        /// <param name="bottomOnly">Determines if only empty rows at the bottom of the worksheet should be trimmed.</param>
+        public void Trim(bool bottomOnly = true)
         {
-            int lastRow = LastRowWithData;
-            for (int row = Rows; row > lastRow; row--) {
-                Data.DeleteRow(row);
+            int colCount = Data.Dimension.Columns;
+            for (int row = Rows; row > 0; row--) {
+                for (int col = 1; col <= colCount; col++) {
+                    ExcelRange cell = Data.Cells[row, col];
+                    if (cell.Value != null && cell.Value.ToString().Length > 0) {
+                        if (bottomOnly)
+                            return;
+                        continue;
+                    }
+                }
             }
         }
 
@@ -481,17 +489,21 @@ namespace Utilities.Excel
         }
 
         /// <summary>
-        /// Trims the rightmost empty columns from the <see cref="Worksheet"/>.
+        /// Trims empty columns from the <see cref="Worksheet"/>.
         /// </summary>
-        public void TrimColumns()
+        /// <param name="rightOnly">Determines if only empty rows on the right side of the worksheet should be trimmed.</param>
+        public void TrimColumns(bool rightOnly = true)
         {
             int rowCount = Data.Dimension.Rows;
             int colCount = Data.Dimension.Columns;
             for (int col = colCount; col >= 1; col--) {
                 for (int row = 1; row <= rowCount; row++) {
                     ExcelRange cell = Data.Cells[row, col];
-                    if (cell.Value != null && cell.Value.ToString().Length > 0)
-                        return;
+                    if (cell.Value != null && cell.Value.ToString().Length > 0) {
+                        if (rightOnly)
+                            return;
+                        continue;
+                    }
                 }
                 Data.DeleteColumn(col);
             }
