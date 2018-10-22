@@ -239,7 +239,7 @@ namespace Utilities.Converters
                     else if (type == typeof(byte[]))
                         return ToBytes(value);
                     else if (type == typeof(BigInteger))
-                        return ToBigInteger(value);
+                        return ObjectToBigInteger(value);
                     ////else if (value is IConvertible conv)
                     ////   return value;
                     return value;
@@ -406,7 +406,15 @@ namespace Utilities.Converters
 
         private static object ObjectToDateTime(object value)
         {
-            return System.Convert.ToDateTime(value);
+            if (value is string str)
+                return StringToDateTimeOffset(str);
+            if (value is DateTimeOffset dto)
+                return value;
+            if (value is DateTime dt)
+                return DateTimeToDateTimeOffset(dt);
+            if (value is TimeSpan ts)
+                return TimeSpanToDateTimeOffset(ts);
+            return System.Convert.ChangeType(value, typeof(DateTimeOffset));
         }
         #endregion // ToDateTime
 
@@ -432,10 +440,9 @@ namespace Utilities.Converters
                 return StringToDateTimeOffset;
             if (input == typeof(DateTime))
                 return DateTimeToDateTimeOffset;
-            else if (input == typeof(TimeSpan))
+            if (input == typeof(TimeSpan))
                 return TimeSpanToDateTimeOffset;
-            else
-                return NoConvert<DateTimeOffset>;
+            return ToDateTimeOffset;
         }
 
         private static object StringToDateTimeOffset(object value)
@@ -462,7 +469,15 @@ namespace Utilities.Converters
         /// <returns>The <see cref="TimeSpan"/> representation of the <see cref="object"/>.</returns>
         public static object ToTimeSpan(object value)
         {
-            return ToTimeSpan(value.GetType())(value);
+            if (value is string str)
+                return TimeSpan.Parse(str);
+            if (value is TimeSpan ts)
+                return ts;
+            if (value is DateTime dt)
+                return dt.TimeOfDay;
+            if (value is DateTimeOffset dto)
+                return Extensions.ToDateTime((DateTimeOffset) value).TimeOfDay;
+            return System.Convert.ChangeType(value, typeof(TimeSpan));
         }
 
         /// <summary>
@@ -480,7 +495,7 @@ namespace Utilities.Converters
             else if (input == typeof(DateTimeOffset))
                 converter = DateTimeOffsetToTimeSpan;
             else
-                converter = NoConvert<TimeSpan>;
+                converter = ToTimeSpan;
             return converter;
         }
 
@@ -972,7 +987,7 @@ namespace Utilities.Converters
         #endregion // ToDecimal
 
         #region ToBigInteger
-        public static object ToBigInteger(object value)
+        public static object ObjectToBigInteger(object value)
         {
             Type type = value.GetType();
             TypeCode typeCode = Type.GetTypeCode(type);

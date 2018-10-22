@@ -458,19 +458,23 @@ namespace Utilities.Excel
         /// <summary>
         /// Trims  empty rows from the <see cref="Worksheet"/>.
         /// </summary>
-        /// <param name="bottomOnly">Determines if only empty rows at the bottom of the worksheet should be trimmed.</param>
-        public void Trim(bool bottomOnly = true)
+        /// <param name="allEmptyRows">Determines if only empty rows at the bottom of the worksheet should be trimmed.</param>
+        public void Trim(bool allEmptyRows = false)
         {
             int colCount = Data.Dimension.Columns;
             for (int row = Rows; row > 0; row--) {
+                bool deleteRow = true;
                 for (int col = 1; col <= colCount; col++) {
                     ExcelRange cell = Data.Cells[row, col];
-                    if (cell.Value != null && cell.Value.ToString().Length > 0) {
-                        if (bottomOnly)
+                    if (cell.Value != null && cell.Text.Length > 0) {
+                        if (!allEmptyRows)
                             return;
-                        continue;
+                        deleteRow = false;
+                        break;
                     }
                 }
+                if(deleteRow)
+                    Data.DeleteRow(row);
             }
         }
 
@@ -491,21 +495,24 @@ namespace Utilities.Excel
         /// <summary>
         /// Trims empty columns from the <see cref="Worksheet"/>.
         /// </summary>
-        /// <param name="rightOnly">Determines if only empty rows on the right side of the worksheet should be trimmed.</param>
-        public void TrimColumns(bool rightOnly = true)
+        /// <param name="allEmptyColumns">Determines if only empty rows on the right side of the worksheet should be trimmed.</param>
+        public void TrimColumns(bool allEmptyColumns = false)
         {
             int rowCount = Data.Dimension.Rows;
             int colCount = Data.Dimension.Columns;
             for (int col = colCount; col >= 1; col--) {
+                bool deleteCol = true;
                 for (int row = 1; row <= rowCount; row++) {
                     ExcelRange cell = Data.Cells[row, col];
                     if (cell.Value != null && cell.Value.ToString().Length > 0) {
-                        if (rightOnly)
+                        if (!allEmptyColumns)
                             return;
-                        continue;
+                        deleteCol = false;
+                        break;
                     }
                 }
-                Data.DeleteColumn(col);
+                if(deleteCol)
+                    Data.DeleteColumn(col);
             }
         }
 
@@ -654,8 +661,22 @@ namespace Utilities.Excel
                 DataRow newRow = table.NewRow();
                 for (int col = 1; col <= maxCol; col++) {
                     ExcelRangeBase cell = Data.Cells[row, col];
-                    if (cell.Text != "")
-                        newRow[col - 1] = converters[col - 1](cell.Value);
+                    if (cell.Text != "") {
+                        object value = cell.Value;
+                        if (colTypes[col - 1] == typeof(TimeSpan)) {
+                            if(cell.Value is double d)
+                                value = DateTime.FromOADate(d).TimeOfDay;
+                            else if (cell.Value is string str)
+                                value = TimeSpan.Parse(str);
+                        }
+                        else if (colTypes[col - 1] == typeof(DateTime)) {
+                            if (cell.Value is double d)
+                                value = DateTime.FromOADate(d);
+                            else if (cell.Value is string str)
+                                value = DateTime.Parse(str);
+                        }
+                        newRow[col - 1] = converters[col - 1](value);
+                    }
                 }
                 table.Rows.Add(newRow);
             }
@@ -712,14 +733,16 @@ namespace Utilities.Excel
                     // Excel stores all numbers as double including int
                     ExcelRange cell = Data.Cells[row, col];
                     string value = null;
-                    if (colTypes[col - 1] == typeof(TimeSpan))
-                        value = DateTime.FromOADate(cell.GetValue<double>()).ToString("h:mm:ss");
-                    else if (colTypes[col - 1] == typeof(DateTime) && cell.Value is double d)
-                        value = DateTime.FromOADate(cell.GetValue<double>()).ToString();
-                    else
-                        value = cell.GetValue<string>();
-                    if (value != null && value.Length == 0)
-                        value = null;
+                    if (cell.Text != "") {
+                        if (colTypes[col - 1] == typeof(TimeSpan))
+                            value = DateTime.FromOADate(cell.GetValue<double>()).ToString("h:mm:ss");
+                        else if (colTypes[col - 1] == typeof(DateTime) && cell.Value is double d)
+                            value = DateTime.FromOADate(d).ToString();
+                        else
+                            value = cell.GetValue<string>();
+                        if (value != null && value.Length == 0)
+                            value = null;
+                    }
                     line[col - 1] = value;
                 }
                 yield return converter(line);
