@@ -368,7 +368,15 @@ namespace Utilities.Converters
         /// <returns>The <see cref="DateTime"/> representation of the <see cref="object"/> representation.</returns>
         public static object ToDateTime(object value)
         {
-            return ToDateTime(value.GetType())(value);
+            if (value is string str)
+                return System.Convert.ToDateTime(value);
+            if (value is DateTime)
+                return value;
+            if (value is TimeSpan ts)
+                return new DateTime(ts.Ticks);
+            if (value is DateTimeOffset dto)
+                return dto.ToDateTime();
+            return System.Convert.ToDateTime(value);
         }
 
         /// <summary>
@@ -384,7 +392,7 @@ namespace Utilities.Converters
             else if (input == typeof(DateTimeOffset))
                 converter = DateTimeOffsetToDateTime;
             else
-                converter = ObjectToDateTime;
+                converter = ToDateTime;
             return converter;
         }
 
@@ -403,19 +411,6 @@ namespace Utilities.Converters
             else
                 return dateTimeOff.DateTime;
         }
-
-        private static object ObjectToDateTime(object value)
-        {
-            if (value is string str)
-                return StringToDateTimeOffset(str);
-            if (value is DateTimeOffset dto)
-                return value;
-            if (value is DateTime dt)
-                return DateTimeToDateTimeOffset(dt);
-            if (value is TimeSpan ts)
-                return TimeSpanToDateTimeOffset(ts);
-            return System.Convert.ChangeType(value, typeof(DateTimeOffset));
-        }
         #endregion // ToDateTime
 
         #region ToDateTimeOffset
@@ -426,7 +421,15 @@ namespace Utilities.Converters
         /// <returns>The <see cref="DateTimeOffset"/> representation of the <see cref="object"/>.</returns>
         public static object ToDateTimeOffset(object value)
         {
-            return ToDateTimeOffset(value.GetType())(value);
+            if (value is string str)
+                return StringToDateTimeOffset(str);
+            if (value is DateTimeOffset dto)
+                return value;
+            if (value is DateTime dt)
+                return DateTimeToDateTimeOffset(dt);
+            if (value is TimeSpan ts)
+                return TimeSpanToDateTimeOffset(ts);
+            return System.Convert.ChangeType(value, typeof(DateTimeOffset));
         }
 
         /// <summary>

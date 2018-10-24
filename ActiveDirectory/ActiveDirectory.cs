@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.DirectoryServices;
+using System.DirectoryServices.ActiveDirectory;
 using System.DirectoryServices.AccountManagement;
 using System.Linq;
 
@@ -22,17 +23,17 @@ namespace Utilities.ActiveDirectory
 
         public PrincipalContext Context { get; private set; }
 
-        public bool Bind()
+        public bool Bind(string username = null, string password = null)
         {
-            return Bind(ContextType.Domain, Environment.UserDomainName, null, null);
+            return Bind(username, password, ContextType.Domain, Environment.UserDomainName);
         }
 
-        public bool Bind(string username, string password)
+        public bool Bind(ContextType contextType, string path)
         {
-            return Bind(ContextType.Domain, Environment.UserDomainName, username, password);
+            return Bind(null, null, contextType, path);
         }
 
-        public bool Bind(ContextType contextType, string path, string username, string password)
+        public bool Bind(string username, string password, ContextType contextType, string path)
         {
             try {
                 if (username != null && password != null) {
@@ -152,22 +153,13 @@ namespace Utilities.ActiveDirectory
             return entry.Properties.Contains(prop) ? entry.Properties[prop].Value : null;
         }
 
-        /*
-        public static ActiveDirectory Default {
+        public static DirectoryEntry Root {
             get {
-                if (ad == null) {
-                    DirectoryEntry de = new DirectoryEntry("LDAP://RootDSE");
-                    string defaultPath = "LDAP://" +
-                       de.Properties["defaultNamingContext"][0].
-                           ToString();
-                    if (ad == null) {
-                        ad = new ActiveDirectory();
-                        ad.Bind(defaultPath, null, null);
-                    }
-                }
-                return ad;
+                return new DirectoryEntry("LDAP://RootDSE");
+                //var tmp = "LDAP://" +
+                 //  de.Properties["defaultNamingContext"];
             }
         }
-        */
+
     }
 }
