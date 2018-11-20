@@ -195,7 +195,7 @@ namespace Utilities
                 if (table.Columns[col].DataType == typeof(string)) {
                     for (int row = 0; row < rows; row++) {
                         object o = table.Rows[row][col];
-                        if (o != DBNull.Value && (o as string).Length > 0)
+                        if (o != DBNull.Value && (o is string s) && !string.IsNullOrWhiteSpace(s))
                             return table;
                     }
                 }
