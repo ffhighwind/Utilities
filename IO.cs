@@ -436,7 +436,7 @@ namespace Utilities
 		{
 			using (TextWriter writer = new StreamWriter(path, false))
 			using (CsvWriter csv = new CsvWriter(writer)) {
-				csv.Configuration.QuoteAllFields = true;
+				csv.Configuration.ShouldQuote = (str, b) => true;
 				csv.Configuration.Delimiter = delim;
 				PropertyInfo[] props = typeof(T).GetProperties(DefaultBindingFlags);
 				if (printHeaders) {
@@ -466,7 +466,7 @@ namespace Utilities
 			using (StreamWriter sr = new StreamWriter(path, false))
 			using (CsvWriter csv = new CsvWriter(sr)) {
 				csv.Configuration.Delimiter = delim;
-				csv.Configuration.QuoteAllFields = true;
+				csv.Configuration.ShouldQuote = (str, b) => true;
 				if (hasHeaders) {
 					foreach (DataColumn column in table.Columns) {
 						csv.WriteField(column.ColumnName);

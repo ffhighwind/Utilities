@@ -414,22 +414,13 @@ namespace Utilities.Excel
 
 		public PivotTable CreatePivotTable(Worksheet source, string name = "")
 		{
-			return new PivotTable(source.Data.Cells[source.Data.Dimension.Address], Add(), name);
+			return CreatePivotTable(source, Add(), "B2", name);
 		}
 
-		public PivotTable CreatePivotTable(Worksheet source, Worksheet destination, string name = "")
+		public PivotTable CreatePivotTable(Worksheet source, Worksheet destination, string destinationAddr = "B2", string name = "")
 		{
-			return new PivotTable(source.Data.Cells[source.Data.Dimension.Address], destination, name);
-		}
-
-		public PivotTable CreatePivotTable(ExcelRangeBase source, string name = "")
-		{
-			return new PivotTable(source, Add(), name);
-		}
-
-		public PivotTable CreatePivotTable(ExcelRangeBase source, Worksheet destination, string name = "")
-		{
-			return new PivotTable(source, destination, name);
+			destination.MoveBefore(source.Name);
+			return new PivotTable(source.Data.Cells[source.Data.Dimension.Address], destination, destinationAddr, name);
 		}
 
 		/// <summary>

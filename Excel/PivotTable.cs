@@ -11,21 +11,33 @@ namespace Utilities.Excel
 		public ExcelPivotTable Data { get; private set; } = null;
 
 		public PivotTable(Worksheet source, Worksheet destination, string destAddress = "B2", string name = " ")
-		: this(source.Data.Cells[source.Data.Dimension.Address], destination, destAddress, name) { }
+			: this(source.Data.Cells[source.Data.Dimension.Address], destination, destAddress, name) { }
 
 		public PivotTable(ExcelRangeBase source, Worksheet destination, string destAddress = "B2", string name = " ")
 		{
 			Data = destination.Data.PivotTables.Add(destination.Data.Cells[destAddress], source, name);
-			Data.ShowHeaders = true;
 			Data.RowHeaderCaption = name;
+			Data.ShowHeaders = true;
 			Data.UseAutoFormatting = true;
 			Data.ApplyWidthHeightFormats = true;
 			Data.ShowDrill = true;
 			Data.FirstHeaderRow = 1;
-			Data.FirstDataCol = 1;
+			Data.FirstDataCol = 2;
 			Data.FirstDataRow = 2;
 			Data.DataOnRows = false;
-			Data.DataCaption = " ";
+			Data.DataCaption = "  ";
+
+			Data.MultipleFieldFilters = true;
+			Data.RowGrandTotals = true;
+			Data.Compact = true;
+			Data.GridDropZones = false;
+			Data.Outline = false;
+			Data.OutlineData = false;
+			Data.ShowError = true;
+			Data.ErrorCaption = "[error]";
+
+
+			//Data.TableStyle = OfficeOpenXml.Table.TableStyles.Medium2;
 			Data.TableStyle = OfficeOpenXml.Table.TableStyles.Medium9;
 		}
 

@@ -85,7 +85,8 @@ namespace Utilities
 		/// <returns>The <see cref="DataTable"/>.</returns>
 		public static DataTable Sort(this DataTable table, int column, params int[] columns)
 		{
-			List<object[]> rows = table.AsEnumerable().Select(row => row.ItemArray).OrderBy(row => row[column]).ToList();
+			IEnumerable<object[]> objs = table.AsEnumerable().Select(row => row.ItemArray);
+			List<object[]> rows = objs.OrderBy(r => r[column]).ToList();
 			for (int i = 0; i < columns.Length; i++) {
 				rows = rows.OrderBy(row => row[columns[i]]).ToList();
 			}
