@@ -275,8 +275,9 @@ namespace Utilities
 						return dow != DayOfWeek.Saturday && dow != DayOfWeek.Sunday;
 					if (day == 2)
 						return dow == DayOfWeek.Monday;
+					return false;
 					// MLK Jr Day
-					return weekOfMonth == 3 && dow == DayOfWeek.Monday;
+					//return weekOfMonth == 3 && dow == DayOfWeek.Monday;
 				//// case 2:
 				//// President’s Day (3rd Monday in February)
 				////if (date.Month == 2 && isMonday && nthWeekDay == 3) return true;
@@ -329,7 +330,7 @@ namespace Utilities
                 // New Years
                 NearestWeekDay(new DateTime(year, 1, 1)),
                 // Martin Luther King Jr Day -- 3rd Monday of January
-                FirstDay(year, 1, DayOfWeek.Monday).AddDays(7 * 2),
+                //FirstDay(year, 1, DayOfWeek.Monday).AddDays(7 * 2),
                 // Memorial Day -- last monday in May
                 PreviousDay(new DateTime(year, 6, 1), DayOfWeek.Monday),
                 // Independence Day
