@@ -12,7 +12,10 @@ namespace Utilities.Email
 	/// </summary>
 	public class EmailService
 	{
-		public const int PageSize = 50;
+		/// <summary>
+		/// The maximum number of items requested at a time. The maximum this can be is 1000.
+		/// </summary>
+		public const int PageSize = 250;
 
 		public EmailService() { }
 
