@@ -17,7 +17,6 @@ namespace Utilities.Email
 		/// </summary>
 		public const int PageSize = 100;
 		private string _Email;
-		private string _Mailbox;
 		private string _Username;
 		private string _Url;
 
