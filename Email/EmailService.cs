@@ -16,18 +16,34 @@ namespace Utilities.Email
 		/// The maximum number of items requested at a time. The maximum this can be is 1000.
 		/// </summary>
 		public const int PageSize = 250;
+		private string _Email;
+		private string _Username;
 
 		public EmailService() { }
 
-		public string Email { get; private set; }
+		public string Email {
+			get =>_Email;
+			set {
+				if (IsConnected)
+					throw new InvalidOperationException("Already connected.");
+				_Email = value;
+			}
+		}
 
-		public string Username { get; private set; }
+		public string Username {
+			get => _Username;
+			set {
+				if (IsConnected)
+					throw new InvalidOperationException("Already connected.");
+				_Username = value;
+			}
+		}
 
-		public bool IsConnected { get; private set; }
+		public bool IsConnected { get => Service?.Url != null; }
 
 		public ExchangeService Service { get; private set; }
 
-		public bool Connect(string password, string uri = null, ExchangeVersion version = ExchangeVersion.Exchange2010_SP1)
+		public bool Connect(string password = null, string uri = null, ExchangeVersion version = ExchangeVersion.Exchange2010_SP1)
 		{
 			try {
 				Service = new ExchangeService(version)
@@ -39,19 +55,12 @@ namespace Utilities.Email
 					Service.Url = new Uri(uri);
 				else
 					Service.AutodiscoverUrl(Email, RedirectionUrlValidationCallback);
-				IsConnected = Service.Url != null;
 			}
 			catch (Exception ex) {
 				Console.Error.WriteLine(ex.Message);
 				Service = null;
-				IsConnected = false;
 			}
 			return IsConnected;
-		}
-
-		public bool Connect(ExchangeVersion version = ExchangeVersion.Exchange2010_SP1)
-		{
-			return Connect(null, null, version);
 		}
 
 		public EmailMessage CreateEmail()
