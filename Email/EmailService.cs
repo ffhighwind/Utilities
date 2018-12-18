@@ -19,11 +19,6 @@ namespace Utilities.Email
 
 		public EmailService() { }
 
-		public EmailService(string email)
-		{
-			Email = email;
-		}
-
 		public string Email { get; private set; }
 
 		public string Username { get; private set; }
@@ -32,22 +27,18 @@ namespace Utilities.Email
 
 		public ExchangeService Service { get; private set; }
 
-		public bool Connect(string email, ExchangeVersion version = ExchangeVersion.Exchange2010_SP1)
+		public bool Connect(string password, string uri = null, ExchangeVersion version = ExchangeVersion.Exchange2010_SP1)
 		{
-			Email = email;
-			return Connect(version);
-		}
-
-		public bool Connect(string username, string password, ExchangeVersion version = ExchangeVersion.Exchange2010_SP1)
-		{
-			Username = username;
 			try {
 				Service = new ExchangeService(version)
 				{
 					Credentials = new WebCredentials(Username, password),
 					UseDefaultCredentials = string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(password)
 				};
-				Service.AutodiscoverUrl(Email, RedirectionUrlValidationCallback);
+				if (uri != null)
+					Service.Url = new Uri(uri);
+				else
+					Service.AutodiscoverUrl(Email, RedirectionUrlValidationCallback);
 				IsConnected = Service.Url != null;
 			}
 			catch (Exception ex) {
@@ -61,16 +52,6 @@ namespace Utilities.Email
 		public bool Connect(ExchangeVersion version = ExchangeVersion.Exchange2010_SP1)
 		{
 			return Connect(null, null, version);
-		}
-
-		/// <summary>
-		/// Connect to the Exchange server with the given credentials.
-		/// </summary>
-		/// <param name="version">The version of the Exchange Service you are connecting to.</param>
-		public bool Connect(string email, string username, string password, ExchangeVersion version = ExchangeVersion.Exchange2010_SP1)
-		{
-			Email = email;
-			return Connect(username, password, version);
 		}
 
 		public EmailMessage CreateEmail()
