@@ -18,11 +18,12 @@ namespace Utilities.Email
 		public const int PageSize = 250;
 		private string _Email;
 		private string _Username;
+		private string _Url;
 
 		public EmailService() { }
 
 		public string Email {
-			get =>_Email;
+			get => _Email;
 			set {
 				if (IsConnected)
 					throw new InvalidOperationException("Already connected.");
@@ -39,11 +40,20 @@ namespace Utilities.Email
 			}
 		}
 
+		public string Url {
+			get => _Url;
+			set {
+				if (IsConnected)
+					throw new InvalidOperationException("Already connected.");
+				_Url = value;
+			}
+		}
+
 		public bool IsConnected { get => Service?.Url != null; }
 
 		public ExchangeService Service { get; private set; }
 
-		public bool Connect(string password = null, string uri = null, ExchangeVersion version = ExchangeVersion.Exchange2010_SP1)
+		public bool Connect(string password = null, ExchangeVersion version = ExchangeVersion.Exchange2010_SP1)
 		{
 			try {
 				Service = new ExchangeService(version)
@@ -51,8 +61,8 @@ namespace Utilities.Email
 					Credentials = new WebCredentials(Username, password),
 					UseDefaultCredentials = string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(password)
 				};
-				if (uri != null)
-					Service.Url = new Uri(uri);
+				if (_Url != null)
+					Service.Url = new Uri(_Url);
 				else
 					Service.AutodiscoverUrl(Email, RedirectionUrlValidationCallback);
 			}
