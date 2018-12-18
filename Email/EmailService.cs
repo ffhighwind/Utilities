@@ -15,8 +15,9 @@ namespace Utilities.Email
 		/// <summary>
 		/// The maximum number of items requested at a time. The maximum this can be is 1000.
 		/// </summary>
-		public const int PageSize = 250;
+		public const int PageSize = 100;
 		private string _Email;
+		private string _Mailbox;
 		private string _Username;
 		private string _Url;
 
@@ -58,8 +59,8 @@ namespace Utilities.Email
 			try {
 				Service = new ExchangeService(version)
 				{
-					Credentials = new WebCredentials(Username, password),
-					UseDefaultCredentials = string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(password)
+					Credentials = new WebCredentials(Username ?? Email, password),
+					UseDefaultCredentials = string.IsNullOrWhiteSpace(password)
 				};
 				if (_Url != null)
 					Service.Url = new Uri(_Url);
@@ -145,7 +146,8 @@ namespace Utilities.Email
 
 		public Folder FindFolder(WellKnownFolderName folder, string mailbox = null, PropertySet properties = null)
 		{
-			return Folder.Bind(Service, folder, properties ?? PropertySet.FirstClassProperties);
+			FolderId folderId = mailbox == null ? new FolderId(folder) : new FolderId(folder, mailbox);
+			return Folder.Bind(Service, folderId, properties ?? PropertySet.FirstClassProperties);
 		}
 
 		public Folder FindFolder(string folderName, WellKnownFolderName parentFolder = WellKnownFolderName.Root, string mailbox = null,
