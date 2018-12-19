@@ -15,7 +15,7 @@ namespace Utilities.Email
 		/// <summary>
 		/// The maximum number of items requested at a time. The maximum this can be is 1000.
 		/// </summary>
-		public const int PageSize = 100;
+		public const int PageSize = 200;
 		private string _Email;
 		private string _Username;
 		private string _Url;
@@ -108,14 +108,19 @@ namespace Utilities.Email
 				PropertySet = PropertySet.FirstClassProperties,
 				Traversal = traversal,
 			};
-			FindItemsResults<Item> results = Service.FindItems(parentFolder, fview);
-			do {
+
+			while (true) {
+				FindItemsResults<Item> results = Service.FindItems(parentFolder, fview);
 				foreach (Item item in results) {
 					yield return item;
 				}
 				if (results.NextPageOffset.HasValue)
 					fview.Offset = results.NextPageOffset.Value;
-			} while (results.MoreAvailable);
+				else
+					fview.Offset += PageSize;
+				if (!results.MoreAvailable)
+					break;
+			}
 		}
 
 		public Folder CreateFolder(string name, FolderId parentFolder)
@@ -179,14 +184,18 @@ namespace Utilities.Email
 				PropertySet = properties ?? PropertySet.FirstClassProperties,
 				Traversal = traversal
 			};
-			FindFoldersResults results = Service.FindFolders(parentFolder, filter, fview);
-			do {
+			while (true) {
+				FindFoldersResults results = Service.FindFolders(parentFolder, filter, fview);
 				foreach (Folder folder in results.Folders) {
 					yield return folder;
 				}
 				if (results.NextPageOffset.HasValue)
 					fview.Offset = results.NextPageOffset.Value;
-			} while (results.MoreAvailable);
+				else
+					fview.Offset += PageSize;
+				if (!results.MoreAvailable)
+					break;
+			}
 		}
 
 		public IEnumerable<Folder> FindFolders(string folderName, WellKnownFolderName parentFolder,
@@ -221,14 +230,18 @@ namespace Utilities.Email
 				PropertySet = properties ?? PropertySet.FirstClassProperties,
 				Traversal = traversal
 			};
-			FindFoldersResults results = Service.FindFolders(parentFolder, fview);
-			do {
+			while (true) {
+				FindFoldersResults results = Service.FindFolders(parentFolder, fview);
 				foreach (Folder folder in results.Folders) {
 					yield return folder;
 				}
 				if (results.NextPageOffset.HasValue)
 					fview.Offset = results.NextPageOffset.Value;
-			} while (results.MoreAvailable);
+				else
+					fview.Offset += PageSize;
+				if (!results.MoreAvailable)
+					break;
+			}
 		}
 
 		/// <summary>
@@ -250,8 +263,8 @@ namespace Utilities.Email
 				Traversal = traversal
 			};
 			iview.OrderBy.Add(ItemSchema.DateTimeReceived, SortDirection.Descending);
-			FindItemsResults<Item> results = Service.FindItems(folderId, iview);
-			do {
+			while (true) {
+				FindItemsResults<Item> results = Service.FindItems(folderId, iview);
 				foreach (Item item in results) {
 					foreach (FileAttachment file in GetNestedFileAttachments(item)) {
 						yield return file;
@@ -259,7 +272,11 @@ namespace Utilities.Email
 				}
 				if (results.NextPageOffset.HasValue)
 					iview.Offset = results.NextPageOffset.Value;
-			} while (results.MoreAvailable);
+				else
+					iview.Offset += PageSize;
+				if (!results.MoreAvailable)
+					break;
+			}
 		}
 
 		/// <summary>
@@ -280,17 +297,20 @@ namespace Utilities.Email
 				Traversal = traversal
 			};
 			iview.OrderBy.Add(ItemSchema.DateTimeReceived, SortDirection.Descending);
-			FindItemsResults<Item> results = Service.FindItems(folderId, new SearchFilter.IsEqualTo(ItemSchema.ItemClass, "IPM.Note"), iview);
-			if (results.TotalCount > 0) {
-				do {
-					foreach (Item email in results) {
-						if (email is EmailMessage emailMsg) {
-							yield return emailMsg;
-						}
+			var searchFilter = new SearchFilter.IsEqualTo(ItemSchema.ItemClass, "IPM.Note");
+			while (true) {
+				FindItemsResults<Item> results = Service.FindItems(folderId, searchFilter, iview);
+				foreach (Item email in results) {
+					if (email is EmailMessage emailMsg) {
+						yield return emailMsg;
 					}
-					if (results.NextPageOffset.HasValue)
-						iview.Offset = results.NextPageOffset.Value;
-				} while (results.MoreAvailable);
+				}
+				if (results.NextPageOffset.HasValue)
+					iview.Offset = results.NextPageOffset.Value;
+				else
+					iview.Offset += PageSize;
+				if (!results.MoreAvailable)
+					break;
 			}
 		}
 
