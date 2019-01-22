@@ -159,12 +159,24 @@ namespace Utilities.Converters
 			if (!output.IsNullable() || !input.IsNullable()) {
 				return GetConverter(output)(input);
 			}
-			Func<object, object> converter = GetConverter(input, output);
-			object nullableConverter(object value)
-			{
-				return value == null ? null : converter(value);
+			else if(input == output) {
+				return NoConvert;
 			}
-			return nullableConverter;
+			Func<object, object> converter = GetConverter(input, output);
+			if (input == typeof(string)) {
+				object nullableConverter(object value)
+				{
+					return String.IsNullOrWhiteSpace(value as string) ? null : converter(value);
+				}
+				return nullableConverter;
+			}
+			else {
+				object nullableConverter(object value)
+				{
+					return value == null ? null : converter(value);
+				}
+				return nullableConverter;
+			}
 		}
 
 		public static Func<Type, Func<object, object>> GetConverter(Type output)
