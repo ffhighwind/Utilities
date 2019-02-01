@@ -29,7 +29,7 @@ namespace Utilities
 		/// <returns>A DataSet with contents from the file.</returns>
 		public static DataSet Read(this DataSet dataset, string path, bool hasHeaders = true)
 		{
-			string ext = Path.GetExtension(path);
+			string ext = Path.GetExtension(path)?.ToLower();
 			if (ext == ".xlsx")
 				return dataset.ReadXlsx(path, hasHeaders);
 			else if (ext == ".csv" || ext == ".tsv") {
@@ -55,7 +55,7 @@ namespace Utilities
 		/// <returns>A DataTable with contents from the file.</returns>
 		public static DataTable Read(this DataTable table, string path, bool hasHeaders = true, string sheetName = null)
 		{
-			string ext = Path.GetExtension(path);
+			string ext = Path.GetExtension(path)?.ToLower();
 			if (ext == ".xlsx")
 				return table.ReadXlsx(path, sheetName, hasHeaders);
 			if (ext == ".csv" || ext == ".tsv")
@@ -93,7 +93,7 @@ namespace Utilities
 		/// <returns>A list with data from the file.</returns>
 		public static ICollection<T> Read<T>(this ICollection<T> list, string path, bool hasHeaders = true, string sheetName = null) where T : class, new()
 		{
-			string ext = Path.GetExtension(path);
+			string ext = Path.GetExtension(path)?.ToLower();
 			if (ext == ".xlsx")
 				return list.ReadXlsx<T>(path, sheetName, hasHeaders);
 			if (ext == ".csv" || ext == ".tsv")
@@ -155,7 +155,7 @@ namespace Utilities
 		/// <returns>The Enumerable rows in the file.</returns>
 		public static IEnumerable<string[]> Foreach(string path, bool hasHeaders = true)
 		{
-			string ext = Path.GetExtension(path);
+			string ext = Path.GetExtension(path)?.ToLower();
 			if (ext == ".xlsx")
 				return XlsxForeach(path, null, hasHeaders);
 			if (ext == ".csv" || ext == ".tsv")
@@ -178,7 +178,7 @@ namespace Utilities
 		/// <returns>The eEnumerable rows in the file.</returns>
 		public static IEnumerable<T> Foreach<T>(string path, Func<string[], T> constructor, bool hasHeaders = true, string sheetName = null)
 		{
-			string ext = Path.GetExtension(path);
+			string ext = Path.GetExtension(path)?.ToLower();
 			if (ext == ".xlsx")
 				return XlsxForeach<T>(path, constructor, sheetName, hasHeaders);
 			if (ext == ".csv" || ext == ".tsv")
@@ -200,7 +200,7 @@ namespace Utilities
 		/// <returns>The Enumerable rows in the file.</returns>
 		public static IEnumerable<T> Foreach<T>(string path, bool hasHeaders = true, string sheetName = null) where T : class, new()
 		{
-			string ext = Path.GetExtension(path);
+			string ext = Path.GetExtension(path)?.ToLower();
 			if (ext == ".xlsx")
 				return XlsxForeach<T>(path, sheetName, hasHeaders);
 			if (ext == ".csv" || ext == ".tsv")
