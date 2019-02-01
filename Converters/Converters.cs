@@ -34,6 +34,7 @@ namespace Utilities.Converters
 
 		public static Func<Tin, Tout> ObjectToObject<Tin, Tout>(
 			IReadOnlyList<string> propertyNames,
+			StringComparison propertyNameCompare = StringComparison.Ordinal,
 			BindingFlags inFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly,
 			BindingFlags outFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly)
 			where Tin : class
@@ -41,7 +42,7 @@ namespace Utilities.Converters
 		{
 			IReadOnlyList<PropertyInfo> pi = typeof(Tin).GetProperties(inFlags);
 			IReadOnlyList<PropertyInfo> po = typeof(Tout).GetProperties(outFlags)
-				.Where(prop => pi.Select(p => p.Name).Contains(prop.Name)).ToList();
+				.Where(prop => pi.Select(p => p.Name).Any(piName => String.Equals(prop.Name, piName, propertyNameCompare))).ToList();
 			if (propertyNames != null)
 				po = po.Where(p => propertyNames.Contains(p.Name)).ToList();
 			List<PropertyInfo> piUnion = new List<PropertyInfo>();
@@ -58,7 +59,7 @@ namespace Utilities.Converters
 		{
 			Func<object, object>[] converters = new Func<object, object>[pinfoIn.Count];
 			for (int i = 0; i < pinfoOut.Count; i++) {
-				converters[i] = GetConverter(pinfoIn[i].PropertyType, pinfoOut[i].PropertyType);
+				converters[i] = GetNullableConverter(pinfoIn[i].PropertyType, pinfoOut[i].PropertyType);
 			}
 			Tout objToObj(Tin input)
 			{
@@ -75,7 +76,7 @@ namespace Utilities.Converters
 		}
 
 		/// <summary>
-		/// Creates a function that converts an <see cref="IReadOnlyList{T}"/> of Tin to a Tout.
+		/// Creates a function that converts an <see cref="IReadOnlyList{T}"/> of Tin to Tout.
 		/// </summary>
 		/// <typeparam name="Tin">The input <see cref="Type"/>.</typeparam>
 		/// <typeparam name="Tout">The output <see cref="Type"/>.</typeparam>
@@ -89,18 +90,22 @@ namespace Utilities.Converters
 		}
 
 		public static Func<IReadOnlyList<Tin>, Tout> ListToObject<Tin, Tout>(
-			IReadOnlyList<string> propertyNames,
+			IReadOnlyList<string> propertyNames, 
+			StringComparison propertyNameCompare = StringComparison.Ordinal,
 			BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly)
 			where Tout : class, new()
 		{
-			PropertyInfo[] pinfos = typeof(Tout).GetProperties(flags);
+			PropertyInfo[] pinfosOut = typeof(Tout).GetProperties(flags);
+			foreach (PropertyInfo pout in pinfosOut) {
+				if (propertyNames.Contains(pout.Name)) {
+					if (!pout.GetCustomAttributes(false).Any(attr => attr is OptionalAttribute))
+						throw new InvalidOperationException("Missing property: " + typeof(Tout).FullName + "." + pout.Name);
+				}
+			}
 			List<PropertyInfo> tmp = new List<PropertyInfo>(propertyNames.Count);
 			for (int i = 0; i < propertyNames.Count; i++) {
-				PropertyInfo pinfo = pinfos.FirstOrDefault(pi => pi.Name == propertyNames[i]);
-				if (pinfo == null) {
-					pinfo = pinfos.FirstOrDefault(pi => pi.Name.Equals(propertyNames[i], StringComparison.OrdinalIgnoreCase));
-				}
-				tmp.Add(pinfo);
+				PropertyInfo pout = pinfosOut.FirstOrDefault(pi => pi.Name.Equals(propertyNames[i], propertyNameCompare));
+				tmp.Add(pout);
 			}
 			for (int i = tmp.Count - 1; i >= 0; i--) {
 				if (tmp[i] != null)
@@ -159,7 +164,7 @@ namespace Utilities.Converters
 			if (!output.IsNullable() || !input.IsNullable()) {
 				return GetConverter(output)(input);
 			}
-			else if(input == output) {
+			else if (input == output) {
 				return NoConvert;
 			}
 			Func<object, object> converter = GetConverter(input, output);

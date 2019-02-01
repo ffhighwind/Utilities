@@ -9,10 +9,9 @@ namespace Utilities
 	public class State
 	{
 		/// <summary>
-		/// Global for determining if daylight savings time (DST) is currently in affect.
-		/// This will not be accurate if the program runs for extended timeframes.
+		/// For determining if daylight savings time (DST) is currently in affect.
 		/// </summary>
-		private static readonly bool IsDaylightSavings = DateTime.Now.IsDaylightSavingTime();
+		private static bool IsDaylightSavings => DateTime.Now.IsDaylightSavingTime();
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="State"/> class.
