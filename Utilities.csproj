@@ -49,6 +49,23 @@
       <ExcludeFromStyleCop>True</ExcludeFromStyleCop>
     </Compile>
     <Compile Include="Comparers\DataRowEqualityComparer.cs" />
+    <None Include="Database\NewFolder1\CacheData.cs" />
+    <Compile Include="Database\ColumnAttribute.cs" />
+    <Compile Include="Database\DapperExtensions.cs" />
+    <Compile Include="Database\ForeignKeyAttribute.cs" />
+    <Compile Include="Database\KeyAttribute.cs" />
+    <Compile Include="Database\IgnoreAttribute.cs" />
+    <Compile Include="Database\IgnoreInsertAttribute.cs" />
+    <Compile Include="Database\IgnoreSelectAttribute.cs" />
+    <Compile Include="Database\IgnoreUpdateAttribute.cs" />
+    <Compile Include="Database\ITableQueries.cs" />
+    <None Include="Database\NewFolder1\TableCache.cs" />
+    <Compile Include="Database\TableCache.cs" />
+    <Compile Include="Database\TableData.cs" />
+    <Compile Include="Database\TableAttribute.cs" />
+    <Compile Include="Database\TableEqualityComparer.cs" />
+    <None Include="Database\NewFolder1\TableQueriesCachedImpl.cs" />
+    <Compile Include="Database\TableQueriesImpl.cs" />
     <Compile Include="DB.cs" />
     <Compile Include="Email\Extensions.cs" />
     <Compile Include="Email\ItemClass.cs" />
@@ -116,5 +133,6 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
