@@ -33,7 +33,7 @@ namespace Utilities.Database
 		public DataAccessObject<T> DAO { get; private set; }
 		private DateTime PreviousPull { get; set; } = DateTime.MinValue;
 		private TimeSpan _StaleTimeSpan { get; set; } = new TimeSpan(1, 0, 0);
-		public DateTime StaleDateTime { get; private set; } = DateTime.MinValue;
+		public DateTime NextStaleTime { get; private set; } = DateTime.MinValue;
 		public TimeSpan StaleTimeSpan {
 			get => _StaleTimeSpan;
 			set {
@@ -41,7 +41,7 @@ namespace Utilities.Database
 					throw new InvalidOperationException("StaleTimeSpan must be positive.");
 				}
 				_StaleTimeSpan = value;
-				StaleDateTime = PreviousPull.Add(value);
+				NextStaleTime = PreviousPull.Add(value);
 			}
 		}
 
@@ -55,16 +55,23 @@ namespace Utilities.Database
 
 		public Action OnCacheUpdate { get; set; } = () => { };
 
-		public bool IsStale => DateTime.Now > StaleDateTime;
+		public bool IsStale => DateTime.Now > NextStaleTime;
 
 		public void DoCacheUpdate()
 		{
 			if (IsStale) {
-				foreach (T obj in DAO.GetList(WhereConditions, Param, true, null)) {
-					UpsertItem(obj);
-				}
-				OnCacheUpdate();
+				ForceCacheUpdate();
 			}
+		}
+
+		public void ForceCacheUpdate()
+		{
+			PreviousPull = DateTime.Now;
+			NextStaleTime = PreviousPull.Add(StaleTimeSpan);
+			foreach (T obj in DAO.GetList(WhereConditions, Param, true, null)) {
+				UpsertItem(obj);
+			}
+			OnCacheUpdate();
 		}
 
 		public bool Delete(object key, int? commandTimeout = null)
@@ -140,7 +147,13 @@ namespace Utilities.Database
 		public CacheBaseT Get(T obj, int? commandTimeout = null)
 		{
 			DoCacheUpdate();
-			return Map.TryGetValue(obj, out CacheBaseT cache) ? cache : null;
+			if (!Map.TryGetValue(obj, out CacheBaseT cache)) {
+				T result = DAO.Get(obj, commandTimeout);
+				if (result == null)
+					return null;
+				cache = new CacheBaseT() { Value = result };
+			}
+			return cache;
 		}
 
 		public ICollection<CacheBaseT> GetList()
