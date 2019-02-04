@@ -1112,7 +1112,7 @@ namespace Utilities
 		/// <param name="autoFilter">Determines if auto-filtering will be enabled. Filters allow sorting and filtering by column.</param>
 		/// <param name="autoFormat">Determines if auto-formatting will be enabled.
 		/// Strings values will be converted into basic types in order to remove the green arrow in Excel.</param>
-		public static void WriteXlsx<T>(this IEnumerable<T> list, string path, bool hasHeaders = true, bool autoFilter = true, bool autoFormat = true)
+		public static void WriteXlsx<T>(this IEnumerable<T> list, string path, bool hasHeaders = true, bool autoFilter = true, bool autoFormat = false)
 		{
 			WriteXlsx((ss) => ss[0].Load(list), path, hasHeaders, autoFilter, autoFormat);
 		}
@@ -1126,7 +1126,7 @@ namespace Utilities
 		/// <param name="autoFilter">Determines if auto-filtering will be enabled. Filters allow sorting and filtering by column.</param>
 		/// <param name="autoFormat">Determines if auto-formatting will be enabled.
 		/// Strings values will be converted into basic types in order to remove the green arrow in Excel.</param>
-		public static void WriteXlsx(this DataTable table, string path, bool hasHeaders = true, bool autoFilter = true, bool autoFormat = true)
+		public static void WriteXlsx(this DataTable table, string path, bool hasHeaders = true, bool autoFilter = true, bool autoFormat = false)
 		{
 			WriteXlsx((ss) => ss[0].Load(table, hasHeaders), path, hasHeaders, autoFilter, autoFormat);
 		}
@@ -1140,7 +1140,7 @@ namespace Utilities
 		/// <param name="autoFilter">Determines if auto-filtering will be enabled. Filters allow sorting and filtering by column.</param>
 		/// <param name="autoFormat">Determines if auto-formatting will be enabled.
 		/// Strings values will be converted into basic types in order to remove the green arrow in Excel.</param>
-		public static void WriteXlsx(this DataSet dataset, string path, bool hasHeaders = true, bool autoFilter = true, bool autoFormat = true)
+		public static void WriteXlsx(this DataSet dataset, string path, bool hasHeaders = true, bool autoFilter = true, bool autoFormat = false)
 		{
 			WriteXlsx((ss) => ss.Load(dataset), path, hasHeaders, autoFilter, autoFormat);
 		}
