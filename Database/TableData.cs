@@ -5,11 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Data;
-using Dapper;
 using System.Reflection;
 using System.Reflection.Emit;
 
-namespace Utilities.Database
+namespace Dapper.Extension
 {
 	public static class TableData<T> where T : class
 	{

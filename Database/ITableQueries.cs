@@ -7,9 +7,9 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Utilities.Database
+namespace Dapper.Extension
 {
-	internal interface ITableQueries<T> where T : class
+	public interface ITableQueries<T> where T : class
 	{
 		bool Delete(IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null);
 		bool Delete(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null);

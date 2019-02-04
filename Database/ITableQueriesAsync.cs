@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Utilities.Database
+namespace Dapper.Extension
 {
-	internal interface ITableQueriesAsync<T> where T : class
+	public interface ITableQueriesAsync<T> where T : class
 	{
 		Task<bool> DeleteAsync(IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null);
 

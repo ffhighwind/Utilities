@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using Dapper;
 
-namespace Utilities.Database
+namespace Dapper.Extension
 {
 	public class DataAccessObject<T> : ITableQueries<T>, ITableQueriesAsync<T>, IDataAccessObject<T>, IDataAccessObjectAsync<T> where T : class
 	{
@@ -15,6 +15,12 @@ namespace Utilities.Database
 		{
 			ConnectionString = connectionString;
 		}
+
+		public bool IsCachable => TableData<T>.IsCachable;
+		public string TableName => TableData<T>.TableName;
+		public string[] ColumnNames => TableData<T>.GetColumnNames(TableData<T>.Properties);
+		public PropertyInfo[] KeyProperties => TableData<T>.KeyProperties;
+		public PropertyInfo[] Properties => TableData<T>.Properties;
 
 		public string ConnectionString { get; private set; }
 		public IDbConnection GetConnection() => new SqlConnection(ConnectionString);

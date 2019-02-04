@@ -5,9 +5,9 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Utilities.Database
+namespace Dapper
 {
-	public class ForeignKeyAttribute<T> where T : class
+	public class ForeignKeyAttribute<T> : Attribute where T : class
 	{
 		public ForeignKeyAttribute(string propertyName, BindingFlags flags = BindingFlags.Instance | BindingFlags.Public)
 		{

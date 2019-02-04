@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Utilities.Database
+namespace Dapper.Extension
 {
 	public class CacheBase<T> where T : class
 	{
@@ -12,13 +12,19 @@ namespace Utilities.Database
 
 		public CacheBase(T value)
 		{
-			Value = value;
+			SetValue(value);
 		}
 
-		protected T _Value { get; set; }
-		public virtual T Value {
+		private T _Value { get; set; }
+
+		public T Value {
 			get => _Value;
-			set { _Value = value; }
+			set => SetValue(value);
+		}
+
+		protected virtual void SetValue(T value)
+		{
+			_Value = value;
 		}
 	}
 }

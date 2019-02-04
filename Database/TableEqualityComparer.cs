@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Utilities.Database
+namespace Dapper.Extension
 {
 	public class TableEqualityComparer<T> : IEqualityComparer<T> where T : class
 	{

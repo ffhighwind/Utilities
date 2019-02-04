@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Utilities.Database
+namespace Dapper.Extension
 {
-	internal interface IDataAccessObjectAsync<T> where T : class
+	public interface IDataAccessObjectAsync<T> where T : class
 	{
 		Task<bool> DeleteAsync(object key, int? commandTimeout = null);
 

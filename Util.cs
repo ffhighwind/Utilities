@@ -490,7 +490,7 @@ namespace Utilities
 			Expression[] argsExp =
 				new Expression[paramsInfo.Length];
 
-			//pick each arg from the params array 
+			//pick each arg from the params array
 			//and create a typed expression of them
 			for (int i = 0; i < paramsInfo.Length; i++) {
 				Expression index = Expression.Constant(i);
@@ -518,9 +518,9 @@ namespace Utilities
 			ObjectConstructor compiled = (ObjectConstructor)lambda.Compile();
 			return compiled;
 		}
-		
+
 		/// <summary>
-		/// Creates a shallow clone of an object. This will not work when using SilverLight and therefore may require other 
+		/// Creates a shallow clone of an object. This will not work when using SilverLight and therefore may require other
 		/// cloning methods such as Json Serialization or IL level cloning.
 		/// </summary>
 		/// <typeparam name="T">The <see cref="Type"/> to clone.</typeparam>

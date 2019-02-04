@@ -6,9 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Utilities.Database
+namespace Dapper.Extension
 {
-	internal interface IDataAccessObject<T> where T : class
+	public interface IDataAccessObject<T> where T : class
 	{
 		bool Delete(object key, int? commandTimeout = null);
 
