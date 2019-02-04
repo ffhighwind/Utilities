@@ -36,29 +36,28 @@ namespace Utilities.Database
 			// Use Dapper to check DBMS and choose what to do?
 			// Validate ForeignKeyAttribute
 			// SqlMapper.AddTypeHandler<T>();
-			TableQueries = new TableQueriesImpl<T>();
+			DAO = new DataAccessObject<T>("");
 		}
 
 		static TableData()
 		{
 			TableAttribute tableAttribute = typeof(T).GetCustomAttribute<TableAttribute>(InheritAttributes);
 			TableName = tableAttribute?.Name ?? typeof(T).Name;
-			IsCached = tableAttribute?.IsCached ?? false;
 			DeleteQuery = "DELETE FROM " + TableName + "\n";
 			Reinitialize();
 		}
 
 		internal static bool InheritAttributes { get; private set; } = false;
 		public static string TableName { get; private set; }
+		public static bool IsCachable => KeyProperties.Length > 0;
 
-		internal static bool IsCached { get; private set; }
-		internal static TableQueriesImpl<T> TableQueries { get; private set; }
-		internal static PropertyInfo[] Properties { get; private set; } = GetTableProperties();
-		internal static PropertyInfo[] KeyProperties { get; private set; }
-		internal static PropertyInfo[] AutoKeyProperties { get; private set; }
-		internal static PropertyInfo[] SelectProperties => GetProperties(typeof(IgnoreSelectAttribute));
-		internal static PropertyInfo[] UpdateProperties => GetProperties(typeof(IgnoreUpdateAttribute));
-		internal static PropertyInfo[] InsertProperties => GetProperties(typeof(IgnoreInsertAttribute));
+		internal static DataAccessObject<T> DAO { get; private set; }
+		public static PropertyInfo[] Properties { get; private set; } = GetTableProperties();
+		public static PropertyInfo[] KeyProperties { get; private set; }
+		public static PropertyInfo[] AutoKeyProperties { get; private set; }
+		public static PropertyInfo[] SelectProperties => GetProperties(typeof(IgnoreSelectAttribute));
+		public static PropertyInfo[] UpdateProperties => GetProperties(typeof(IgnoreUpdateAttribute));
+		public static PropertyInfo[] InsertProperties => GetProperties(typeof(IgnoreInsertAttribute));
 		internal static PropertyInfo[] CompareProperties { get; private set; }
 		internal static string SelectListQuery { get; private set; }
 		internal static string SelectListKeysQuery { get; private set; }
@@ -109,6 +108,13 @@ namespace Utilities.Database
 			return false;
 		}
 
+		public static T CreateObjectFromKey(object key)
+		{
+			T objKey = (T)System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(T));
+			TableData<T>.CopyKeyToObject(key, objKey);
+			return objKey;
+		}
+
 		public static void CopyKeyToObject(object key, T obj)
 		{
 			Type type = key.GetType();
@@ -143,7 +149,7 @@ namespace Utilities.Database
 				? Properties : properties.ToArray();
 		}
 
-		internal static string[] GetColumnNames(params PropertyInfo[] properties)
+		public static string[] GetColumnNames(params PropertyInfo[] properties)
 		{
 			string[] columnNames = new string[properties.Length];
 			for (int i = 0; i < Properties.Length; i++) {

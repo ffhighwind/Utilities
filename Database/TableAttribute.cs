@@ -8,12 +8,11 @@ namespace Utilities.Database
 {
 	public class TableAttribute : Attribute
 	{
-		public TableAttribute(string name, bool cached = false)
+		public TableAttribute(string name)
 		{
 			Name = name;
 		}
 
 		public string Name { get; private set; }
-		public bool IsCached { get; private set; }
 	}
 }

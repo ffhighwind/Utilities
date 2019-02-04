@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Utilities.Database
 {
-	internal class TableEqualityComparer<T> : IEqualityComparer<T> where T : class
+	public class TableEqualityComparer<T> : IEqualityComparer<T> where T : class
 	{
 		bool IEqualityComparer<T>.Equals(T x, T y)
 		{

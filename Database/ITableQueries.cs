@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Utilities.Database
 {
-	public interface ITableQueries<T> where T : class
+	internal interface ITableQueries<T> where T : class
 	{
 		bool Delete(IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null);
 		bool Delete(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null);
