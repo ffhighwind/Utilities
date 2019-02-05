@@ -12,19 +12,9 @@ namespace Dapper.Extension
 
 		public CacheBase(T value)
 		{
-			SetValue(value);
+			Value = value;
 		}
 
-		private T _Value { get; set; }
-
-		public T Value {
-			get => _Value;
-			set => SetValue(value);
-		}
-
-		protected virtual void SetValue(T value)
-		{
-			_Value = value;
-		}
+		public virtual T Value { get; set; }
 	}
 }

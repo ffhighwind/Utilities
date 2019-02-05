@@ -90,14 +90,14 @@ namespace Utilities.Converters
 		}
 
 		public static Func<IReadOnlyList<Tin>, Tout> ListToObject<Tin, Tout>(
-			IReadOnlyList<string> propertyNames, 
+			IReadOnlyList<string> propertyNames,
 			StringComparison propertyNameCompare = StringComparison.Ordinal,
 			BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly)
 			where Tout : class, new()
 		{
 			PropertyInfo[] pinfosOut = typeof(Tout).GetProperties(flags);
 			foreach (PropertyInfo pout in pinfosOut) {
-				if (propertyNames.Contains(pout.Name)) {
+				if (!propertyNames.Contains(pout.Name)) {
 					if (!pout.GetCustomAttributes(false).Any(attr => attr is OptionalAttribute))
 						throw new InvalidOperationException("Missing property: " + typeof(Tout).FullName + "." + pout.Name);
 				}
