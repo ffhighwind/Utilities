@@ -70,16 +70,22 @@ namespace Dapper.Extension
 
 		public int Delete(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
-			if (string.IsNullOrWhiteSpace(whereCondition)) {
-				Map.Clear();
-			}
-			else {
-				List<T> list = DAO.GetKeys(whereCondition, param, buffered, commandTimeout);
-				foreach (T obj in list) {
-					Map.TryRemove(obj, out CacheBaseT value);
+			using (IDbConnection conn = DAO.GetConnection()) {
+				using (IDbTransaction trans = conn.BeginTransaction()) {
+					if (string.IsNullOrWhiteSpace(whereCondition)) {
+						Map.Clear();
+					}
+					else {
+						List<T> list = DAO.GetKeys(trans, whereCondition, param, buffered, commandTimeout);
+						foreach (T obj in list) {
+							Map.TryRemove(obj, out CacheBaseT value);
+						}
+					}
+					int result = DAO.Delete(trans, whereCondition, param, buffered, commandTimeout);
+					trans.Commit();
+					return result;
 				}
 			}
-			return DAO.Delete(whereCondition, param, buffered, commandTimeout);
 		}
 
 		public void Insert(T obj, int? commandTimeout = null)
@@ -224,7 +230,7 @@ namespace Dapper.Extension
 			return await DAO.RecordCountAsync(whereCondition, param, commandTimeout);
 		}
 
-		public async CacheBaseT FindAsync(T obj, int? commandTimeout = null)
+		public async Task<CacheBaseT> FindAsync(T obj, int? commandTimeout = null)
 		{
 			return await Task.Run(() => Find(obj, commandTimeout));
 		}

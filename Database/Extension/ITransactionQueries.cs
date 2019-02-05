@@ -9,6 +9,8 @@ namespace Dapper.Extension
 {
 	public interface ITransactionQueries<T> where T : class
 	{
+		List<T> GetKeys(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+
 		bool Delete(IDbTransaction transaction, object key, int? commandTimeout = null);
 		bool Delete(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		int Delete(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null);

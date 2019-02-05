@@ -231,6 +231,11 @@ namespace Dapper
 		#endregion // IDataAccessObjectAsync<T>
 
 		#region ITransactionQueries<T>
+		public List<T> GetKeys(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			return transaction.Connection.GetKeys<T>(whereCondition, param, transaction, buffered, commandTimeout);
+		}
+
 		public bool Delete(IDbTransaction transaction, object key, int? commandTimeout = null)
 		{
 			return transaction.Connection.Delete<T>(key, transaction, commandTimeout);
@@ -303,6 +308,11 @@ namespace Dapper
 		#endregion // ITableQueries<T>
 
 		#region ITransactionQueriesAsync<T>
+		public async Task<List<T>> GetKeysAsync(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			return await Task.Run(() => GetKeys(transaction, whereCondition, param, buffered, commandTimeout));
+		}
+
 		public async Task<bool> DeleteAsync(IDbTransaction transaction, object key, int? commandTimeout = null)
 		{
 			return await Task.Run(() => Delete(transaction, key, commandTimeout));
