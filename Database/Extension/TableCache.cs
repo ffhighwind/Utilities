@@ -136,6 +136,11 @@ namespace Dapper.Extension
 			return DAO.RecordCount(whereCondition, param, commandTimeout);
 		}
 
+		public CacheBaseT Find(T obj, int? commandTimeout = null)
+		{
+			return Map.TryGetValue(obj, out CacheBaseT value) ? value : Get(obj, commandTimeout);
+		}
+
 		public async Task<List<T>> GetKeysAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
 			return await DAO.GetKeysAsync(whereCondition, param, buffered, commandTimeout);
@@ -217,6 +222,11 @@ namespace Dapper.Extension
 		public async Task<int> RecordCountAsync(string whereCondition = "", object param = null, int? commandTimeout = null)
 		{
 			return await DAO.RecordCountAsync(whereCondition, param, commandTimeout);
+		}
+
+		public async CacheBaseT FindAsync(T obj, int? commandTimeout = null)
+		{
+			return await Task.Run(() => Find(obj, commandTimeout));
 		}
 	}
 }
