@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Dapper.Extension;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -7,147 +8,157 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Dapper.Extension
+namespace Dapper
 {
-	public class DataAccessObject<T> : ITableQueries<T>, ITableQueriesAsync<T>, IDataAccessObject<T>, IDataAccessObjectAsync<T> where T : class
+	public class DataAccessObject<T> : IDataAccessObject<T>, IDataAccessObjectAsync<T> where T : class
 	{
-		public DataAccessObject(string connectionString)
+		public DataAccessObject(string connString)
 		{
-			ConnectionString = connectionString;
+			ConnectionString = connString;
 		}
 
 		public bool IsCachable => TableData<T>.IsCachable;
 		public string TableName => TableData<T>.TableName;
-		public string[] ColumnNames => TableData<T>.GetColumnNames(TableData<T>.Properties);
-		public PropertyInfo[] KeyProperties => TableData<T>.KeyProperties;
 		public PropertyInfo[] Properties => TableData<T>.Properties;
+		public PropertyInfo[] KeyProperties => TableData<T>.KeyProperties;
+		public string[] ColumnNames => TableData<T>.GetColumnNames(TableData<T>.Properties);
+		public string[] KeyColumnNames => TableData<T>.GetColumnNames(TableData<T>.KeyProperties);
 
 		public string ConnectionString { get; private set; }
 		public IDbConnection GetConnection() => new SqlConnection(ConnectionString);
 
-		public async Task<List<T>> GetKeysAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
-		{
-			return await Task.Run(() => GetKeys(whereCondition, param, buffered, commandTimeout));
-		}
 
+		#region IDataAccessObject<T>
 		public List<T> GetKeys(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
 			using (IDbConnection conn = GetConnection()) {
-				return GetKeys(conn, whereCondition, param, null, buffered, commandTimeout);
+				return conn.GetKeys<T>(whereCondition, param, null, buffered, commandTimeout);
 			}
 		}
 
-		public async Task<List<T>> GetKeysAsync(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
-		{
-			return await Task.Run(() => GetKeys(connection, whereCondition, param, transaction, buffered, commandTimeout));
-		}
-
-		public List<T> GetKeys(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
-		{
-			return connection.Query<T>(TableData<T>.SelectListKeysQuery + whereCondition, param, transaction, buffered, commandTimeout).AsList();
-		}
-
-		#region IDataAccessObject<T>
 		public bool Delete(object key, int? commandTimeout = null)
 		{
 			using (IDbConnection conn = GetConnection()) {
-				return Delete(conn, key, null, commandTimeout);
+				return conn.Delete<T>(key, null, commandTimeout);
 			}
 		}
 
 		public bool Delete(T obj, int? commandTimeout = null)
 		{
 			using (IDbConnection conn = GetConnection()) {
-				return Delete(conn, obj, null, commandTimeout);
+				return conn.Delete<T>(obj, null, commandTimeout);
 			}
 		}
 
 		public int Delete(IEnumerable<T> objs, int? commandTimeout = null)
 		{
 			using (IDbConnection conn = GetConnection()) {
-				return Delete(conn, objs, null, commandTimeout);
+				using (IDbTransaction trans = conn.BeginTransaction()) {
+					int count = conn.Delete(objs, trans, commandTimeout);
+					trans.Commit();
+					return count;
+				}
 			}
 		}
 
 		public int Delete(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
 			using (IDbConnection conn = GetConnection()) {
-				return Delete(conn, whereCondition, param, null, buffered, commandTimeout);
+				using (IDbTransaction trans = conn.BeginTransaction()) {
+					int count = conn.Delete<T>(whereCondition, param, trans, buffered, commandTimeout);
+					trans.Commit();
+					return count;
+				}
 			}
 		}
 
 		public void Insert(T obj, int? commandTimeout = null)
 		{
 			using (IDbConnection conn = GetConnection()) {
-				Insert(conn, obj, null, commandTimeout);
+				conn.Insert<T>(obj, null, commandTimeout);
 			}
 		}
 
 		public void Insert(IEnumerable<T> objs, int? commandTimeout = null)
 		{
 			using (IDbConnection conn = GetConnection()) {
-				Insert(conn, objs, null, commandTimeout);
+				using (IDbTransaction trans = conn.BeginTransaction()) {
+					conn.Insert<T>(objs, trans, commandTimeout);
+					trans.Commit();
+				}
 			}
 		}
 
 		public bool Update(T obj, int? commandTimeout = null)
 		{
 			using (IDbConnection conn = GetConnection()) {
-				return Update(conn, obj, null, commandTimeout);
+				return conn.Update<T>(obj, null, commandTimeout);
 			}
 		}
 
 		public int Update(IEnumerable<T> objs, int? commandTimeout = null)
 		{
 			using (IDbConnection conn = GetConnection()) {
-				return Update(conn, objs, null, commandTimeout);
+				using (IDbTransaction trans = conn.BeginTransaction()) {
+					int count = conn.Update(objs, trans, commandTimeout);
+					trans.Commit();
+					return count;
+				}
 			}
 		}
 
 		public void Upsert(T obj, int? commandTimeout = null)
 		{
 			using (IDbConnection conn = GetConnection()) {
-				Upsert(conn, obj, null, commandTimeout);
+				conn.Upsert<T>(obj, null, commandTimeout);
 			}
 		}
 
 		public void Upsert(IEnumerable<T> objs, int? commandTimeout = null)
 		{
 			using (IDbConnection conn = GetConnection()) {
-				Upsert(conn, objs, null, commandTimeout);
+				using (IDbTransaction trans = conn.BeginTransaction()) {
+					conn.Upsert<T>(objs, trans, commandTimeout);
+					trans.Commit();
+				}
 			}
 		}
 
 		public T Get(object key, int? commandTimeout = null)
 		{
 			using (IDbConnection conn = GetConnection()) {
-				return Get(conn, key, null, commandTimeout);
+				return conn.Get<T>(key, null, commandTimeout);
 			}
 		}
 
 		public T Get(T obj, int? commandTimeout = null)
 		{
 			using (IDbConnection conn = GetConnection()) {
-				return Get(conn, obj, null, commandTimeout);
+				return conn.Get<T>(obj, null, commandTimeout);
 			}
 		}
 
 		public List<T> GetList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
 			using (IDbConnection conn = GetConnection()) {
-				return GetList(conn, whereCondition, param, null, buffered, commandTimeout);
+				return conn.GetList<T>(whereCondition, param, null, buffered, commandTimeout);
 			}
 		}
 
 		public int RecordCount(string whereCondition = "", object param = null, int? commandTimeout = null)
 		{
 			using (IDbConnection conn = GetConnection()) {
-				return RecordCount(conn, whereCondition, param, null, commandTimeout);
+				return conn.RecordCount<T>(whereCondition, param, null, commandTimeout);
 			}
 		}
 		#endregion // IDataAccessObject<T>
 
 		#region IDataAccessObjectAsync<T>
+		public async Task<List<T>> GetKeysAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			return await Task.Run(() => GetKeys(whereCondition, param, buffered, commandTimeout));
+		}
+
 		public async Task<bool> DeleteAsync(object key, int? commandTimeout = null)
 		{
 			return await Task.Run(() => Delete(key, commandTimeout));
@@ -219,181 +230,148 @@ namespace Dapper.Extension
 		}
 		#endregion // IDataAccessObjectAsync<T>
 
-		#region ITableQueries<T>
-		public bool Delete(IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null)
+		#region ITransactionQueries<T>
+		public bool Delete(IDbTransaction transaction, object key, int? commandTimeout = null)
 		{
-			return 0 < connection.Execute(TableData<T>.DeleteSingleQuery, key, transaction, commandTimeout);
+			return transaction.Connection.Delete<T>(key, transaction, commandTimeout);
 		}
 
-		public bool Delete(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
+		public bool Delete(IDbTransaction transaction, T obj, int? commandTimeout = null)
 		{
-			return 0 < connection.Execute(TableData<T>.DeleteSingleQuery, obj, transaction, commandTimeout);
+			return transaction.Connection.Delete<T>(obj, transaction, commandTimeout);
 		}
 
-		public int Delete(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
+		public int Delete(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
 		{
-			using (IDbTransaction tempTransaction = transaction != null ? null : connection.BeginTransaction()) {
-				transaction = transaction ?? tempTransaction;
-				int count = 0;
-				// TODO: Partition<> with keys
-				foreach (T obj in objs) {
-					if (Delete(connection, obj, transaction, commandTimeout)) {
-						count++;
-					}
-				}
-				tempTransaction?.Commit();
-				return count;
-			}
+			return transaction.Connection.Delete<T>(objs, transaction, commandTimeout);
 		}
 
-		public int Delete(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		public int Delete(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
-			return connection.Execute(TableData<T>.DeleteQuery + whereCondition, param, transaction, commandTimeout);
+			return transaction.Connection.Delete<T>(whereCondition, param, transaction, buffered, commandTimeout);
 		}
 
-		public void Insert(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
+		public void Insert(IDbTransaction transaction, T obj, int? commandTimeout = null)
 		{
-			connection.Execute(TableData<T>.InsertQuery, obj, transaction, commandTimeout);
+			transaction.Connection.Insert<T>(obj, transaction, commandTimeout);
 		}
 
-		public void Insert(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
+		public void Insert(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
 		{
-			using (IDbTransaction tempTransaction = transaction != null ? null : connection.BeginTransaction()) {
-				transaction = transaction ?? tempTransaction;
-				foreach (T obj in objs) {
-					Insert(connection, obj, transaction, commandTimeout);
-				}
-				tempTransaction?.Commit();
-			}
+			transaction.Connection.Insert<T>(objs, transaction, commandTimeout);
 		}
 
-		public bool Update(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
+		public bool Update(IDbTransaction transaction, T obj, int? commandTimeout = null)
 		{
-			return 0 < connection.ExecuteScalar<int>(TableData<T>.UpdateQuery, obj, transaction, commandTimeout);
+			return transaction.Connection.Update<T>(obj, transaction, commandTimeout);
 		}
 
-		public int Update(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
+		public int Update(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
 		{
-			using (IDbTransaction tempTransaction = transaction != null ? null : connection.BeginTransaction()) {
-				transaction = transaction ?? tempTransaction;
-				int count = 0;
-				foreach (T obj in objs) {
-					if (Update(connection, obj, transaction, commandTimeout)) {
-						count++;
-					}
-				}
-				tempTransaction?.Commit();
-				return count;
-			}
+			return transaction.Connection.Update<T>(objs, transaction, commandTimeout);
 		}
 
-		public void Upsert(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
+		public void Upsert(IDbTransaction transaction, T obj, int? commandTimeout = null)
 		{
-			connection.Execute(TableData<T>.UpsertQuery, obj, transaction, commandTimeout);
+			transaction.Connection.Upsert<T>(obj, transaction, commandTimeout);
 		}
 
-		public void Upsert(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
+		public void Upsert(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
 		{
-			using (IDbTransaction tempTransaction = transaction != null ? null : connection.BeginTransaction()) {
-				transaction = transaction ?? tempTransaction;
-				foreach (T obj in objs) {
-					Upsert(connection, obj, transaction, commandTimeout);
-				}
-				tempTransaction?.Commit();
-			}
+			transaction.Connection.Upsert<T>(objs, transaction, commandTimeout);
 		}
 
-		public T Get(IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null)
+		public T Get(IDbTransaction transaction, object key, int? commandTimeout = null)
 		{
-			return connection.Query<T>(TableData<T>.SelectSingleQuery, key, transaction, true, commandTimeout).SingleOrDefault();
+			return transaction.Connection.Get<T>(key, transaction, commandTimeout);
 		}
 
-		public T Get(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
+		public T Get(IDbTransaction transaction, T obj, int? commandTimeout = null)
 		{
-			return connection.Query<T>(TableData<T>.SelectSingleQuery, obj, transaction, true, commandTimeout).SingleOrDefault();
+			return transaction.Connection.Get<T>(obj, transaction, commandTimeout);
 		}
 
-		public List<T> GetList(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		public List<T> GetList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
-			return connection.Query<T>(TableData<T>.SelectListQuery + whereCondition, param, transaction, buffered, commandTimeout).AsList();
+			return transaction.Connection.GetList<T>(whereCondition, param, transaction, buffered, commandTimeout);
 		}
 
-		public int RecordCount(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, int? commandTimeout = null)
+		public int RecordCount(IDbTransaction transaction, string whereCondition = "", object param = null, int? commandTimeout = null)
 		{
-			return connection.ExecuteScalar<int>(TableData<T>.CountQuery + whereCondition, param, transaction, commandTimeout);
+			return transaction.Connection.RecordCount<T>(whereCondition, param, transaction, commandTimeout);
 		}
 		#endregion // ITableQueries<T>
 
-		#region ITableQueriesAsync<T>
-		public async Task<bool> DeleteAsync(IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null)
+		#region ITransactionQueriesAsync<T>
+		public async Task<bool> DeleteAsync(IDbTransaction transaction, object key, int? commandTimeout = null)
 		{
-			return await Task.Run(() => Delete(connection, key, transaction, commandTimeout));
+			return await Task.Run(() => Delete(transaction, key, commandTimeout));
 		}
 
-		public async Task<bool> DeleteAsync(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
+		public async Task<bool> DeleteAsync(IDbTransaction transaction, T obj, int? commandTimeout = null)
 		{
-			return await Task.Run(() => Delete(connection, obj, transaction, commandTimeout));
+			return await Task.Run(() => Delete(transaction, obj, commandTimeout));
 		}
 
-		public async Task<int> DeleteAsync(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
+		public async Task<int> DeleteAsync(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
 		{
-			return await Task.Run(() => Delete(connection, objs, transaction, commandTimeout));
+			return await Task.Run(() => Delete(transaction, objs, commandTimeout));
 		}
 
-		public async Task<int> DeleteAsync(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		public async Task<int> DeleteAsync(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
-			return await Task.Run(() => Delete(connection, whereCondition, param, transaction, buffered, commandTimeout));
+			return await Task.Run(() => Delete(transaction, whereCondition, param, buffered, commandTimeout));
 		}
 
-		public async Task InsertAsync(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
+		public async Task InsertAsync(IDbTransaction transaction, T obj, int? commandTimeout = null)
 		{
-			await Task.Run(() => Insert(connection, obj, transaction, commandTimeout));
+			await Task.Run(() => Insert(transaction, obj, commandTimeout));
 		}
 
-		public async Task InsertAsync(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
+		public async Task InsertAsync(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
 		{
-			await Task.Run(() => Insert(connection, objs, transaction, commandTimeout));
+			await Task.Run(() => Insert(transaction, objs, commandTimeout));
 		}
 
-		public async Task<bool> UpdateAsync(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
+		public async Task<bool> UpdateAsync(IDbTransaction transaction, T obj, int? commandTimeout = null)
 		{
-			return await Task.Run(() => Update(connection, obj, transaction, commandTimeout));
+			return await Task.Run(() => Update(transaction, obj, commandTimeout));
 		}
 
-		public async Task<int> UpdateAsync(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
+		public async Task<int> UpdateAsync(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
 		{
-			return await Task.Run(() => Update(connection, objs, transaction, commandTimeout));
+			return await Task.Run(() => Update(transaction, objs, commandTimeout));
 		}
 
-		public async Task UpsertAsync(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
+		public async Task UpsertAsync(IDbTransaction transaction, T obj, int? commandTimeout = null)
 		{
-			await Task.Run(() => Upsert(connection, obj, transaction, commandTimeout));
+			await Task.Run(() => Upsert(transaction, obj, commandTimeout));
 		}
 
-		public async Task UpsertAsync(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
+		public async Task UpsertAsync(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
 		{
-			await Task.Run(() => Upsert(connection, objs, transaction, commandTimeout));
+			await Task.Run(() => Upsert(transaction, objs, commandTimeout));
 		}
 
-		public async Task<T> GetAsync(IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null)
+		public async Task<T> GetAsync(IDbTransaction transaction, object key, int? commandTimeout = null)
 		{
-			return await Task.Run(() => Get(connection, key, transaction, commandTimeout));
+			return await Task.Run(() => Get(transaction, key, commandTimeout));
 		}
 
-		public async Task<T> GetAsync(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
+		public async Task<T> GetAsync(IDbTransaction transaction, T obj, int? commandTimeout = null)
 		{
-			return await Task.Run(() => Get(connection, obj, transaction, commandTimeout));
+			return await Task.Run(() => Get(transaction, obj, commandTimeout));
 		}
 
-		public async Task<List<T>> GetListAsync(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		public async Task<List<T>> GetListAsync(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
-			return await Task.Run(() => GetList(connection, whereCondition, param, transaction, buffered, commandTimeout));
+			return await Task.Run(() => GetList(transaction, whereCondition, param, buffered, commandTimeout));
 		}
 
-		public async Task<int> RecordCountAsync(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, int? commandTimeout = null)
+		public async Task<int> RecordCountAsync(IDbTransaction transaction, string whereCondition = "", object param = null, int? commandTimeout = null)
 		{
-			return await Task.Run(() => RecordCount(connection, whereCondition, param, transaction, commandTimeout));
+			return await Task.Run(() => RecordCount(transaction, whereCondition, param, commandTimeout));
 		}
-		#endregion // ITableQueriesAsync<T>
+		#endregion // ITransactionQueriesAsync<T>
 	}
 }

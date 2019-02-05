@@ -9,6 +9,8 @@ namespace Dapper.Extension
 {
 	public interface IDataAccessObjectAsync<T> where T : class
 	{
+		Task<List<T>> GetKeysAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+
 		Task<bool> DeleteAsync(object key, int? commandTimeout = null);
 
 		Task<bool> DeleteAsync(T obj, int? commandTimeout = null);

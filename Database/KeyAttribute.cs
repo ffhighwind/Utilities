@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace Dapper
 {
+	[AttributeUsage(AttributeTargets.Property)]
 	public class KeyAttribute : Attribute
 	{
 		public KeyAttribute(bool required = false)

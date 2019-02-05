@@ -7,13 +7,14 @@ using System.Threading.Tasks;
 
 namespace Dapper
 {
-	public class ForeignKeyAttribute<T> : Attribute where T : class
+	[AttributeUsage(AttributeTargets.Property)]
+	public class ForeignKeyAttribute : Attribute
 	{
-		public ForeignKeyAttribute(string propertyName, BindingFlags flags = BindingFlags.Instance | BindingFlags.Public)
+		public ForeignKeyAttribute(string propertyName)
 		{
-			Property = typeof(T).GetProperty(propertyName, flags);
+			PropertyName = propertyName;
 		}
 
-		public PropertyInfo Property { get; private set; }
+		public string PropertyName { get; private set; }
 	}
 }

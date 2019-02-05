@@ -49,24 +49,26 @@
       <ExcludeFromStyleCop>True</ExcludeFromStyleCop>
     </Compile>
     <Compile Include="Comparers\DataRowEqualityComparer.cs" />
-    <Compile Include="Database\CacheBase.cs" />
+    <Compile Include="Database\Extension\CacheBase.cs" />
     <Compile Include="Database\ColumnAttribute.cs" />
     <Compile Include="Database\DapperExtensions.cs" />
     <Compile Include="Database\DataAccessObject.cs" />
+    <Compile Include="Database\Extension\ITransactionQueries.cs" />
+    <Compile Include="Database\Extension\ITransactionQueriesAsync.cs" />
     <Compile Include="Database\ForeignKeyAttribute.cs" />
-    <Compile Include="Database\IDataAccessObject.cs" />
-    <Compile Include="Database\IDataAccessObjectAsync.cs" />
-    <Compile Include="Database\ITableQueriesAsync.cs" />
+    <Compile Include="Database\Extension\IDataAccessObject.cs" />
+    <Compile Include="Database\Extension\IDataAccessObjectAsync.cs" />
+    <Compile Include="Database\Extension\ITableQueriesAsync.cs" />
     <Compile Include="Database\KeyAttribute.cs" />
     <Compile Include="Database\IgnoreAttribute.cs" />
     <Compile Include="Database\IgnoreInsertAttribute.cs" />
     <Compile Include="Database\IgnoreSelectAttribute.cs" />
     <Compile Include="Database\IgnoreUpdateAttribute.cs" />
-    <Compile Include="Database\ITableQueries.cs" />
-    <Compile Include="Database\TableCache.cs" />
-    <Compile Include="Database\TableData.cs" />
+    <Compile Include="Database\Extension\ITableQueries.cs" />
+    <Compile Include="Database\Extension\TableCache.cs" />
+    <Compile Include="Database\Extension\TableData.cs" />
     <Compile Include="Database\TableAttribute.cs" />
-    <Compile Include="Database\TableEqualityComparer.cs" />
+    <Compile Include="Database\Extension\TableEqualityComparer.cs" />
     <Compile Include="DB.cs" />
     <Compile Include="Email\Extensions.cs" />
     <Compile Include="Email\ItemClass.cs" />
@@ -109,7 +111,7 @@
       <HintPath>packages\Dapper.1.50.5\lib\net451\Dapper.dll</HintPath>
     </Reference>
     <Reference Include="EPPlus, Version=4.5.3.1, Culture=neutral, PublicKeyToken=ea159fdaa78159a1, processorArchitecture=MSIL">
-      <HintPath>..\FLSAComplianceReportsGUI\packages\EPPlus.4.5.3.1\lib\net40\EPPlus.dll</HintPath>
+      <HintPath>packages\EPPlus.4.5.3.1\lib\net40\EPPlus.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Microsoft.Exchange.WebServices, Version=15.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">

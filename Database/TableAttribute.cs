@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace Dapper
 {
+	[AttributeUsage(AttributeTargets.Class)]
 	public class TableAttribute : Attribute
 	{
 		public TableAttribute(string name)

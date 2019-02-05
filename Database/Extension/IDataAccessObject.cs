@@ -10,6 +10,8 @@ namespace Dapper.Extension
 {
 	public interface IDataAccessObject<T> where T : class
 	{
+		List<T> GetKeys(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+
 		bool Delete(object key, int? commandTimeout = null);
 
 		bool Delete(T obj, int? commandTimeout = null);

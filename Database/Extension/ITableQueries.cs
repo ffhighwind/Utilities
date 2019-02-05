@@ -11,6 +11,7 @@ namespace Dapper.Extension
 {
 	public interface ITableQueries<T> where T : class
 	{
+		List<T> GetKeys(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
 		bool Delete(IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null);
 		bool Delete(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null);
 		int Delete(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null);

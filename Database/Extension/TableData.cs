@@ -35,7 +35,6 @@ namespace Dapper.Extension
 			// Use Dapper to check DBMS and choose what to do?
 			// Validate ForeignKeyAttribute
 			// SqlMapper.AddTypeHandler<T>();
-			DAO = new DataAccessObject<T>("");
 		}
 
 		static TableData()
@@ -50,7 +49,6 @@ namespace Dapper.Extension
 		public static string TableName { get; private set; }
 		public static bool IsCachable => KeyProperties.Length > 0;
 
-		internal static DataAccessObject<T> DAO { get; private set; }
 		public static PropertyInfo[] Properties { get; private set; } = GetTableProperties();
 		public static PropertyInfo[] KeyProperties { get; private set; }
 		public static PropertyInfo[] AutoKeyProperties { get; private set; }
