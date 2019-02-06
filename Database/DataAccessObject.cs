@@ -10,19 +10,17 @@ using System.Threading.Tasks;
 
 namespace Dapper
 {
-	public class DataAccessObject<T> : IDataAccessObject<T>, IDataAccessObjectAsync<T> where T : class
+	public class DataAccessObject<T> : IDataAccessObject<T>, IDataAccessObjectAsync<T>, ITransactionQueries<T>, ITransactionQueriesAsync<T> where T : class
 	{
 		public DataAccessObject(string connString)
 		{
 			ConnectionString = connString;
 		}
 
-		public bool IsCachable => TableData<T>.IsCachable;
+		public bool IsCachable => TableData<T>.KeyProperties.Length > 0;
 		public string TableName => TableData<T>.TableName;
 		public PropertyInfo[] Properties => TableData<T>.Properties;
 		public PropertyInfo[] KeyProperties => TableData<T>.KeyProperties;
-		public string[] ColumnNames => TableData<T>.GetColumnNames(TableData<T>.Properties);
-		public string[] KeyColumnNames => TableData<T>.GetColumnNames(TableData<T>.KeyProperties);
 
 		public string ConnectionString { get; private set; }
 		public IDbConnection GetConnection() => new SqlConnection(ConnectionString);
@@ -68,6 +66,17 @@ namespace Dapper
 					int count = conn.Delete<T>(whereCondition, param, trans, buffered, commandTimeout);
 					trans.Commit();
 					return count;
+				}
+			}
+		}
+
+		public List<T> DeleteList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			using (IDbConnection conn = GetConnection()) {
+				using (IDbTransaction trans = conn.BeginTransaction()) {
+					List<T> list = conn.DeleteList<T>(whereCondition, param, trans, buffered, commandTimeout);
+					trans.Commit();
+					return list;
 				}
 			}
 		}
@@ -179,6 +188,11 @@ namespace Dapper
 			return await Task.Run(() => Delete(whereCondition, param, buffered, commandTimeout));
 		}
 
+		public async Task<List<T>> DeleteListAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			return await Task.Run(() => DeleteList(whereCondition, param, buffered, commandTimeout));
+		}
+
 		public async Task InsertAsync(T obj, int? commandTimeout = null)
 		{
 			await Task.Run(() => Insert(obj, commandTimeout));
@@ -256,6 +270,11 @@ namespace Dapper
 			return transaction.Connection.Delete<T>(whereCondition, param, transaction, buffered, commandTimeout);
 		}
 
+		public List<T> DeleteList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			return transaction.Connection.DeleteList<T>(whereCondition, param, transaction, buffered, commandTimeout);
+		}
+
 		public void Insert(IDbTransaction transaction, T obj, int? commandTimeout = null)
 		{
 			transaction.Connection.Insert<T>(obj, transaction, commandTimeout);
@@ -331,6 +350,11 @@ namespace Dapper
 		public async Task<int> DeleteAsync(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
 			return await Task.Run(() => Delete(transaction, whereCondition, param, buffered, commandTimeout));
+		}
+
+		public async Task<List<T>> DeleteListAsync(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			return await Task.Run(() => DeleteList(transaction, whereCondition, param, buffered, commandTimeout));
 		}
 
 		public async Task InsertAsync(IDbTransaction transaction, T obj, int? commandTimeout = null)

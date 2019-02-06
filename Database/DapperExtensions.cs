@@ -15,107 +15,97 @@ namespace Dapper
 		public static List<T> GetKeys<T>(this IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 			where T : class
 		{
-			return connection.Query<T>(TableData<T>.SelectListKeysQuery + whereCondition, param, transaction, buffered, commandTimeout).AsList();
+			return TableData<T>.Queries.GetKeys(connection, whereCondition, param, transaction, buffered, commandTimeout);
 		}
 
 		public static bool Delete<T>(this IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null)
 			where T : class
 		{
-			return 0 < connection.Execute(TableData<T>.DeleteSingleQuery, key, transaction, commandTimeout);
+			return TableData<T>.Queries.Delete(connection, key, transaction, commandTimeout);
 		}
 
 		public static bool Delete<T>(this IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
 			where T : class
 		{
-			return 0 < connection.Execute(TableData<T>.DeleteSingleQuery, obj, transaction, commandTimeout);
+			return TableData<T>.Queries.Delete(connection, obj, transaction, commandTimeout);
 		}
 
 		public static int Delete<T>(this IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
 			where T : class
 		{
-			int count = 0;
-			foreach (T obj in objs) {
-				if (Delete(connection, obj, transaction, commandTimeout)) {
-					count++;
-				}
-			}
-			return count;
+			return TableData<T>.Queries.Delete(connection, objs, transaction, commandTimeout);
 		}
 
 		public static int Delete<T>(this IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 			where T : class
 		{
-			return connection.Execute(TableData<T>.DeleteQuery + whereCondition, param, transaction, commandTimeout);
+			return TableData<T>.Queries.Delete(connection, whereCondition, param, transaction, buffered, commandTimeout);
+		}
+
+		public static List<T> DeleteList<T>(this IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+			where T : class
+		{
+			return TableData<T>.Queries.DeleteList(connection, whereCondition, param, transaction, buffered, commandTimeout);
 		}
 
 		public static void Insert<T>(this IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
 			where T : class
 		{
-			connection.Execute(TableData<T>.InsertQuery, obj, transaction, commandTimeout);
+			TableData<T>.Queries.Insert(connection, obj, transaction, commandTimeout);
 		}
 
 		public static void Insert<T>(this IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
 			where T : class
 		{
-			foreach (T obj in objs) {
-				Insert(connection, obj, transaction, commandTimeout);
-			}
+			TableData<T>.Queries.Insert(connection, objs, transaction, commandTimeout);
 		}
 
 		public static bool Update<T>(this IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
 			where T : class
 		{
-			return 0 < connection.ExecuteScalar<int>(TableData<T>.UpdateQuery, obj, transaction, commandTimeout);
+			return TableData<T>.Queries.Update(connection, obj, transaction, commandTimeout);
 		}
 
 		public static int Update<T>(this IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
 			where T : class
 		{
-			int count = 0;
-			foreach (T obj in objs) {
-				if (Update(connection, obj, transaction, commandTimeout)) {
-					count++;
-				}
-			}
-			return count;
+			return TableData<T>.Queries.Update(connection, objs, transaction, commandTimeout);
 		}
 
 		public static void Upsert<T>(this IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
 			where T : class
 		{
-			connection.Execute(TableData<T>.UpsertQuery, obj, transaction, commandTimeout);
+			TableData<T>.Queries.Upsert(connection, obj, transaction, commandTimeout);
 		}
 
 		public static void Upsert<T>(this IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
 			where T : class
 		{
-			foreach (T obj in objs) {
-				Upsert(connection, obj, transaction, commandTimeout);
-			}
+			TableData<T>.Queries.Upsert(connection, objs, transaction, commandTimeout);
 		}
 
 		public static T Get<T>(this IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null)
 			where T : class
 		{
-			return connection.Query<T>(TableData<T>.SelectSingleQuery, key, transaction, true, commandTimeout).SingleOrDefault();
+			return TableData<T>.Queries.Get(connection, key, transaction, commandTimeout);
 		}
 
 		public static T Get<T>(this IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
 			where T : class
 		{
-			return connection.Query<T>(TableData<T>.SelectSingleQuery, obj, transaction, true, commandTimeout).SingleOrDefault();
+			return TableData<T>.Queries.Get(connection, obj, transaction, commandTimeout);
 		}
 
 		public static List<T> GetList<T>(this IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 			where T : class
 		{
-			return connection.Query<T>(TableData<T>.SelectListQuery + whereCondition, param, transaction, buffered, commandTimeout).AsList();
+			return TableData<T>.Queries.GetList(connection, whereCondition, param, transaction, buffered, commandTimeout);
 		}
 
 		public static int RecordCount<T>(this IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, int? commandTimeout = null)
 			where T : class
 		{
-			return connection.ExecuteScalar<int>(TableData<T>.CountQuery + whereCondition, param, transaction, commandTimeout);
+			return TableData<T>.Queries.RecordCount(connection, whereCondition, param, transaction, commandTimeout);
 		}
 		#endregion // ITableQueries<T>
 
@@ -148,6 +138,12 @@ namespace Dapper
 			where T : class
 		{
 			return await Task.Run(() => Delete<T>(connection, whereCondition, param, transaction, buffered, commandTimeout));
+		}
+
+		public static async Task<List<T>> DeleteListAsync<T>(this IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+			where T : class
+		{
+			return await Task.Run(() => DeleteList<T>(connection, whereCondition, param, transaction, buffered, commandTimeout));
 		}
 
 		public static async Task InsertAsync<T>(this IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)

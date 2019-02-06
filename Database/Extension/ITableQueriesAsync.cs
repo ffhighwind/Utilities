@@ -18,6 +18,7 @@ namespace Dapper.Extension
 		Task<int> DeleteAsync(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null);
 
 		Task<int> DeleteAsync(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
+		Task<List<T>> DeleteListAsync(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
 
 		Task InsertAsync(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null);
 

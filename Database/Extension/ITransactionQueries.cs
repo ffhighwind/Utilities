@@ -15,6 +15,7 @@ namespace Dapper.Extension
 		bool Delete(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		int Delete(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null);
 		int Delete(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		List<T> DeleteList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
 		void Insert(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		void Insert(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null);

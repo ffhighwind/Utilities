@@ -42,14 +42,9 @@ namespace Dapper.Extension
 			return list;
 		}
 
-		public List<T> GetKeys(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
-		{
-			return DAO.GetKeys(whereCondition, param, buffered, commandTimeout);
-		}
-
 		public bool Delete(object key, int? commandTimeout = null)
 		{
-			return Delete(TableData<T>.CreateObjectFromKey(key), commandTimeout);
+			return Delete(TableData<T>.CreateObject(key), commandTimeout);
 		}
 
 		public bool Delete(T obj, int? commandTimeout = null)
@@ -70,22 +65,11 @@ namespace Dapper.Extension
 
 		public int Delete(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
-			using (IDbConnection conn = DAO.GetConnection()) {
-				using (IDbTransaction trans = conn.BeginTransaction()) {
-					if (string.IsNullOrWhiteSpace(whereCondition)) {
-						Map.Clear();
-					}
-					else {
-						List<T> list = DAO.GetKeys(trans, whereCondition, param, buffered, commandTimeout);
-						foreach (T obj in list) {
-							Map.TryRemove(obj, out CacheBaseT value);
-						}
-					}
-					int result = DAO.Delete(trans, whereCondition, param, buffered, commandTimeout);
-					trans.Commit();
-					return result;
-				}
+			List<T> list = DAO.DeleteList(whereCondition, param, buffered, commandTimeout);
+			foreach (T obj in list) {
+				Map.TryRemove(obj, out CacheBaseT value);
 			}
+			return list.Count;
 		}
 
 		public void Insert(T obj, int? commandTimeout = null)

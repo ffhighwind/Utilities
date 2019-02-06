@@ -15,6 +15,7 @@ namespace Dapper.Extension
 		Task<bool> DeleteAsync(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		Task<int> DeleteAsync(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null);
 		Task<int> DeleteAsync(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		Task<List<T>> DeleteListAsync(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
 		Task InsertAsync(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		Task InsertAsync(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null);

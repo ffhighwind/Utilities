@@ -19,6 +19,8 @@ namespace Dapper.Extension
 
 		Task<int> DeleteAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
+		Task<List<T>> DeleteListAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+
 		Task InsertAsync(T obj, int? commandTimeout = null);
 
 		Task InsertAsync(IEnumerable<T> objs, int? commandTimeout = null);

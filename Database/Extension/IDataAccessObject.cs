@@ -20,6 +20,8 @@ namespace Dapper.Extension
 
 		int Delete(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
+		List<T> DeleteList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+
 		void Insert(T obj, int? commandTimeout = null);
 
 		void Insert(IEnumerable<T> objs, int? commandTimeout = null);
