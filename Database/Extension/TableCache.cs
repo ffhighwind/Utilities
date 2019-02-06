@@ -4,24 +4,50 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Dapper.Extension
 {
-	public class TableCache<T, CacheBaseT>
+	public class TableCache<T> : TableCache<T, CacheBase<T>>
+		where T : class
+	{
+		TableCache(DataAccessObject<T> dao)
+			: base(dao) { }
+	}
+
+	public class TableCache<T, CacheBaseT> : TableCache<T, int, CacheBaseT>
 		where T : class
 		where CacheBaseT : CacheBase<T>, new()
 	{
-		protected ConcurrentDictionary<T, CacheBaseT> Map = new ConcurrentDictionary<T, CacheBaseT>(new TableEqualityComparer<T>());
-
-		public IReadOnlyDictionary<T, CacheBaseT> Items;
-
 		public TableCache(DataAccessObject<T> dao)
+			: base(dao, null)
+		{
+			if(TableData<T>.KeyProperties.Length != 1) {
+				throw new InvalidOperationException(typeof(T).Name + " must have one KeyAttribute");
+			}
+			PropertyInfo keyProp = TableData<T>.KeyProperties[0];
+			if (keyProp.PropertyType != typeof(int)) {
+				throw new InvalidOperationException(typeof(T).Name + "." + keyProp.Name + " does not match expected type: int");
+			}
+		}
+	}
+
+	public class TableCache<T, KeyType, CacheBaseT>
+		where T : class
+		where CacheBaseT : CacheBase<T>, new()
+	{
+		protected ConcurrentDictionary<KeyType, CacheBaseT> Map = null;
+
+		public IReadOnlyDictionary<KeyType, CacheBaseT> Items;
+
+		public TableCache(DataAccessObject<T> dao, IEqualityComparer<KeyType> comparer = null)
 		{
 			if (TableData<T>.KeyProperties.Length == 0) {
 				throw new InvalidOperationException("Cannot cache objects without a KeyAttribute.");
 			}
+			Map = new ConcurrentDictionary<KeyType, CacheBaseT>(comparer ?? EqualityComparer<KeyType>.Default);
 			DAO = dao;
 			Items = Map;
 		}
@@ -30,7 +56,8 @@ namespace Dapper.Extension
 
 		protected CacheBaseT UpsertItem(T obj)
 		{
-			return Map.AddOrUpdate(obj, new CacheBaseT() { Value = obj }, (val, c) => { c.Value = obj; return c; });
+			return Map.AddOrUpdate(TableData<T>.GetKey<KeyType>(obj),
+				new CacheBaseT() { Value = obj }, (val, c) => { c.Value = obj; return c; });
 		}
 
 		protected List<CacheBaseT> UpsertItems(IEnumerable<T> objs)
@@ -44,21 +71,28 @@ namespace Dapper.Extension
 
 		public bool Delete(object key, int? commandTimeout = null)
 		{
-			return Delete(TableData<T>.CreateObject(key), commandTimeout);
+			bool deleted = DAO.Delete(key, commandTimeout);
+			//Map.TryRemove(TableData<T>.CreateObject(key), out CacheBaseT value);
+			return deleted;
+		}
+
+		public bool Delete(KeyType key, int? commandTimeout = null)
+		{
+			bool deleted = DAO.Delete(TableData<T>.MakeKey<KeyType>(key), commandTimeout);
+			Map.TryRemove(key, out CacheBaseT value);
+			return deleted;
 		}
 
 		public bool Delete(T obj, int? commandTimeout = null)
 		{
-			bool deleted = DAO.Delete(obj, commandTimeout);
-			Map.TryRemove(obj, out CacheBaseT value);
-			return deleted;
+			return Delete(GetKey(obj), commandTimeout);
 		}
 
 		public int Delete(IEnumerable<T> objs, int? commandTimeout = null)
 		{
 			int count = DAO.Delete(objs, commandTimeout);
 			foreach (T obj in objs) {
-				Map.TryRemove(obj, out CacheBaseT value);
+				Map.TryRemove(GetKey(obj), out CacheBaseT value);
 			}
 			return count;
 		}
@@ -67,7 +101,7 @@ namespace Dapper.Extension
 		{
 			List<T> list = DAO.DeleteList(whereCondition, param, buffered, commandTimeout);
 			foreach (T obj in list) {
-				Map.TryRemove(obj, out CacheBaseT value);
+				Map.TryRemove(GetKey(obj), out CacheBaseT value);
 			}
 			return list.Count;
 		}
@@ -128,7 +162,7 @@ namespace Dapper.Extension
 
 		public CacheBaseT Find(T obj, int? commandTimeout = null)
 		{
-			return Map.TryGetValue(obj, out CacheBaseT value) ? value : Get(obj, commandTimeout);
+			return Map.TryGetValue(GetKey(obj), out CacheBaseT value) ? value : Get(obj, commandTimeout);
 		}
 
 		public async Task<List<T>> GetKeysAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)

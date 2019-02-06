@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -16,10 +17,10 @@ namespace Dapper.Extension
 				&& prop.CanRead && prop.CanWrite && (!prop.PropertyType.IsClass || prop.PropertyType == typeof(string))).ToArray();
 			KeyProperties = Properties.Where(prop => prop.GetCustomAttribute<KeyAttribute>(false) != null).ToArray();
 			AutoKeyProperties = KeyProperties.Where(prop => !prop.GetCustomAttribute<KeyAttribute>(false).Required).ToArray();
-			CompareProperties = KeyProperties.Length == 0 ? Properties : KeyProperties;
 			SelectProperties = GetProperties(AutoKeyProperties, typeof(IgnoreSelectAttribute), typeof(IgnoreAttribute));
 			InsertProperties = GetProperties(AutoKeyProperties, typeof(IgnoreInsertAttribute), typeof(IgnoreAttribute));
 			UpdateProperties = GetProperties(AutoKeyProperties, typeof(IgnoreUpdateAttribute), typeof(IgnoreAttribute));
+			EqualityProperties = KeyProperties.Length == 0 ? KeyProperties : Properties;
 
 			string selectQueryPart = "([" + string.Join("],[", GetColumnNames(SelectProperties)) + "]) FROM " + TableName;
 			string whereKeyQuery = "WHERE " + GetEqualsParams(" AND ", KeyProperties);
@@ -68,16 +69,65 @@ namespace Dapper.Extension
 		public T CreateObject(object key)
 		{
 			T objKey = (T)System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(T));
-			CopyKey(key, objKey);
+			SetKey(objKey, key);
 			return objKey;
 		}
 
-		public void CopyKey(object key, T obj)
+		public T CreateObject<KeyType>(KeyType key)
+		{
+			T objKey = (T)System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(T));
+			SetKey(objKey, key);
+			return objKey;
+		}
+
+		public void SetKey<KeyType>(T obj, KeyType key)
+		{
+			KeyProperties[0].SetValue(obj, key);
+		}
+
+		public object MakeKey<KeyType>(KeyType key)
+		{
+			dynamic newKey = new ExpandoObject();
+			newKey[KeyProperties[0].Name] = key;
+			return newKey;
+		}
+
+		public void SetKey(T obj, object key)
 		{
 			Type type = key.GetType();
 			for (int i = 0; i < KeyProperties.Length; i++) {
 				KeyProperties[i].SetValue(obj, type.GetProperty(KeyProperties[i].Name, BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance));
 			}
+		}
+
+		public void SetKey(T source, T dest)
+		{
+			for (int i = 0; i < KeyProperties.Length; i++) {
+				KeyProperties[i].SetValue(dest, KeyProperties[i].GetValue(source));
+			}
+		}
+
+		public Tout GetKey<Tout>(T obj)
+		{
+			return (Tout) KeyProperties[0].GetValue(obj);
+		}
+
+		public object GetKey(T obj)
+		{
+			dynamic key = new ExpandoObject();
+			for (int i = 0; i < KeyProperties.Length; i++) {
+				key[KeyProperties[i].Name] = KeyProperties[i].GetValue(obj);
+			}
+			return key;
+		}
+
+		public T Clone(T source)
+		{
+			T dest = (T)System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(T));
+			for (int i = 0; i < Properties.Length; i++) {
+				Properties[i].SetValue(dest, Properties[i].GetValue(source));
+			}
+			return dest;
 		}
 
 		private string GetEqualsParams(string joinString, params PropertyInfo[] properties)
@@ -184,11 +234,7 @@ namespace Dapper.Extension
 
 		public PropertyInfo[] InsertProperties { get; private set; }
 		public string[] InsertColumns => GetColumnNames(InsertProperties);
-
-		/// <summary>
-		/// KeyProperties, or all Properties if there are no KeyProperties.
-		/// </summary>
-		public PropertyInfo[] CompareProperties { get; private set; }
+		public PropertyInfo[] EqualityProperties { get; private set; }
 
 		#region ITableQueries<T>
 		public List<T> GetKeys(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
@@ -229,7 +275,7 @@ namespace Dapper.Extension
 
 		public void Insert(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
-			CopyKey(connection.Query<dynamic>(InsertQuery, obj, transaction, true, commandTimeout), obj);
+			SetKey(obj, connection.Query<dynamic>(InsertQuery, obj, transaction, true, commandTimeout));
 		}
 
 		public void Insert(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
@@ -257,7 +303,7 @@ namespace Dapper.Extension
 
 		public void Upsert(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
-			CopyKey(connection.Query<T>(UpsertQuery, obj, transaction, true, commandTimeout), obj);
+			SetKey(obj, connection.Query<T>(UpsertQuery, obj, transaction, true, commandTimeout));
 		}
 
 		public void Upsert(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
