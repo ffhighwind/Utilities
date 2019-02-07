@@ -12,6 +12,7 @@ namespace Utilities.UnitTests
 		[Key]
 		public int ID { get; set; }
 
+		[Column("FirstName")]
 		public string Name { get; set; }
 		public string Email { get; set; }
 		public DateTime? CreatedDt { get; set; }

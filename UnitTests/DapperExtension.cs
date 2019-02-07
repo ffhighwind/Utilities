@@ -18,7 +18,6 @@ namespace Utilities.UnitTests
 			string[] cols = TableData<TestDTO>.Columns;
 
 			TableDataImpl<TestDTO> x = TableData<TestDTO>.Queries as TableDataImpl<TestDTO>;
-
 		}
 	}
 }

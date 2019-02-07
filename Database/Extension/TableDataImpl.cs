@@ -21,7 +21,7 @@ namespace Dapper.Extension
 			SelectProperties = GetProperties(AutoKeyProperties, typeof(IgnoreSelectAttribute), typeof(IgnoreAttribute));
 			InsertProperties = GetProperties(AutoKeyProperties, typeof(IgnoreInsertAttribute), typeof(IgnoreAttribute));
 			UpdateProperties = GetProperties(AutoKeyProperties, typeof(IgnoreUpdateAttribute), typeof(IgnoreAttribute));
-			EqualityProperties = KeyProperties.Length == 0 ? KeyProperties : Properties;
+			EqualityProperties = KeyProperties.Length == 0 ? Properties : KeyProperties;
 			GenerateQueries();
 			// NOTES:
 			// Use Dapper to check DBMS and choose what to do?
@@ -32,24 +32,29 @@ namespace Dapper.Extension
 		protected void GenerateQueries()
 		{
 			string selectQueryPart = "([" + string.Join("],[", GetColumnNames(SelectProperties)) + "]) FROM " + TableName;
-			string whereKeyQuery = "WHERE " + GetEqualsParams(" AND ", KeyProperties);
+			string whereEqualsQuery = "WHERE " + GetEqualsParams(" AND ", EqualityProperties);
+			string whereKeyQuery = KeyProperties.Length == 0 ? "" : whereEqualsQuery;
 			string insertIntoQuery = "INSERT INTO " + TableName + " ([" + string.Join("],[", InsertColumns) + "])\n";
 			string insertValuesQuery = "VALUES (" + GetParams(InsertProperties) + ")";
-			string outputDeletedQuery = GetOutput("DELETED", true);
-			string outputInsertedQuery = GetOutput("INSERTED", false);
-
-			InsertQuery = insertIntoQuery + outputInsertedQuery + insertValuesQuery;
+	
+			InsertQuery = insertIntoQuery + GetOutput("INSERTED", false) + insertValuesQuery;
 			SelectListQuery = "SELECT " + selectQueryPart + "\n";
 			SelectListKeysQuery = "SELECT ([" + string.Join("],[", KeyColumns) + "]) FROM " + TableName + "\n";
-			SelectSingleQuery = "SELECT " + selectQueryPart + "\n" + whereKeyQuery;
+			SelectSingleQuery = "SELECT " + selectQueryPart + "\n" + whereEqualsQuery;
 			CountQuery = "SELECT COUNT(*) FROM " + TableName + "\n";
 			DeleteQuery = "DELETE FROM " + TableName + "\n";
-			DeleteSingleQuery = DeleteQuery + whereKeyQuery;
-			DeleteListQuery = DeleteQuery + outputDeletedQuery + "\n";
+			DeleteSingleQuery = DeleteQuery + whereEqualsQuery;
+			DeleteListQuery = DeleteQuery + GetOutput("DELETED", true) + "\n";
 
-			string updateQuery = "UPDATE " + TableName + "\nSET \t" + GetEqualsParams(",", UpdateProperties);
+			string updateQuery = "UPDATE " + TableName + "\nSET " + GetEqualsParams(",", UpdateProperties);
 			UpdateQuery = updateQuery + whereKeyQuery;
-			UpsertQuery = "IF NOT EXISTS (SELECT " + selectQueryPart + ")\n\n" + InsertQuery + "\n\nELSE\n\n" + updateQuery + GetOutput("DELETED", true) + whereKeyQuery;
+			UpsertQuery = "IF NOT EXISTS (\nSELECT " + selectQueryPart + "\n" + whereEqualsQuery + ")\n" + insertIntoQuery + GetOutput("INSERTED", true) + insertValuesQuery;
+
+			if(KeyProperties.Length == 0) {
+				UpdateQuery = "";
+				SelectListKeysQuery = "";
+				UpsertQuery = UpsertQuery + "\n\nELSE\n\n" + updateQuery + GetOutput("DELETED", true) + whereKeyQuery;
+			}
 		}
 
 		protected string TableName => TableData<T>.TableName;
@@ -63,15 +68,14 @@ namespace Dapper.Extension
 			for (int i = 0; i < columnNames.Length; i++) {
 				sb.AppendFormat("\t{0}[{1}] = @{2}\n", joinString, columnNames[i], properties[i].Name);
 			}
-			return sb.Remove(0, joinString.Length).ToString();
+			return "\t" + sb.Remove(0, joinString.Length + 1).ToString();
 		}
 
 		private string GetParams(params PropertyInfo[] properties)
 		{
 			if (properties.Length == 0)
 				return "";
-			string[] columnNames = GetColumnNames(properties);
-			return "@" + string.Join(",@", columnNames);
+			return "@" + string.Join(",@", properties.Select(prop => prop.Name));
 		}
 
 		private string GetOutput(string type, bool allIfNoKeys)
@@ -195,7 +199,7 @@ namespace Dapper.Extension
 
 		public void Insert(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
-			TableData<T>.SetKey(obj, connection.Query<dynamic>(InsertQuery, obj, transaction, true, commandTimeout));
+			TableData<T>.SetKey(obj, connection.Query<dynamic>(InsertQuery, obj, transaction, true, commandTimeout).First());
 		}
 
 		public void Insert(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
@@ -223,7 +227,10 @@ namespace Dapper.Extension
 
 		public void Upsert(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
-			TableData<T>.SetKey(obj, connection.Query<T>(UpsertQuery, obj, transaction, true, commandTimeout));
+			dynamic key = connection.Query<dynamic>(UpsertQuery, obj, transaction, true, commandTimeout).FirstOrDefault();
+			if(obj != null) {
+				TableData<T>.SetKey(obj, key);
+			}
 		}
 
 		public void Upsert(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
