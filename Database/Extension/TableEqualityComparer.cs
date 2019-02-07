@@ -26,7 +26,11 @@ namespace Dapper.Extension
 		{
 			int hashCode = InitialHash;
 			for (int i = 0; i < Properties.Length; i++) {
-				hashCode += Properties[i].GetValue(obj).GetHashCode();
+				object value = Properties[i].GetValue(obj);
+				hashCode = hashCode * 397;
+				if (value != null) {
+					hashCode ^= value.GetHashCode();
+				}
 			}
 			return hashCode;
 		}
