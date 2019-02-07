@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Data;
+using System.Data.SqlClient;
+using System.Dynamic;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Dynamic;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Dapper.Extension
 {
@@ -37,23 +37,30 @@ namespace Dapper.Extension
 		/// <returns></returns>
 		public static T CreateObject(object key)
 		{
-			T objKey = (T)System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(T));
+			T objKey = (T) System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(T));
 			SetKey(objKey, key);
 			return objKey;
 		}
 
 		public static T CreateObject<KeyType>(KeyType key)
 		{
-			T objKey = (T)System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(T));
+			T objKey = (T) System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(T));
 			SetKey<KeyType>(objKey, key);
 			return objKey;
 		}
 
 		public static void SetKey(T obj, object key)
 		{
-			Type type = key.GetType();
-			for (int i = 0; i < KeyProperties.Length; i++) {
-				KeyProperties[i].SetValue(obj, type.GetProperty(KeyProperties[i].Name, BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance));
+			if (key is IDictionary<string, object> expando) {
+				for (int i = 0; i < KeyProperties.Length; i++) {
+					KeyProperties[i].SetValue(obj, expando[KeyProperties[i].Name]);
+				}
+			}
+			else {
+				Type type = key.GetType();
+				for (int i = 0; i < KeyProperties.Length; i++) {
+					KeyProperties[i].SetValue(obj, type.GetProperty(KeyProperties[i].Name, BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance).GetValue(key));
+				}
 			}
 		}
 
@@ -77,7 +84,7 @@ namespace Dapper.Extension
 		/// <returns>The value of the key.</returns>
 		public static Tout GetKey<Tout>(T obj)
 		{
-			return (Tout)KeyProperties[0].GetValue(obj);
+			return (Tout) KeyProperties[0].GetValue(obj);
 		}
 
 		/// <summary>
@@ -96,7 +103,7 @@ namespace Dapper.Extension
 
 		public static T Clone(T source)
 		{
-			T dest = (T)System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(T));
+			T dest = (T) System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(T));
 			for (int i = 0; i < Properties.Length; i++) {
 				Properties[i].SetValue(dest, Properties[i].GetValue(source));
 			}

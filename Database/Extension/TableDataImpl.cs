@@ -18,7 +18,7 @@ namespace Dapper.Extension
 				&& prop.CanRead && prop.CanWrite && (!prop.PropertyType.IsClass || prop.PropertyType == typeof(string))).ToArray();
 			KeyProperties = Properties.Where(prop => prop.GetCustomAttribute<KeyAttribute>(false) != null).ToArray();
 			AutoKeyProperties = KeyProperties.Where(prop => !prop.GetCustomAttribute<KeyAttribute>(false).Required).ToArray();
-			SelectProperties = GetProperties(AutoKeyProperties, typeof(IgnoreSelectAttribute), typeof(IgnoreAttribute));
+			SelectProperties = GetProperties(Array.Empty<PropertyInfo>(), typeof(IgnoreSelectAttribute), typeof(IgnoreAttribute));
 			InsertProperties = GetProperties(AutoKeyProperties, typeof(IgnoreInsertAttribute), typeof(IgnoreAttribute));
 			UpdateProperties = GetProperties(AutoKeyProperties, typeof(IgnoreUpdateAttribute), typeof(IgnoreAttribute));
 			EqualityProperties = KeyProperties.Length == 0 ? Properties : KeyProperties;
@@ -36,6 +36,7 @@ namespace Dapper.Extension
 			string whereKeyQuery = KeyProperties.Length == 0 ? "" : whereEqualsQuery;
 			string insertIntoQuery = "INSERT INTO " + TableName + " ([" + string.Join("],[", InsertColumns) + "])\n";
 			string insertValuesQuery = "VALUES (" + GetParams(InsertProperties) + ")";
+			string whereInsertedEqualsQuery = "\nWHERE " + GetEqualsParams(" AND ", InsertProperties);
 
 			InsertQuery = insertIntoQuery + GetOutput("INSERTED", false) + insertValuesQuery;
 			SelectListQuery = "SELECT " + selectQueryPart + "\n";
@@ -48,9 +49,10 @@ namespace Dapper.Extension
 
 			string updateQuery = "UPDATE " + TableName + "\nSET " + GetEqualsParams(",", UpdateProperties);
 			UpdateQuery = updateQuery + whereKeyQuery;
-			UpsertQuery = "IF NOT EXISTS (\nSELECT " + selectQueryPart + "\n" + whereEqualsQuery + ")\n" + insertIntoQuery + GetOutput("INSERTED", true) + insertValuesQuery;
+			UpsertQuery = "IF NOT EXISTS (\nSELECT TOP(1) * FROM " + TableName + whereInsertedEqualsQuery + ")\n" + insertIntoQuery + GetOutput("INSERTED", true) + insertValuesQuery
+				+ "\nELSE\n" + "SELECT TOP(1) [" + string.Join("],[", KeyColumns) + "] FROM " + TableName + "\n" + whereInsertedEqualsQuery;
 
-			if(KeyProperties.Length == 0) {
+			if (KeyProperties.Length == 0) {
 				UpdateQuery = "";
 				SelectListKeysQuery = "";
 				UpsertQuery = UpsertQuery + "\n\nELSE\n\n" + updateQuery + GetOutput("DELETED", true) + whereKeyQuery;
@@ -200,8 +202,10 @@ namespace Dapper.Extension
 
 		public T Insert(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
-			connection.execute
-			TableData<T>.SetKey(obj, connection.Query<dynamic>(InsertQuery, obj, transaction, true, commandTimeout).First());
+			IEnumerable<dynamic> key = connection.Query<dynamic>(InsertQuery, obj, transaction, true, commandTimeout);
+			if(key.Any()) {
+				TableData<T>.SetKey(obj, key.First());
+			}
 			return obj;
 		}
 
@@ -232,7 +236,7 @@ namespace Dapper.Extension
 		public T Upsert(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
 			dynamic key = connection.Query<dynamic>(UpsertQuery, obj, transaction, true, commandTimeout).FirstOrDefault();
-			if(obj != null) {
+			if(key != null) {
 				TableData<T>.SetKey(obj, key);
 			}
 			return obj;
