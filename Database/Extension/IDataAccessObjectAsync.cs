@@ -23,17 +23,17 @@ namespace Dapper.Extension
 
 		Task<List<T>> DeleteListAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
-		Task InsertAsync(T obj, int? commandTimeout = null);
+		Task<Ret> InsertAsync(T obj, int? commandTimeout = null);
 
-		Task InsertAsync(IEnumerable<T> objs, int? commandTimeout = null);
+		Task<IEnumerable<Ret>> InsertAsync(IEnumerable<T> objs, int? commandTimeout = null);
 
 		Task<bool> UpdateAsync(T obj, int? commandTimeout = null);
 
 		Task<int> UpdateAsync(IEnumerable<T> objs, int? commandTimeout = null);
 
-		Task UpsertAsync(T obj, int? commandTimeout = null);
+		Task<Ret> UpsertAsync(T obj, int? commandTimeout = null);
 
-		Task UpsertAsync(IEnumerable<T> objs, int? commandTimeout = null);
+		Task<IEnumerable<Ret>> UpsertAsync(IEnumerable<T> objs, int? commandTimeout = null);
 
 		Task<Ret> GetAsync(object key, int? commandTimeout = null);
 

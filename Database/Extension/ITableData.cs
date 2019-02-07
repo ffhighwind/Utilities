@@ -16,6 +16,7 @@ namespace Dapper.Extension
 		PropertyInfo[] UpdateProperties { get; }
 		PropertyInfo[] InsertProperties { get; }
 		PropertyInfo[] EqualityProperties { get; }
+		BindingFlags PropertyFlags { get; }
 
 		string[] Columns { get; }
 		string[] KeyColumns { get; }

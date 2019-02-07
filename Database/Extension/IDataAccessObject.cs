@@ -24,17 +24,17 @@ namespace Dapper.Extension
 
 		List<T> DeleteList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
-		void Insert(T obj, int? commandTimeout = null);
+		Ret Insert(T obj, int? commandTimeout = null);
 
-		void Insert(IEnumerable<T> objs, int? commandTimeout = null);
+		IEnumerable<Ret> Insert(IEnumerable<T> objs, int? commandTimeout = null);
 
 		bool Update(T obj, int? commandTimeout = null);
 
 		int Update(IEnumerable<T> objs, int? commandTimeout = null);
 
-		void Upsert(T obj, int? commandTimeout = null);
+		Ret Upsert(T obj, int? commandTimeout = null);
 
-		void Upsert(IEnumerable<T> objs, int? commandTimeout = null);
+		IEnumerable<Ret> Upsert(IEnumerable<T> objs, int? commandTimeout = null);
 
 		Ret Get(object key, int? commandTimeout = null);
 

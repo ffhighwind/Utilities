@@ -8,7 +8,7 @@ namespace Dapper.Extension
 {
 	public interface ITableCache<T, KeyType, BaseCacheT>
 		where T : class
-		where BaseCacheT : CacheBase<T>
+		where BaseCacheT : ICacheBase<T>
 	{
 		bool Delete(object key, int? commandTimeout = null);
 		bool Delete(KeyType key, int? commandTimeout = null);

@@ -83,19 +83,21 @@ namespace Dapper
 			}
 		}
 
-		public void Insert(T obj, int? commandTimeout = null)
+		public T Insert(T obj, int? commandTimeout = null)
 		{
 			using (IDbConnection conn = GetConnection()) {
 				Queries.Insert(conn, obj, null, commandTimeout);
+				return obj;
 			}
 		}
 
-		public void Insert(IEnumerable<T> objs, int? commandTimeout = null)
+		public IEnumerable<T> Insert(IEnumerable<T> objs, int? commandTimeout = null)
 		{
 			using (IDbConnection conn = GetConnection()) {
 				using (IDbTransaction trans = conn.BeginTransaction()) {
 					Queries.Insert(conn, objs, trans, commandTimeout);
 					trans.Commit();
+					return objs;
 				}
 			}
 		}
@@ -118,19 +120,21 @@ namespace Dapper
 			}
 		}
 
-		public void Upsert(T obj, int? commandTimeout = null)
+		public T Upsert(T obj, int? commandTimeout = null)
 		{
 			using (IDbConnection conn = GetConnection()) {
 				Queries.Upsert(conn, obj, null, commandTimeout);
+				return obj;
 			}
 		}
 
-		public void Upsert(IEnumerable<T> objs, int? commandTimeout = null)
+		public IEnumerable<T> Upsert(IEnumerable<T> objs, int? commandTimeout = null)
 		{
 			using (IDbConnection conn = GetConnection()) {
 				using (IDbTransaction trans = conn.BeginTransaction()) {
 					Queries.Upsert(conn, objs, trans, commandTimeout);
 					trans.Commit();
+					return objs;
 				}
 			}
 		}
@@ -195,14 +199,14 @@ namespace Dapper
 			return await Task.Run(() => DeleteList(whereCondition, param, buffered, commandTimeout));
 		}
 
-		public async Task InsertAsync(T obj, int? commandTimeout = null)
+		public async Task<T> InsertAsync(T obj, int? commandTimeout = null)
 		{
-			await Task.Run(() => Insert(obj, commandTimeout));
+			return await Task.Run(() => Insert(obj, commandTimeout));
 		}
 
-		public async Task InsertAsync(IEnumerable<T> objs, int? commandTimeout = null)
+		public async Task<IEnumerable<T>> InsertAsync(IEnumerable<T> objs, int? commandTimeout = null)
 		{
-			await Task.Run(() => Insert(objs, commandTimeout));
+			return await Task.Run(() => Insert(objs, commandTimeout));
 		}
 
 		public async Task<bool> UpdateAsync(T obj, int? commandTimeout = null)
@@ -215,14 +219,14 @@ namespace Dapper
 			return await Task.Run(() => Update(objs, commandTimeout));
 		}
 
-		public async Task UpsertAsync(T obj, int? commandTimeout = null)
+		public async Task<T> UpsertAsync(T obj, int? commandTimeout = null)
 		{
-			await Task.Run(() => Upsert(obj, commandTimeout));
+			return await Task.Run(() => Upsert(obj, commandTimeout));
 		}
 
-		public async Task UpsertAsync(IEnumerable<T> objs, int? commandTimeout = null)
+		public async Task<IEnumerable<T>> UpsertAsync(IEnumerable<T> objs, int? commandTimeout = null)
 		{
-			await Task.Run(() => Upsert(objs, commandTimeout));
+			return await Task.Run(() => Upsert(objs, commandTimeout));
 		}
 
 		public async Task<T> GetAsync(object key, int? commandTimeout = null)
@@ -277,14 +281,14 @@ namespace Dapper
 			return Queries.DeleteList(transaction.Connection, whereCondition, param, transaction, buffered, commandTimeout);
 		}
 
-		public void Insert(IDbTransaction transaction, T obj, int? commandTimeout = null)
+		public T Insert(IDbTransaction transaction, T obj, int? commandTimeout = null)
 		{
-			Queries.Insert(transaction.Connection, obj, transaction, commandTimeout);
+			return Queries.Insert(transaction.Connection, obj, transaction, commandTimeout);
 		}
 
-		public void Insert(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
+		public IEnumerable<T> Insert(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
 		{
-			Queries.Insert(transaction.Connection, objs, transaction, commandTimeout);
+			return Queries.Insert(transaction.Connection, objs, transaction, commandTimeout);
 		}
 
 		public bool Update(IDbTransaction transaction, T obj, int? commandTimeout = null)
@@ -297,14 +301,14 @@ namespace Dapper
 			return Queries.Update(transaction.Connection, objs, transaction, commandTimeout);
 		}
 
-		public void Upsert(IDbTransaction transaction, T obj, int? commandTimeout = null)
+		public T Upsert(IDbTransaction transaction, T obj, int? commandTimeout = null)
 		{
-			Queries.Upsert(transaction.Connection, obj, transaction, commandTimeout);
+			return Queries.Upsert(transaction.Connection, obj, transaction, commandTimeout);
 		}
 
-		public void Upsert(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
+		public IEnumerable<T> Upsert(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
 		{
-			Queries.Upsert(transaction.Connection, objs, transaction, commandTimeout);
+			return Queries.Upsert(transaction.Connection, objs, transaction, commandTimeout);
 		}
 
 		public T Get(IDbTransaction transaction, object key, int? commandTimeout = null)
@@ -359,14 +363,14 @@ namespace Dapper
 			return await Task.Run(() => DeleteList(transaction, whereCondition, param, buffered, commandTimeout));
 		}
 
-		public async Task InsertAsync(IDbTransaction transaction, T obj, int? commandTimeout = null)
+		public async Task<T> InsertAsync(IDbTransaction transaction, T obj, int? commandTimeout = null)
 		{
-			await Task.Run(() => Insert(transaction, obj, commandTimeout));
+			return await Task.Run(() => Insert(transaction, obj, commandTimeout));
 		}
 
-		public async Task InsertAsync(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
+		public async Task<IEnumerable<T>> InsertAsync(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
 		{
-			await Task.Run(() => Insert(transaction, objs, commandTimeout));
+			return await Task.Run(() => Insert(transaction, objs, commandTimeout));
 		}
 
 		public async Task<bool> UpdateAsync(IDbTransaction transaction, T obj, int? commandTimeout = null)
@@ -379,14 +383,14 @@ namespace Dapper
 			return await Task.Run(() => Update(transaction, objs, commandTimeout));
 		}
 
-		public async Task UpsertAsync(IDbTransaction transaction, T obj, int? commandTimeout = null)
+		public async Task<T> UpsertAsync(IDbTransaction transaction, T obj, int? commandTimeout = null)
 		{
-			await Task.Run(() => Upsert(transaction, obj, commandTimeout));
+			return await Task.Run(() => Upsert(transaction, obj, commandTimeout));
 		}
 
-		public async Task UpsertAsync(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
+		public async Task<IEnumerable<T>> UpsertAsync(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
 		{
-			await Task.Run(() => Upsert(transaction, objs, commandTimeout));
+			return await Task.Run(() => Upsert(transaction, objs, commandTimeout));
 		}
 
 		public async Task<T> GetAsync(IDbTransaction transaction, object key, int? commandTimeout = null)

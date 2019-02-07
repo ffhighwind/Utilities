@@ -11,10 +11,10 @@ namespace Dapper.Extension
 {
 	public class TableDataImpl<T> : ITableData<T> where T : class
 	{
-		public TableDataImpl(BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.Instance)
+		public TableDataImpl(BindingFlags propertyFlags = BindingFlags.Public | BindingFlags.Instance)
 		{
-
-			Properties = typeof(T).GetProperties(bindingFlags).Where(prop => prop.GetCustomAttribute<IgnoreAttribute>(false) == null
+			PropertyFlags = propertyFlags;
+			Properties = typeof(T).GetProperties(propertyFlags).Where(prop => prop.GetCustomAttribute<IgnoreAttribute>(false) == null
 				&& prop.CanRead && prop.CanWrite && (!prop.PropertyType.IsClass || prop.PropertyType == typeof(string))).ToArray();
 			KeyProperties = Properties.Where(prop => prop.GetCustomAttribute<KeyAttribute>(false) != null).ToArray();
 			AutoKeyProperties = KeyProperties.Where(prop => !prop.GetCustomAttribute<KeyAttribute>(false).Required).ToArray();
@@ -31,15 +31,15 @@ namespace Dapper.Extension
 
 		protected void GenerateQueries()
 		{
-			string selectQueryPart = "([" + string.Join("],[", GetColumnNames(SelectProperties)) + "]) FROM " + TableName;
+			string selectQueryPart = "[" + string.Join("],[", GetColumnNames(SelectProperties)) + "] FROM " + TableName;
 			string whereEqualsQuery = "WHERE " + GetEqualsParams(" AND ", EqualityProperties);
 			string whereKeyQuery = KeyProperties.Length == 0 ? "" : whereEqualsQuery;
 			string insertIntoQuery = "INSERT INTO " + TableName + " ([" + string.Join("],[", InsertColumns) + "])\n";
 			string insertValuesQuery = "VALUES (" + GetParams(InsertProperties) + ")";
-	
+
 			InsertQuery = insertIntoQuery + GetOutput("INSERTED", false) + insertValuesQuery;
 			SelectListQuery = "SELECT " + selectQueryPart + "\n";
-			SelectListKeysQuery = "SELECT ([" + string.Join("],[", KeyColumns) + "]) FROM " + TableName + "\n";
+			SelectListKeysQuery = "SELECT [" + string.Join("],[", KeyColumns) + "] FROM " + TableName + "\n";
 			SelectSingleQuery = "SELECT " + selectQueryPart + "\n" + whereEqualsQuery;
 			CountQuery = "SELECT COUNT(*) FROM " + TableName + "\n";
 			DeleteQuery = "DELETE FROM " + TableName + "\n";
@@ -57,6 +57,7 @@ namespace Dapper.Extension
 			}
 		}
 
+		public BindingFlags PropertyFlags { get; private set; }
 		protected string TableName => TableData<T>.TableName;
 
 		private string GetEqualsParams(string joinString, params PropertyInfo[] properties)
@@ -197,16 +198,19 @@ namespace Dapper.Extension
 			return connection.Query<T>(DeleteListQuery + whereCondition, param, transaction, buffered, commandTimeout).AsList();
 		}
 
-		public void Insert(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
+		public T Insert(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
+			connection.execute
 			TableData<T>.SetKey(obj, connection.Query<dynamic>(InsertQuery, obj, transaction, true, commandTimeout).First());
+			return obj;
 		}
 
-		public void Insert(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
+		public IEnumerable<T> Insert(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
 			foreach (T obj in objs) {
 				Insert(connection, obj, transaction, commandTimeout);
 			}
+			return objs;
 		}
 
 		public bool Update(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
@@ -225,19 +229,21 @@ namespace Dapper.Extension
 			return count;
 		}
 
-		public void Upsert(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
+		public T Upsert(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
 			dynamic key = connection.Query<dynamic>(UpsertQuery, obj, transaction, true, commandTimeout).FirstOrDefault();
 			if(obj != null) {
 				TableData<T>.SetKey(obj, key);
 			}
+			return obj;
 		}
 
-		public void Upsert(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
+		public IEnumerable<T> Upsert(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
 			foreach (T obj in objs) {
 				Upsert(connection, obj, transaction, commandTimeout);
 			}
+			return objs;
 		}
 
 		public T Get(IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null)
@@ -292,14 +298,14 @@ namespace Dapper.Extension
 			return await Task.Run(() => DeleteList(connection, whereCondition, param, transaction, buffered, commandTimeout));
 		}
 
-		public async Task InsertAsync(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
+		public async Task<T> InsertAsync(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
-			await Task.Run(() => Insert(connection, obj, transaction, commandTimeout));
+			return await Task.Run(() => Insert(connection, obj, transaction, commandTimeout));
 		}
 
-		public async Task InsertAsync(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
+		public async Task<IEnumerable<T>> InsertAsync(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
-			await Task.Run(() => Insert(connection, objs, transaction, commandTimeout));
+			return await Task.Run(() => Insert(connection, objs, transaction, commandTimeout));
 		}
 
 		public async Task<bool> UpdateAsync(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
@@ -312,14 +318,14 @@ namespace Dapper.Extension
 			return await Task.Run(() => Update(connection, objs, transaction, commandTimeout));
 		}
 
-		public async Task UpsertAsync(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
+		public async Task<T> UpsertAsync(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
-			await Task.Run(() => Upsert(connection, obj, transaction, commandTimeout));
+			return await Task.Run(() => Upsert(connection, obj, transaction, commandTimeout));
 		}
 
-		public async Task UpsertAsync(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
+		public async Task<IEnumerable<T>> UpsertAsync(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
-			await Task.Run(() => Upsert(connection, objs, transaction, commandTimeout));
+			return await Task.Run(() => Upsert(connection, objs, transaction, commandTimeout));
 		}
 
 		public async Task<T> GetAsync(IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null)

@@ -23,6 +23,12 @@ namespace Dapper.Extension
 		public static TableAttribute TableAttribute { get; private set; }
 		public static ITableData<T> Queries { get; set; }
 		public static string TableName { get; private set; }
+		public static void RecreateQueries(BindingFlags flags)
+		{
+			if (Queries.PropertyFlags == flags)
+				return;
+			Queries = new TableDataImpl<T>(flags);
+		}
 
 		/// <summary>
 		/// Creates an object from a key where the type has identical KeyProperties (e.g. ExpandoObject or typeof(T)).

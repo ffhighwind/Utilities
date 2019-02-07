@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
@@ -14,7 +15,7 @@ namespace Dapper.Extension
 	public class TableCache<T, KeyType, CacheBaseT> : TableCache<T, CacheBaseT>
 		where T : class
 		where KeyType : struct
-		where CacheBaseT : CacheBase<T>, new()
+		where CacheBaseT : class, ICacheBase<T>, new()
 	{
 		public TableCache(DataAccessObject<T> dao) : base(dao) { }
 
@@ -49,13 +50,25 @@ namespace Dapper.Extension
 		}
 	}
 
-	public class TableCache<T, CacheBaseT> : IDataAccessObject<T, CacheBaseT>, IDataAccessObjectAsync<T, CacheBaseT>
+	public class TableCache<T, CacheBaseT> : IDataAccessObject<T, CacheBaseT>, IDataAccessObjectAsync<T, CacheBaseT>, IEnumerable<CacheBaseT>
 		where T : class
-		where CacheBaseT : CacheBase<T>, new()
+		where CacheBaseT : class, ICacheBase<T>, new()
 	{
 		protected IDictionary<T, CacheBaseT> Map = null;
 
 		public IReadOnlyDictionary<T, CacheBaseT> Items;
+
+		public IEnumerable<CacheBaseT> Values => Items.Values;
+
+		public IEnumerator<CacheBaseT> GetEnumerator()
+		{
+			return Items.Values.GetEnumerator();
+		}
+
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return Values.GetEnumerator();
+		}
 
 		public TableCache(DataAccessObject<T> dao)
 		{
@@ -114,6 +127,11 @@ namespace Dapper.Extension
 			return count;
 		}
 
+		public int Delete(IEnumerable<CacheBaseT> objs, int? commandTimeout = null)
+		{
+			return Delete(objs.Select(o => o.Value), commandTimeout);
+		}
+
 		public int Delete(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
 			List<T> list = DAO.DeleteList(whereCondition, param, buffered, commandTimeout);
@@ -123,16 +141,16 @@ namespace Dapper.Extension
 			return list.Count;
 		}
 
-		public void Insert(T obj, int? commandTimeout = null)
+		public CacheBaseT Insert(T obj, int? commandTimeout = null)
 		{
 			DAO.Insert(obj, commandTimeout);
-			UpsertItem(obj);
+			return UpsertItem(obj);
 		}
 
-		public void Insert(IEnumerable<T> objs, int? commandTimeout = null)
+		public IEnumerable<CacheBaseT> Insert(IEnumerable<T> objs, int? commandTimeout = null)
 		{
 			DAO.Insert(objs, commandTimeout);
-			UpsertItems(objs);
+			return UpsertItems(objs);
 		}
 
 		public bool Update(T obj, int? commandTimeout = null)
@@ -145,16 +163,21 @@ namespace Dapper.Extension
 			return DAO.Update(objs, commandTimeout);
 		}
 
-		public void Upsert(T obj, int? commandTimeout = null)
+		public int Update(IEnumerable<CacheBaseT> objs, int? commandTimeout = null)
 		{
-			DAO.Upsert(obj, commandTimeout);
-			UpsertItem(obj);
+			return Update(objs.Select(o => o.Value), commandTimeout);
 		}
 
-		public void Upsert(IEnumerable<T> objs, int? commandTimeout = null)
+		public CacheBaseT Upsert(T obj, int? commandTimeout = null)
+		{
+			DAO.Upsert(obj, commandTimeout);
+			return UpsertItem(obj);
+		}
+
+		public IEnumerable<CacheBaseT> Upsert(IEnumerable<T> objs, int? commandTimeout = null)
 		{
 			DAO.Upsert(objs, commandTimeout);
-			UpsertItems(objs);
+			return UpsertItems(objs);
 		}
 
 		public CacheBaseT Get(object key, int? commandTimeout = null)
@@ -179,7 +202,7 @@ namespace Dapper.Extension
 
 		public CacheBaseT Find(T obj, int? commandTimeout = null)
 		{
-			return Map.TryGetValue(obj, out CacheBaseT value) 
+			return Map.TryGetValue(obj, out CacheBaseT value)
 				? value : Get(obj, commandTimeout);
 		}
 
@@ -222,16 +245,16 @@ namespace Dapper.Extension
 			return await Task.Run(() => { return Delete(whereCondition, param, buffered, commandTimeout); });
 		}
 
-		public async Task InsertAsync(T obj, int? commandTimeout = null)
+		public async Task<CacheBaseT> InsertAsync(T obj, int? commandTimeout = null)
 		{
 			await DAO.InsertAsync(obj, commandTimeout);
-			UpsertItem(obj);
+			return UpsertItem(obj);
 		}
 
-		public async Task InsertAsync(IEnumerable<T> objs, int? commandTimeout = null)
+		public async Task<IEnumerable<CacheBaseT>> InsertAsync(IEnumerable<T> objs, int? commandTimeout = null)
 		{
 			await DAO.InsertAsync(objs, commandTimeout);
-			UpsertItems(objs);
+			return UpsertItems(objs);
 		}
 
 		public async Task<bool> UpdateAsync(T obj, int? commandTimeout = null)
@@ -244,16 +267,16 @@ namespace Dapper.Extension
 			return await DAO.UpdateAsync(objs, commandTimeout);
 		}
 
-		public async Task UpsertAsync(T obj, int? commandTimeout = null)
+		public async Task<CacheBaseT> UpsertAsync(T obj, int? commandTimeout = null)
 		{
 			await DAO.UpsertAsync(obj, commandTimeout);
-			UpsertItem(obj);
+			return UpsertItem(obj);
 		}
 
-		public async Task UpsertAsync(IEnumerable<T> objs, int? commandTimeout = null)
+		public async Task<IEnumerable<CacheBaseT>> UpsertAsync(IEnumerable<T> objs, int? commandTimeout = null)
 		{
 			await DAO.UpsertAsync(objs, commandTimeout);
-			UpsertItems(objs);
+			return UpsertItems(objs);
 		}
 
 		public async Task<CacheBaseT> GetAsync(object key, int? commandTimeout = null)

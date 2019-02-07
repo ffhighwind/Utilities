@@ -17,14 +17,14 @@ namespace Dapper.Extension
 		int Delete(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		List<T> DeleteList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
-		void Insert(IDbTransaction transaction, T obj, int? commandTimeout = null);
-		void Insert(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null);
+		T Insert(IDbTransaction transaction, T obj, int? commandTimeout = null);
+		IEnumerable<T> Insert(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null);
 
 		bool Update(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		int Update(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null);
 
-		void Upsert(IDbTransaction transaction, T obj, int? commandTimeout = null);
-		void Upsert(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null);
+		T Upsert(IDbTransaction transaction, T obj, int? commandTimeout = null);
+		IEnumerable<T> Upsert(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null);
 
 		T Get(IDbTransaction transaction, object key, int? commandTimeout = null);
 		T Get(IDbTransaction transaction, T obj, int? commandTimeout = null);

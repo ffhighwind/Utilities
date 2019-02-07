@@ -18,14 +18,14 @@ namespace Dapper.Extension
 		int Delete(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
 		List<T> DeleteList(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
 
-		void Insert(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null);
-		void Insert(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null);
+		T Insert(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null);
+		IEnumerable<T> Insert(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null);
 
 		bool Update(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null);
 		int Update(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null);
 
-		void Upsert(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null);
-		void Upsert(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null);
+		T Upsert(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null);
+		IEnumerable<T> Upsert(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null);
 
 		T Get(IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null);
 		T Get(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null);
