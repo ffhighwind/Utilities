@@ -90,7 +90,15 @@ namespace Dapper.Extension
 				properties = Properties;
 			}
 			string[] columnNames = GetColumnNames(properties);
-			return "OUTPUT " + type + ".[" + string.Join("]," + type + ".[", columnNames) + "]\n";
+			StringBuilder sb = new StringBuilder("OUTPUT " + type + ".[");
+			for(int i = 0; i < columnNames.Length; i++) {
+				sb.AppendFormat("{0}.[{1}]", type, columnNames[i]);
+				if(columnNames[i] != properties[i].Name) {
+					sb.AppendFormat(" as [{0}]", properties[i].Name);
+				}
+				sb.Append("\n");
+			}
+			return sb.ToString();
 		}
 
 		/// <summary>
