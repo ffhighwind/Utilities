@@ -7,7 +7,9 @@ using System.Threading.Tasks;
 
 namespace Dapper.Extension
 {
-	public interface IDataAccessObjectAsync<T> where T : class
+	public interface IDataAccessObjectAsync<T> : IDataAccessObjectAsync<T, T> where T : class { }
+
+	public interface IDataAccessObjectAsync<T, Ret> where T : class
 	{
 		Task<List<T>> GetKeysAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
@@ -33,11 +35,11 @@ namespace Dapper.Extension
 
 		Task UpsertAsync(IEnumerable<T> objs, int? commandTimeout = null);
 
-		Task<T> GetAsync(object key, int? commandTimeout = null);
+		Task<Ret> GetAsync(object key, int? commandTimeout = null);
 
-		Task<T> GetAsync(T obj, int? commandTimeout = null);
+		Task<Ret> GetAsync(T obj, int? commandTimeout = null);
 
-		Task<List<T>> GetListAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		Task<List<Ret>> GetListAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
 		Task<int> RecordCountAsync(string whereCondition = "", object param = null, int? commandTimeout = null);
 	}

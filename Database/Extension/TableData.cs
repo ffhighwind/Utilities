@@ -23,39 +23,96 @@ namespace Dapper.Extension
 		public static TableAttribute TableAttribute { get; private set; }
 		public static ITableData<T> Queries { get; set; }
 		public static string TableName { get; private set; }
+
+		/// <summary>
+		/// Creates an object from a key where the type has identical KeyProperties (e.g. ExpandoObject or typeof(T)).
+		/// </summary>
+		/// <param name="key">The key or value</param>
+		/// <returns></returns>
 		public static T CreateObject(object key)
 		{
-			return Queries.CreateObject(key);
+			T objKey = (T)System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(T));
+			SetKey(objKey, key);
+			return objKey;
+		}
+
+		public static T CreateObject<KeyType>(KeyType key)
+		{
+			T objKey = (T)System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(T));
+			SetKey<KeyType>(objKey, key);
+			return objKey;
 		}
 
 		public static void SetKey(T obj, object key)
 		{
-			Queries.SetKey(obj, key);
+			Type type = key.GetType();
+			for (int i = 0; i < KeyProperties.Length; i++) {
+				KeyProperties[i].SetValue(obj, type.GetProperty(KeyProperties[i].Name, BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance));
+			}
 		}
 
-		public static object MakeKey<KeyType>(KeyType value)
+		public static void SetKey<KeyType>(T obj, KeyType key)
 		{
-			return Queries.MakeKey<KeyType>(value);
+			KeyProperties[0].SetValue(obj, key);
 		}
 
+		public static object CreateKey<KeyType>(KeyType value)
+		{
+			dynamic newKey = new ExpandoObject();
+			newKey[KeyProperties[0].Name] = value;
+			return newKey;
+		}
+
+		/// <summary>
+		/// Gets the value of the first key from an object. This assumes that there is only one KeyAttribute.
+		/// </summary>
+		/// <typeparam name="Tout">The type of the key.</typeparam>
+		/// <param name="obj">The input object to pull the key from.</param>
+		/// <returns>The value of the key.</returns>
 		public static Tout GetKey<Tout>(T obj)
 		{
-			return (Tout) Queries.GetKey(obj);
+			return (Tout)KeyProperties[0].GetValue(obj);
 		}
 
+		/// <summary>
+		/// Gets an ExpandoObject T with the keys filled in.
+		/// </summary>
+		/// <param name="obj">The input object to pull keys from.</param>
+		/// <returns>An ExpandoObject with keys from the input.</returns>
 		public static object GetKey(T obj)
 		{
-			return Queries.GetKey(obj);
+			dynamic key = new ExpandoObject();
+			for (int i = 0; i < KeyProperties.Length; i++) {
+				key[KeyProperties[i].Name] = KeyProperties[i].GetValue(obj);
+			}
+			return key;
 		}
 
 		public static T Clone(T source)
 		{
-			return Queries.Clone(source);
+			T dest = (T)System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(T));
+			for (int i = 0; i < Properties.Length; i++) {
+				Properties[i].SetValue(dest, Properties[i].GetValue(source));
+			}
+			return dest;
 		}
 
+		/// <summary>
+		/// Returns true if the destination was modified, or false if they were identical.
+		/// </summary>
 		public static bool Copy(T source, T dest)
 		{
-			return Queries.Copy(source, dest);
+			for (int i = 0; i < Properties.Length; i++) {
+				object sourceValue = Properties[i].GetValue(source);
+				object destValue = Properties[i].GetValue(dest);
+				if (sourceValue != destValue) {
+					for (int j = i; j < Properties.Length; j++) {
+						Properties[j].SetValue(dest, Properties[j].GetValue(source));
+					}
+					return true;
+				}
+			}
+			return false;
 		}
 
 		public static PropertyInfo[] Properties => Queries.Properties;

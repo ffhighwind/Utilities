@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Dapper;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
@@ -10,54 +11,74 @@ using System.Threading.Tasks;
 
 namespace Dapper.Extension
 {
-	public class TableCache<T> : TableCache<T, CacheBase<T>>
+	public class TableCache<T, KeyType, CacheBaseT> : TableCache<T, CacheBaseT>
 		where T : class
-	{
-		TableCache(DataAccessObject<T> dao)
-			: base(dao) { }
-	}
-
-	public class TableCache<T, CacheBaseT> : TableCache<T, int, CacheBaseT>
-		where T : class
+		where KeyType : struct
 		where CacheBaseT : CacheBase<T>, new()
 	{
-		public TableCache(DataAccessObject<T> dao)
-			: base(dao, null)
+		public TableCache(DataAccessObject<T> dao) : base(dao) { }
+
+		public bool Delete(KeyType key, int? commandTimeout = null)
 		{
-			if(TableData<T>.KeyProperties.Length != 1) {
-				throw new InvalidOperationException(typeof(T).Name + " must have one KeyAttribute");
-			}
-			PropertyInfo keyProp = TableData<T>.KeyProperties[0];
-			if (keyProp.PropertyType != typeof(int)) {
-				throw new InvalidOperationException(typeof(T).Name + "." + keyProp.Name + " does not match expected type: int");
-			}
+			return Delete(TableData<T>.CreateObject<KeyType>(key), commandTimeout);
+		}
+
+		public Task<bool> DeleteAsync(KeyType key, int? commandTimeout = null)
+		{
+			return DeleteAsync(TableData<T>.CreateObject<KeyType>(key), commandTimeout);
+		}
+
+		public CacheBaseT Get(KeyType key, int? commandTimeout = null)
+		{
+			return Get(TableData<T>.CreateObject<KeyType>(key), commandTimeout);
+		}
+
+		public Task<CacheBaseT> GetAsync(KeyType key, int? commandTimeout = null)
+		{
+			return GetAsync(TableData<T>.CreateObject<KeyType>(key), commandTimeout);
+		}
+
+		public CacheBaseT Find(KeyType key, int? commandTimeout = null)
+		{
+			return Find(TableData<T>.CreateObject<KeyType>(key), commandTimeout);
+		}
+
+		public Task<CacheBaseT> FindAsync(KeyType key, int? commandTimeout = null)
+		{
+			return FindAsync(TableData<T>.CreateObject<KeyType>(key), commandTimeout);
 		}
 	}
 
-	public class TableCache<T, KeyType, CacheBaseT>
+	public class TableCache<T, CacheBaseT> : IDataAccessObject<T, CacheBaseT>, IDataAccessObjectAsync<T, CacheBaseT>
 		where T : class
 		where CacheBaseT : CacheBase<T>, new()
 	{
-		protected ConcurrentDictionary<KeyType, CacheBaseT> Map = null;
+		protected IDictionary<T, CacheBaseT> Map = null;
 
-		public IReadOnlyDictionary<KeyType, CacheBaseT> Items;
+		public IReadOnlyDictionary<T, CacheBaseT> Items;
 
-		public TableCache(DataAccessObject<T> dao, IEqualityComparer<KeyType> comparer = null)
+		public TableCache(DataAccessObject<T> dao)
 		{
-			if (TableData<T>.KeyProperties.Length == 0) {
+			if (TableData<T>.KeyProperties.Length != 1) {
 				throw new InvalidOperationException("Cannot cache objects without a KeyAttribute.");
 			}
-			Map = new ConcurrentDictionary<KeyType, CacheBaseT>(comparer ?? EqualityComparer<KeyType>.Default);
+			Dictionary<T, CacheBaseT> map = new Dictionary<T, CacheBaseT>(TableEqualityComparer<T>.Default);
+			Map = map;
 			DAO = dao;
-			Items = Map;
+			Items = map;
 		}
 
 		public DataAccessObject<T> DAO { get; private set; }
 
 		protected CacheBaseT UpsertItem(T obj)
 		{
-			return Map.AddOrUpdate(TableData<T>.GetKey<KeyType>(obj),
-				new CacheBaseT() { Value = obj }, (val, c) => { c.Value = obj; return c; });
+			if (Map.TryGetValue(obj, out CacheBaseT cache))
+				cache.Value = obj;
+			else {
+				cache = new CacheBaseT() { Value = obj };
+				Map[obj] = cache;
+			}
+			return cache;
 		}
 
 		protected List<CacheBaseT> UpsertItems(IEnumerable<T> objs)
@@ -72,27 +93,23 @@ namespace Dapper.Extension
 		public bool Delete(object key, int? commandTimeout = null)
 		{
 			bool deleted = DAO.Delete(key, commandTimeout);
-			//Map.TryRemove(TableData<T>.CreateObject(key), out CacheBaseT value);
-			return deleted;
-		}
-
-		public bool Delete(KeyType key, int? commandTimeout = null)
-		{
-			bool deleted = DAO.Delete(TableData<T>.MakeKey<KeyType>(key), commandTimeout);
-			Map.TryRemove(key, out CacheBaseT value);
+			T obj = TableData<T>.CreateObject(key);
+			Map.Remove(obj);
 			return deleted;
 		}
 
 		public bool Delete(T obj, int? commandTimeout = null)
 		{
-			return Delete(GetKey(obj), commandTimeout);
+			bool deleted = DAO.Delete(obj, commandTimeout);
+			Map.Remove(obj);
+			return deleted;
 		}
 
 		public int Delete(IEnumerable<T> objs, int? commandTimeout = null)
 		{
 			int count = DAO.Delete(objs, commandTimeout);
 			foreach (T obj in objs) {
-				Map.TryRemove(GetKey(obj), out CacheBaseT value);
+				Map.Remove(obj);
 			}
 			return count;
 		}
@@ -101,7 +118,7 @@ namespace Dapper.Extension
 		{
 			List<T> list = DAO.DeleteList(whereCondition, param, buffered, commandTimeout);
 			foreach (T obj in list) {
-				Map.TryRemove(GetKey(obj), out CacheBaseT value);
+				Map.Remove(obj);
 			}
 			return list.Count;
 		}
@@ -162,12 +179,27 @@ namespace Dapper.Extension
 
 		public CacheBaseT Find(T obj, int? commandTimeout = null)
 		{
-			return Map.TryGetValue(GetKey(obj), out CacheBaseT value) ? value : Get(obj, commandTimeout);
+			return Map.TryGetValue(obj, out CacheBaseT value) 
+				? value : Get(obj, commandTimeout);
 		}
 
-		public async Task<List<T>> GetKeysAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		public List<T> GetKeys(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
-			return await DAO.GetKeysAsync(whereCondition, param, buffered, commandTimeout);
+			return DAO.GetKeys(whereCondition, param, buffered, commandTimeout);
+		}
+
+		public List<T> DeleteList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			List<T> objs = DAO.DeleteList(whereCondition, param, buffered, commandTimeout);
+			foreach(T obj in objs) {
+				Map.Remove(obj);
+			}
+			return objs;
+		}
+
+		public Task<List<T>> GetKeysAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			return DAO.GetKeysAsync(whereCondition, param, buffered, commandTimeout);
 		}
 
 		public async Task<bool> DeleteAsync(object key, int? commandTimeout = null)
@@ -177,7 +209,7 @@ namespace Dapper.Extension
 
 		public async Task<bool> DeleteAsync(T obj, int? commandTimeout = null)
 		{
-			return await Task.Run(() => { return Delete(obj, commandTimeout); });
+			return await Task.Run(() => Delete(obj, commandTimeout));
 		}
 
 		public async Task<int> DeleteAsync(IEnumerable<T> objs, int? commandTimeout = null)
@@ -209,8 +241,7 @@ namespace Dapper.Extension
 
 		public async Task<int> UpdateAsync(IEnumerable<T> objs, int? commandTimeout = null)
 		{
-			int count = await DAO.UpdateAsync(objs, commandTimeout);
-			return count;
+			return await DAO.UpdateAsync(objs, commandTimeout);
 		}
 
 		public async Task UpsertAsync(T obj, int? commandTimeout = null)
@@ -251,6 +282,11 @@ namespace Dapper.Extension
 		public async Task<CacheBaseT> FindAsync(T obj, int? commandTimeout = null)
 		{
 			return await Task.Run(() => Find(obj, commandTimeout));
+		}
+
+		public async Task<List<T>> DeleteListAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			return await Task.Run(() => DeleteList(whereCondition, param, buffered, commandTimeout));
 		}
 	}
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -8,12 +9,14 @@ namespace Dapper.Extension
 {
 	public class TableEqualityComparer<T> : IEqualityComparer<T> where T : class
 	{
+		private PropertyInfo[] Properties = TableData<T>.EqualityProperties;
+		private readonly int InitialHash = TableData<T>.TableName.GetHashCode();
+
 		bool IEqualityComparer<T>.Equals(T x, T y)
 		{
-			for (int i = 0; i < TableData<T>.EqualityProperties.Length; i++) {
-				object a = TableData<T>.EqualityProperties[i].GetValue(x);
-				object b = TableData<T>.EqualityProperties[i].GetValue(y);
-				if (a != b)
+			for (int i = 0; i < Properties.Length; i++) {
+				PropertyInfo prop = Properties[i];
+				if (!prop.GetValue(x).Equals(prop.GetValue(y)))
 					return false;
 			}
 			return true;
@@ -21,11 +24,13 @@ namespace Dapper.Extension
 
 		int IEqualityComparer<T>.GetHashCode(T obj)
 		{
-			int hashCode = TableData<T>.TableName.GetHashCode();
-			for (int i = 0; i < TableData<T>.EqualityProperties.Length; i++) {
-				hashCode += TableData<T>.EqualityProperties[i].GetValue(obj).GetHashCode();
+			int hashCode = InitialHash;
+			for (int i = 0; i < Properties.Length; i++) {
+				hashCode += Properties[i].GetValue(obj).GetHashCode();
 			}
 			return hashCode;
 		}
+
+		public static TableEqualityComparer<T> Default = new TableEqualityComparer<T>();
 	}
 }

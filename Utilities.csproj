@@ -53,6 +53,7 @@
     <Compile Include="Database\ColumnAttribute.cs" />
     <Compile Include="Database\DapperExtensions.cs" />
     <Compile Include="Database\DataAccessObject.cs" />
+    <Compile Include="Database\Extension\ITableCache.cs" />
     <Compile Include="Database\Extension\ITableData.cs" />
     <Compile Include="Database\Extension\ITransactionQueries.cs" />
     <Compile Include="Database\Extension\ITransactionQueriesAsync.cs" />
@@ -66,7 +67,7 @@
     <Compile Include="Database\IgnoreSelectAttribute.cs" />
     <Compile Include="Database\IgnoreUpdateAttribute.cs" />
     <Compile Include="Database\Extension\ITableQueries.cs" />
-    <None Include="Database\Extension\TableCache.cs" />
+    <Compile Include="Database\Extension\TableCache.cs" />
     <Compile Include="Database\Extension\TableData.cs" />
     <Compile Include="Database\TableAttribute.cs" />
     <Compile Include="Database\Extension\TableEqualityComparer.cs" />
@@ -107,7 +108,7 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="CsvHelper, Version=12.0.0.0, Culture=neutral, PublicKeyToken=8c4959082be5c823, processorArchitecture=MSIL">
-      <HintPath>..\GPWebServices\packages\CsvHelper.12.1.2\lib\net45\CsvHelper.dll</HintPath>
+      <HintPath>packages\CsvHelper.12.1.2\lib\net45\CsvHelper.dll</HintPath>
     </Reference>
     <Reference Include="Dapper, Version=1.50.5.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\Dapper.1.50.5\lib\net451\Dapper.dll</HintPath>

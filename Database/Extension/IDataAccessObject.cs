@@ -8,7 +8,9 @@ using System.Threading.Tasks;
 
 namespace Dapper.Extension
 {
-	public interface IDataAccessObject<T> where T : class
+	public interface IDataAccessObject<T> : IDataAccessObject<T, T> where T : class { }
+
+	public interface IDataAccessObject<T, Ret> where T : class
 	{
 		List<T> GetKeys(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
@@ -34,11 +36,11 @@ namespace Dapper.Extension
 
 		void Upsert(IEnumerable<T> objs, int? commandTimeout = null);
 
-		T Get(object key, int? commandTimeout = null);
+		Ret Get(object key, int? commandTimeout = null);
 
-		T Get(T obj, int? commandTimeout = null);
+		Ret Get(T obj, int? commandTimeout = null);
 
-		List<T> GetList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		List<Ret> GetList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
 		int RecordCount(string whereCondition = "", object param = null, int? commandTimeout = null);
 	}
