@@ -40,6 +40,12 @@ namespace Dapper.Extension
 			return objKey;
 		}
 
+		/// <summary>
+		/// Creates an object from a single value KeyProperty.
+		/// </summary>
+		/// <typeparam name="KeyType">The type of the key.</typeparam>
+		/// <param name="key">The value of the key.</param>
+		/// <returns>A new object with the specified key.</returns>
 		public static T CreateObject<KeyType>(KeyType key)
 		{
 			T objKey = (T) System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(T));
@@ -65,11 +71,17 @@ namespace Dapper.Extension
 			}
 		}
 
+		/// <summary>
+		/// Copies a single value to the KeyProperty of an object.
+		/// </summary>
 		public static void SetKey<KeyType>(T obj, KeyType key)
 		{
 			KeyProperties[0].SetValue(obj, key);
 		}
 
+		/// <summary>
+		/// Creates an ExpandoObject (key) from a single value.
+		/// </summary>
 		public static object CreateKey<KeyType>(KeyType value)
 		{
 			dynamic newKey = new ExpandoObject();
