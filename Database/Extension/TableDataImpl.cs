@@ -23,10 +23,6 @@ namespace Dapper.Extension
 			UpdateProperties = GetProperties(AutoKeyProperties, typeof(IgnoreUpdateAttribute), typeof(IgnoreAttribute));
 			EqualityProperties = KeyProperties.Length == 0 ? Properties : KeyProperties;
 			GenerateQueries();
-			// NOTES:
-			// Use Dapper to check DBMS and choose what to do?
-			// Validate ForeignKeyAttribute
-			// SqlMapper.AddTypeHandler<T>();
 		}
 
 		protected void GenerateQueries()
@@ -48,20 +44,33 @@ namespace Dapper.Extension
 			DeleteListQuery = DeleteQuery + GetOutput("DELETED", true) + "\n";
 
 			string updateQuery = "UPDATE " + TableName + "\nSET " + GetEqualsParams(",", UpdateProperties);
-			UpdateQuery = updateQuery + whereKeyQuery;
-			UpsertQuery = "IF NOT EXISTS (\nSELECT TOP(1) * FROM " + TableName + whereInsertedEqualsQuery + ")\n" + insertIntoQuery + GetOutput("INSERTED", true) + insertValuesQuery
-				+ "\nELSE\n" + "SELECT TOP(1) [" + string.Join("],[", KeyColumns) + "] FROM " + TableName + "\n" + whereInsertedEqualsQuery;
+			UpsertQuery = "IF NOT EXISTS (\nSELECT TOP(1) * FROM " + TableName + whereEqualsQuery + ")\n" + insertIntoQuery + GetOutput("INSERTED", true) + insertValuesQuery;
 
 			if (KeyProperties.Length == 0) {
 				UpdateQuery = "";
 				SelectListKeysQuery = "";
-				UpsertQuery = UpsertQuery + "\n\nELSE\n\n" + updateQuery + GetOutput("DELETED", true) + whereKeyQuery;
+			}
+			else {
+				UpdateQuery = updateQuery + whereKeyQuery;
+				UpsertQuery = UpsertQuery + "\n\nELSE\n\n" + updateQuery + GetOutput("DELETED", true) + whereEqualsQuery;
 			}
 		}
 
+		/// <summary>
+		/// The flags used to get the base set of properties.
+		/// </summary>
 		public BindingFlags PropertyFlags { get; private set; }
+
+		/// <summary>
+		/// [Table("Name")] or the class name
+		/// </summary>
 		protected string TableName => TableData<T>.TableName;
 
+		/// <summary>
+		/// x = @x, y = @y
+		/// x = @x AND y = @y
+		/// x = @x OR  y = @y
+		/// </summary>
 		private string GetEqualsParams(string joinString, params PropertyInfo[] properties)
 		{
 			if (properties.Length == 0)
@@ -74,6 +83,9 @@ namespace Dapper.Extension
 			return "\t" + sb.Remove(0, joinString.Length + 1).ToString();
 		}
 
+		/// <summary>
+		/// @a,@b,@c
+		/// </summary>
 		private string GetParams(params PropertyInfo[] properties)
 		{
 			if (properties.Length == 0)
@@ -81,6 +93,9 @@ namespace Dapper.Extension
 			return "@" + string.Join(",@", properties.Select(prop => prop.Name));
 		}
 
+		/// <summary>
+		/// OUTPUT INSERTED.[a] as A
+		/// </summary>
 		private string GetOutput(string type, bool allIfNoKeys)
 		{
 			PropertyInfo[] properties = KeyProperties;
@@ -90,22 +105,23 @@ namespace Dapper.Extension
 				properties = Properties;
 			}
 			string[] columnNames = GetColumnNames(properties);
-			StringBuilder sb = new StringBuilder("OUTPUT " + type + ".[");
-			for(int i = 0; i < columnNames.Length; i++) {
-				sb.AppendFormat("{0}.[{1}]", type, columnNames[i]);
-				if(columnNames[i] != properties[i].Name) {
+			StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < columnNames.Length; i++) {
+				sb.AppendFormat("\t,{0}.[{1}]", type, columnNames[i]);
+				if (columnNames[i] != properties[i].Name) {
 					sb.AppendFormat(" as [{0}]", properties[i].Name);
 				}
 				sb.Append("\n");
 			}
-			return sb.ToString();
+			return "OUTPUT \t" + sb.Remove(0, 2).ToString();
 		}
 
 		/// <summary>
-		/// Gets the properties ignoring specified Properties and Attribute types.
+		/// Gets a list of PropertyInfos from the base list except the ones in a specific set of ignored items.
 		/// </summary>
-		/// <param name="ignoredAttributes"></param>
-		/// <returns></returns>
+		/// <param name="ignoredProperties">PropertyInfos in this list are ignored.</param>
+		/// <param name="ignoredAttributes">PropertyInfos with these any of these Attributes are ignored.</param>
+		/// <returns>A set of PropertyInfos.</returns>
 		protected PropertyInfo[] GetProperties(PropertyInfo[] ignoredProperties, params Type[] ignoredAttributes)
 		{
 			List<PropertyInfo> properties = new List<PropertyInfo>();
@@ -128,6 +144,9 @@ namespace Dapper.Extension
 				? Properties : properties.ToArray();
 		}
 
+		/// <summary>
+		/// [Column("Name")] or the name of the properties.
+		/// </summary>
 		public string[] GetColumnNames(params PropertyInfo[] properties)
 		{
 			string[] columnNames = new string[properties.Length];
@@ -211,7 +230,7 @@ namespace Dapper.Extension
 		public T Insert(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
 			IEnumerable<dynamic> key = connection.Query<dynamic>(InsertQuery, obj, transaction, true, commandTimeout);
-			if(key.Any()) {
+			if (key.Any()) {
 				TableData<T>.SetKey(obj, key.First());
 			}
 			return obj;
@@ -244,7 +263,7 @@ namespace Dapper.Extension
 		public T Upsert(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
 			dynamic key = connection.Query<dynamic>(UpsertQuery, obj, transaction, true, commandTimeout).FirstOrDefault();
-			if(key != null) {
+			if (key != null) {
 				TableData<T>.SetKey(obj, key);
 			}
 			return obj;

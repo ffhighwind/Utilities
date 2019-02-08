@@ -25,16 +25,14 @@ namespace Dapper.Extension
 		public static string TableName { get; private set; }
 		public static void RecreateQueries(BindingFlags flags)
 		{
-			if (Queries.PropertyFlags == flags)
-				return;
-			Queries = new TableDataImpl<T>(flags);
+			if (Queries?.PropertyFlags != flags) {
+				Queries = new TableDataImpl<T>(flags);
+			}
 		}
 
 		/// <summary>
 		/// Creates an object from a key where the type has identical KeyProperties (e.g. ExpandoObject or typeof(T)).
 		/// </summary>
-		/// <param name="key">The key or value</param>
-		/// <returns></returns>
 		public static T CreateObject(object key)
 		{
 			T objKey = (T) System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(T));
@@ -49,6 +47,9 @@ namespace Dapper.Extension
 			return objKey;
 		}
 
+		/// <summary>
+		/// Creates an object from a key where the type has identical KeyProperties (e.g. ExpandoObject or typeof(T)).
+		/// </summary>
 		public static void SetKey(T obj, object key)
 		{
 			if (key is IDictionary<string, object> expando) {
@@ -101,6 +102,9 @@ namespace Dapper.Extension
 			return key;
 		}
 
+		/// <summary>
+		/// Creates a shallow clone of the object.
+		/// </summary>
 		public static T Clone(T source)
 		{
 			T dest = (T) System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(T));
