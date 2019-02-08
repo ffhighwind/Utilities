@@ -134,6 +134,11 @@ namespace Dapper.Extension
 
 		public int Delete(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
+			if(string.IsNullOrWhiteSpace(whereCondition)) {
+				int count = DAO.Delete();
+				Map.Clear();
+				return count;
+			}
 			List<T> list = DAO.DeleteList(whereCondition, param, buffered, commandTimeout);
 			foreach (T obj in list) {
 				Map.Remove(obj);
