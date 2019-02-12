@@ -44,7 +44,7 @@ namespace Dapper.Extension
 			DeleteListQuery = DeleteQuery + GetOutput("DELETED", true) + "\n";
 
 			string updateQuery = "UPDATE " + TableName + "\nSET " + GetEqualsParams(",", UpdateProperties);
-			UpsertQuery = "IF NOT EXISTS (\nSELECT TOP(1) * FROM " + TableName + whereEqualsQuery + ")\n" + insertIntoQuery + GetOutput("INSERTED", true) + insertValuesQuery;
+			UpsertQuery = "IF NOT EXISTS (\nSELECT TOP(1) * FROM " + TableName + "\n" + whereEqualsQuery + ")\n" + insertIntoQuery + GetOutput("INSERTED", true) + insertValuesQuery;
 
 			if (KeyProperties.Length == 0) {
 				UpdateQuery = "";
