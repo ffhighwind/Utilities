@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Dapper.Extension
 {
-	public interface ITableQueriesAsync<T> where T : class
+	public interface IConnectionQueriesAsync<T> where T : class
 	{
 		Task<List<T>> GetKeysAsync(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
 

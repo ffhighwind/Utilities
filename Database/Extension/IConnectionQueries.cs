@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Dapper.Extension
 {
-	public interface ITableQueries<T> where T : class
+	public interface IConnectionQueries<T> where T : class
 	{
 		List<T> GetKeys(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
 		bool Delete(IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null);

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Dapper.Extension
 {
-	public interface ITableData<T> : ITableQueries<T>, ITableQueriesAsync<T> where T : class
+	public interface IQueriesData<T> where T : class
 	{
 		PropertyInfo[] Properties { get; }
 		PropertyInfo[] KeyProperties { get; }
