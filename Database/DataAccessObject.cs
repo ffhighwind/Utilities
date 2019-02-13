@@ -143,6 +143,11 @@ namespace Dapper
 				return Queries.Upsert(conn, objs, null, commandTimeout);
 			}
 		}
+
+		public override IEnumerable<T> Insert(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null)
+		{
+			return Queries.Insert(bulkCopy, objs, commandTimeout);
+		}
 		#endregion IDataAccessObjectSync<T>
 
 
@@ -235,6 +240,13 @@ namespace Dapper
 		public override List<T> DeleteList(IDbTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
 			return Queries.DeleteList<T>(transaction.Connection, objs, transaction, buffered, commandTimeout);
+		}
+
+		public override IEnumerable<T> Insert(SqlTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
+		{
+			using (SqlBulkCopy bulkCopy = new SqlBulkCopy(transaction.Connection, SqlBulkCopyOptions.Default, transaction)) {
+				return Insert(bulkCopy, objs, commandTimeout);
+			}
 		}
 		#endregion // ITransactionQueriesSync<T>
 	}
@@ -402,6 +414,11 @@ namespace Dapper
 				return Queries.DeleteList<KeyType>(conn, objs, null, buffered, commandTimeout);
 			}
 		}
+
+		public override IEnumerable<T> Insert(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null)
+		{
+			return Queries.Insert(bulkCopy, objs, commandTimeout);
+		}
 		#endregion // IDataAccessObjectSync<T, KeyType, Ret>
 
 
@@ -504,6 +521,13 @@ namespace Dapper
 		public override List<KeyType> DeleteList(IDbTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
 			return Queries.DeleteList<KeyType>(transaction.Connection, objs, transaction, buffered, commandTimeout);
+		}
+
+		public override IEnumerable<T> Insert(SqlTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
+		{
+			using (SqlBulkCopy bulkCopy = new SqlBulkCopy(transaction.Connection, SqlBulkCopyOptions.Default, transaction)) {
+				return Insert(bulkCopy, objs, commandTimeout);
+			}
 		}
 		#endregion // ITransactionQueriesSync<T, KeyType, Ret>
 	}

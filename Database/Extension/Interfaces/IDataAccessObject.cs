@@ -29,6 +29,7 @@ namespace Dapper.Extension.Interfaces
 		public abstract List<Ret> GetList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		public abstract Ret Insert(T obj, int? commandTimeout = null);
 		public abstract IEnumerable<Ret> Insert(IEnumerable<T> objs, int? commandTimeout = null);
+		public abstract IEnumerable<Ret> Insert(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null);
 		public abstract int RecordCount(string whereCondition = "", object param = null, int? commandTimeout = null);
 		public abstract bool Update(T obj, int? commandTimeout = null);
 		public abstract int Update(IEnumerable<T> objs, int? commandTimeout = null);
@@ -123,6 +124,11 @@ namespace Dapper.Extension.Interfaces
 		{
 			return await Task.Run(() => DeleteList(objs, buffered, commandTimeout));
 		}
+
+		public async Task<IEnumerable<Ret>> InsertAsync(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null)
+		{
+			return await Task.Run(() => Insert(bulkCopy, objs, commandTimeout));
+		}
 		#endregion // IDataAccessObjectAsync<T>
 	}
 
@@ -154,6 +160,7 @@ namespace Dapper.Extension.Interfaces
 		public abstract List<Ret> GetList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		public abstract Ret Insert(T obj, int? commandTimeout = null);
 		public abstract IEnumerable<Ret> Insert(IEnumerable<T> objs, int? commandTimeout = null);
+		public abstract IEnumerable<Ret> Insert(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null);
 		public abstract int RecordCount(string whereCondition = "", object param = null, int? commandTimeout = null);
 		public abstract bool Update(T obj, int? commandTimeout = null);
 		public abstract int Update(IEnumerable<T> objs, int? commandTimeout = null);
@@ -262,6 +269,11 @@ namespace Dapper.Extension.Interfaces
 		public async Task<List<KeyType>> DeleteListAsync(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
 			return await Task.Run(() => DeleteList(objs, buffered, commandTimeout));
+		}
+
+		public async Task<IEnumerable<Ret>> InsertAsync(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null)
+		{
+			return await Task.Run(() => Insert(bulkCopy, objs, commandTimeout));
 		}
 		#endregion // IDataAccessObjectAsync<T, KeyType, Ret>
 	}

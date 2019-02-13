@@ -17,7 +17,7 @@ namespace Utilities.Converters
 	{
 		private IEnumerator enumerator;
 		private readonly PropertyInfo[] pinfos;
-		private readonly string[] propertyNames;
+		private readonly string[] columnNames;
 		private readonly Type[] types;
 		private readonly BitArray allowNull;
 		private object current = null;
@@ -29,19 +29,26 @@ namespace Utilities.Converters
 		/// </summary>
 		/// <param name="source">The <see cref="IEnumerable{T}"/> to read.</param>
 		/// <param name="flags">The <see cref="BindingFlags"/> for the type's properties.</param>
-		/// <param name="members">The property names that will be read. If this is empty then all properties will be read.</param>
-		public GenericDataReader(IEnumerable<T> source, BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly, params string[] members)
+		/// <param name="props">The property names that will be read. If this is empty then all properties will be read.</param>
+		public GenericDataReader(IEnumerable<T> source, BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly, params string[] props)
+			: this(source, props, typeof(T).GetProperties(flags).Where(pinfo => props.Contains(pinfo.Name)).ToArray())
+		{ }
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="GenericDataReader{T}"/> class.
+		/// </summary>
+		/// <param name="source">The <see cref="IEnumerable{T}"/> to read.</param>
+		/// <param name="columns">The names of the table columns that match the properties.</param>
+		/// <param name="props">The properties that will be read. If this is empty then all properties will be read.</param>
+		public GenericDataReader(IEnumerable<T> source, string[] columns, params PropertyInfo[] props)
 		{
-			pinfos = typeof(T).GetProperties(flags);
-			if (members.Length > 0)
-				pinfos = pinfos.Where(pinfo => members.Contains(pinfo.Name)).ToArray();
+			pinfos = props.Length == 0 ? props : typeof(T).GetProperties(DefaultBindingFlags);
 			enumerator = source.GetEnumerator();
-			propertyNames = new string[pinfos.Length];
+			columnNames = columns;
 			types = new Type[pinfos.Length];
 			allowNull = new BitArray(pinfos.Length);
 			for (int i = 0; i < pinfos.Length; i++) {
 				PropertyInfo pi = pinfos[i];
-				propertyNames[i] = pi.Name;
 				Type ty = Nullable.GetUnderlyingType(pi.PropertyType);
 				allowNull[i] = ty != null;
 				types[i] = ty ?? pi.PropertyType;
@@ -52,9 +59,9 @@ namespace Utilities.Converters
 		/// Initializes a new instance of the <see cref="GenericDataReader{T}"/> class.
 		/// </summary>
 		/// <param name="source">The <see cref="IEnumerable{T}"/> to read.</param>
-		/// <param name="members">The property names that will be read. If this is empty then all properties will be read.</param>
-		public GenericDataReader(IEnumerable<T> source, params string[] members)
-			: this(source, DefaultBindingFlags, members) { }
+		/// <param name="props">The property names that will be read. If this is empty then all properties will be read.</param>
+		public GenericDataReader(IEnumerable<T> source, params string[] props)
+			: this(source, DefaultBindingFlags, props.Length == 0 ? typeof(T).GetProperties(DefaultBindingFlags).Select(p => p.Name).ToArray() : props) { }
 
 		/// <summary>
 		/// Not implemented.
@@ -97,9 +104,9 @@ namespace Utilities.Converters
 			};
 
 			object[] rowData = new object[5];
-			for (int i = 0; i < propertyNames.Length; i++) {
+			for (int i = 0; i < pinfos.Length; i++) {
 				rowData[0] = i;
-				rowData[1] = propertyNames[i];
+				rowData[1] = columnNames[i];
 				rowData[2] = types[i];
 				rowData[3] = -1;
 				rowData[4] = allowNull[i];
@@ -180,7 +187,7 @@ namespace Utilities.Converters
 		/// Gets the number of columns in the current row.
 		/// </summary>
 		/// <returns>The number of columns in the current row.</returns>
-		public override int FieldCount => propertyNames.Length;
+		public override int FieldCount => pinfos.Length;
 
 		/// <summary>
 		/// Gets a value indicating whether the <see cref="DbDataReader"/> is closed.
@@ -379,7 +386,7 @@ namespace Utilities.Converters
 		/// <returns>The name of the specified column.</returns>
 		public override string GetName(int ordinal)
 		{
-			return propertyNames[ordinal];
+			return columnNames[ordinal];
 		}
 
 		/// <summary>
@@ -389,7 +396,7 @@ namespace Utilities.Converters
 		/// <returns>The zero-based column ordinal.</returns>
 		public override int GetOrdinal(string name)
 		{
-			return Array.IndexOf(propertyNames, name);
+			return Array.IndexOf(columnNames, name);
 		}
 
 		/// <summary>
@@ -428,9 +435,9 @@ namespace Utilities.Converters
 		/// <returns>The number of instances of <see cref="object"/> in the array.</returns>
 		public override int GetValues(object[] values)
 		{
-			for (int i = 0; i < propertyNames.Length; i++)
+			for (int i = 0; i < pinfos.Length; i++)
 				values[i] = pinfos[i].GetValue(current) ?? DBNull.Value;
-			return propertyNames.Length;
+			return pinfos.Length;
 		}
 
 		/// <summary>

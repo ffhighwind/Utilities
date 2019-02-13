@@ -175,6 +175,11 @@ namespace Dapper.Extension
 		{
 			return DAO.RecordCount(whereCondition, param, commandTimeout);
 		}
+
+		public override IEnumerable<Ret> Insert(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null)
+		{
+			return UpsertItems(DAO.Insert(bulkCopy, objs, commandTimeout));
+		}
 		#endregion // IDataAccessObjectSync<T, KeyType, Ret>
 
 
@@ -300,6 +305,11 @@ namespace Dapper.Extension
 				Map.Remove(key);
 			}
 			return keys;
+		}
+
+		public override IEnumerable<Ret> Insert(SqlTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
+		{
+			return UpsertItems(DAO.Insert(transaction, objs, commandTimeout));
 		}
 		#endregion // ITransactionQueriesSync<T, KeyType, Ret>
 	}
@@ -453,6 +463,11 @@ namespace Dapper.Extension
 		{
 			return DAO.RecordCount(whereCondition, param, commandTimeout);
 		}
+
+		public override IEnumerable<Ret> Insert(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null)
+		{
+			return UpsertItems(DAO.Insert(bulkCopy, objs, commandTimeout));
+		}
 		#endregion // IDataAccessObjectSync<T, T, Ret>
 
 
@@ -563,6 +578,11 @@ namespace Dapper.Extension
 				Map.Remove(key);
 			}
 			return keys;
+		}
+
+		public override IEnumerable<Ret> Insert(SqlTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
+		{
+			return UpsertItems(DAO.Insert(transaction, objs, commandTimeout));
 		}
 		#endregion // ITransactionQueriesSync<T, T, Ret>
 	}

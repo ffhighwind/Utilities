@@ -23,6 +23,7 @@ namespace Dapper.Extension.Interfaces
 
 		Ret Insert(T obj, int? commandTimeout = null);
 		IEnumerable<Ret> Insert(IEnumerable<T> objs, int? commandTimeout = null);
+		IEnumerable<Ret> Insert(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null);
 
 		bool Update(T obj, int? commandTimeout = null);
 		int Update(IEnumerable<T> objs, int? commandTimeout = null);
@@ -56,6 +57,7 @@ namespace Dapper.Extension.Interfaces
 
 		Ret Insert(T obj, int? commandTimeout = null);
 		IEnumerable<Ret> Insert(IEnumerable<T> objs, int? commandTimeout = null);
+		IEnumerable<Ret> Insert(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null);
 
 		bool Update(T obj, int? commandTimeout = null);
 		int Update(IEnumerable<T> objs, int? commandTimeout = null);

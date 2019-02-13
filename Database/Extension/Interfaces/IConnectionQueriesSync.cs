@@ -27,6 +27,8 @@ namespace Dapper.Extension.Interfaces
 
 		T Insert(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null);
 		IEnumerable<T> Insert(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null);
+		IEnumerable<T> Insert(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, int? commandTimeout = null);
+		IEnumerable<T> Insert(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null);
 
 		bool Update(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null);
 		int Update(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null);

@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
 using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Dapper.Extension.Interfaces;
+using Utilities.Converters;
 
 namespace Dapper.Extension
 {
@@ -245,6 +247,23 @@ namespace Dapper.Extension
 			return objs;
 		}
 
+		public override IEnumerable<T> Insert(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, int? commandTimeout = null)
+		{
+			using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connection, SqlBulkCopyOptions.Default, transaction)) {
+				return Insert(bulkCopy, objs, commandTimeout);
+			}
+		}
+
+		public override IEnumerable<T> Insert(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null)
+		{
+			using (GenericDataReader<T> dataReader = new GenericDataReader<T>(objs, InsertColumns, InsertProperties)) {
+				bulkCopy.DestinationTableName = TableData<T>.TableName;
+				bulkCopy.BulkCopyTimeout = commandTimeout ?? 0;
+				bulkCopy.WriteToServer(dataReader);
+			}
+			return objs;
+		}
+
 		public override bool Update(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
 			return 0 < connection.ExecuteScalar<int>(UpdateQuery, obj, transaction, commandTimeout);
@@ -297,8 +316,6 @@ namespace Dapper.Extension
 		{
 			return connection.ExecuteScalar<int>(CountQuery + whereCondition, param, transaction, commandTimeout);
 		}
-		#endregion // ITableQueries<T>
-
 
 		public override List<KeyType> GetKeys<KeyType>(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 		{
@@ -341,6 +358,7 @@ namespace Dapper.Extension
 			}
 			return list;
 		}
+		#endregion // ITableQueries<T>
 
 		private IEnumerable<Tuple<string, DynamicParameters>> CreateDynamicParams(IEnumerable<T> objs)
 		{

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,6 +23,7 @@ namespace Dapper.Extension.Interfaces
 
 		Task<Ret> InsertAsync(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		Task<IEnumerable<Ret>> InsertAsync(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null);
+		Task<IEnumerable<Ret>> InsertAsync(SqlTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null);
 
 		Task<bool> UpdateAsync(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		Task<int> UpdateAsync(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null);
@@ -54,6 +56,7 @@ namespace Dapper.Extension.Interfaces
 
 		Task<Ret> InsertAsync(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		Task<IEnumerable<Ret>> InsertAsync(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null);
+		Task<IEnumerable<Ret>> InsertAsync(SqlTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null);
 
 		Task<bool> UpdateAsync(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		Task<int> UpdateAsync(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null);
