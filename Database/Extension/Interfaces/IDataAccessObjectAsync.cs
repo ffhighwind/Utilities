@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,6 +14,7 @@ namespace Dapper.Extension.Interfaces
 	{
 		Task<List<T>> GetKeysAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		Task<List<T>> DeleteListAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		Task<List<T>> DeleteListAsync(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 
 		Task<bool> DeleteAsync(object key, int? commandTimeout = null);
 		Task<bool> DeleteAsync(T obj, int? commandTimeout = null);
@@ -21,6 +23,7 @@ namespace Dapper.Extension.Interfaces
 
 		Task<Ret> InsertAsync(T obj, int? commandTimeout = null);
 		Task<IEnumerable<Ret>> InsertAsync(IEnumerable<T> objs, int? commandTimeout = null);
+		Task<IEnumerable<Ret>> InsertAsync(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null);
 
 		Task<bool> UpdateAsync(T obj, int? commandTimeout = null);
 		Task<int> UpdateAsync(IEnumerable<T> objs, int? commandTimeout = null);
@@ -44,6 +47,7 @@ namespace Dapper.Extension.Interfaces
 		Task<int> DeleteAsync(IEnumerable<KeyType> keys, int? commandTimeout = null);
 		Task<List<KeyType>> DeleteListAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		Task<Ret> GetAsync(KeyType key, int? commandTimeout = null);
+		Task<List<KeyType>> DeleteListAsync(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 
 		Task<bool> DeleteAsync(object key, int? commandTimeout = null);
 		Task<bool> DeleteAsync(T obj, int? commandTimeout = null);
@@ -52,6 +56,7 @@ namespace Dapper.Extension.Interfaces
 
 		Task<Ret> InsertAsync(T obj, int? commandTimeout = null);
 		Task<IEnumerable<Ret>> InsertAsync(IEnumerable<T> objs, int? commandTimeout = null);
+		Task<IEnumerable<Ret>> InsertAsync(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null);
 
 		Task<bool> UpdateAsync(T obj, int? commandTimeout = null);
 		Task<int> UpdateAsync(IEnumerable<T> objs, int? commandTimeout = null);

@@ -192,6 +192,11 @@ namespace Dapper.Extension
 		{
 			return DAO.RecordCount(whereCondition, param, commandTimeout);
 		}
+
+		public override IEnumerable<Ret> Insert(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null)
+		{
+			return UpsertItems(DAO.Insert(bulkCopy, objs, commandTimeout));
+		}
 		#endregion // IDataAccessObjectSync<T, KeyType, Ret>
 
 
@@ -299,6 +304,29 @@ namespace Dapper.Extension
 		public override int RecordCount(IDbTransaction transaction, string whereCondition = "", object param = null, int? commandTimeout = null)
 		{
 			return DAO.RecordCount(transaction, whereCondition, param, commandTimeout);
+		}
+
+		public override List<KeyType> DeleteList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			List<KeyType> keys = DAO.DeleteList(objs, buffered, commandTimeout);
+			foreach (KeyType key in keys) {
+				Map.Remove(key);
+			}
+			return keys;
+		}
+
+		public override List<KeyType> DeleteList(IDbTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			List<KeyType> keys = DAO.DeleteList(transaction, objs, buffered, commandTimeout);
+			foreach (KeyType key in keys) {
+				Map.Remove(key);
+			}
+			return keys;
+		}
+
+		public override IEnumerable<Ret> Insert(SqlTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
+		{
+			return UpsertItems(DAO.Insert(transaction, objs, commandTimeout));
 		}
 		#endregion // ITransactionQueriesSync<T, KeyType, Ret>
 	}
@@ -452,6 +480,11 @@ namespace Dapper.Extension
 		{
 			return DAO.RecordCount(whereCondition, param, commandTimeout);
 		}
+
+		public override IEnumerable<Ret> Insert(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null)
+		{
+			return UpsertItems(DAO.Insert(bulkCopy, objs, commandTimeout));
+		}
 		#endregion // IDataAccessObjectSync<T, T, Ret>
 
 
@@ -544,6 +577,29 @@ namespace Dapper.Extension
 		public override int RecordCount(IDbTransaction transaction, string whereCondition = "", object param = null, int? commandTimeout = null)
 		{
 			return DAO.RecordCount(transaction, whereCondition, param, commandTimeout);
+		}
+
+		public override List<T> DeleteList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			List<T> keys = DAO.DeleteList(objs, buffered, commandTimeout);
+			foreach (T key in keys) {
+				Map.Remove(key);
+			}
+			return keys;
+		}
+
+		public override List<T> DeleteList(IDbTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			List<T> keys = DAO.DeleteList(transaction, objs, buffered, commandTimeout);
+			foreach (T key in keys) {
+				Map.Remove(key);
+			}
+			return keys;
+		}
+
+		public override IEnumerable<Ret> Insert(SqlTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
+		{
+			return UpsertItems(DAO.Insert(transaction, objs, commandTimeout));
 		}
 		#endregion // ITransactionQueriesSync<T, T, Ret>
 	}

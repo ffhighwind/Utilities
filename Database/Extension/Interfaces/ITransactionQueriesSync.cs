@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,6 +15,7 @@ namespace Dapper.Extension.Interfaces
 	{
 		List<T> GetKeys(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		List<T> DeleteList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		List<T> DeleteList(IDbTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 
 		bool Delete(IDbTransaction transaction, object key, int? commandTimeout = null);
 		bool Delete(IDbTransaction transaction, T obj, int? commandTimeout = null);
@@ -22,6 +24,7 @@ namespace Dapper.Extension.Interfaces
 
 		Ret Insert(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		IEnumerable<Ret> Insert(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null);
+		IEnumerable<Ret> Insert(SqlTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null);
 
 		bool Update(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		int Update(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null);
@@ -45,6 +48,7 @@ namespace Dapper.Extension.Interfaces
 		int Delete(IDbTransaction transaction, IEnumerable<KeyType> keys, int? commandTimeout = null);
 		Ret Get(IDbTransaction transaction, KeyType key, int? commandTimeout = null);
 		List<KeyType> DeleteList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		List<KeyType> DeleteList(IDbTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 
 		bool Delete(IDbTransaction transaction, object key, int? commandTimeout = null);
 		bool Delete(IDbTransaction transaction, T obj, int? commandTimeout = null);
@@ -53,6 +57,7 @@ namespace Dapper.Extension.Interfaces
 
 		Ret Insert(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		IEnumerable<Ret> Insert(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null);
+		IEnumerable<Ret> Insert(SqlTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null);
 
 		bool Update(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		int Update(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null);

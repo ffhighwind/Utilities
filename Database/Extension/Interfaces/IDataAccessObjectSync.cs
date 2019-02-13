@@ -14,6 +14,7 @@ namespace Dapper.Extension.Interfaces
 	{
 		List<T> GetKeys(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		List<T> DeleteList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		List<T> DeleteList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 
 		bool Delete(object key, int? commandTimeout = null);
 		bool Delete(T obj, int? commandTimeout = null);
@@ -22,6 +23,7 @@ namespace Dapper.Extension.Interfaces
 
 		Ret Insert(T obj, int? commandTimeout = null);
 		IEnumerable<Ret> Insert(IEnumerable<T> objs, int? commandTimeout = null);
+		IEnumerable<Ret> Insert(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null);
 
 		bool Update(T obj, int? commandTimeout = null);
 		int Update(IEnumerable<T> objs, int? commandTimeout = null);
@@ -46,6 +48,7 @@ namespace Dapper.Extension.Interfaces
 		int Delete(IEnumerable<KeyType> keys, int? commandTimeout = null);
 		List<KeyType> DeleteList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		Ret Get(KeyType key, int? commandTimeout = null);
+		List<KeyType> DeleteList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 
 		bool Delete(object key, int? commandTimeout = null);
 		bool Delete(T obj, int? commandTimeout = null);
@@ -54,6 +57,7 @@ namespace Dapper.Extension.Interfaces
 
 		Ret Insert(T obj, int? commandTimeout = null);
 		IEnumerable<Ret> Insert(IEnumerable<T> objs, int? commandTimeout = null);
+		IEnumerable<Ret> Insert(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null);
 
 		bool Update(T obj, int? commandTimeout = null);
 		int Update(IEnumerable<T> objs, int? commandTimeout = null);
