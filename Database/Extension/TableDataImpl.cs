@@ -289,8 +289,6 @@ namespace Dapper.Extension
 		{
 			return connection.ExecuteScalar<int>(CountQuery + whereCondition, param, transaction, commandTimeout);
 		}
-		#endregion // ITableQueries<T>
-
 
 		public override List<KeyType> GetKeys<KeyType>(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 		{
@@ -312,13 +310,14 @@ namespace Dapper.Extension
 		public override T Get<KeyType>(IDbConnection connection, KeyType key, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
 			dynamic newKey = new ExpandoObject();
-			newKey[KeyColumns[0]] = key;
-			return Get(connection, newKey, transaction, commandTimeout);
+			((IDictionary<string, object>)newKey)[KeyColumns[0]] = key;
+			return Get(connection, (object)newKey, transaction, commandTimeout);
 		}
 
 		public override List<KeyType> DeleteList<KeyType>(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 		{
 			return connection.Query<KeyType>(DeleteListQuery + whereCondition, param, transaction, buffered, commandTimeout).AsList();
 		}
+		#endregion // ITableQueries<T>
 	}
 }

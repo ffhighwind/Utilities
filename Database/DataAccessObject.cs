@@ -305,7 +305,7 @@ namespace Dapper
 		public override T Get(KeyType key, int? commandTimeout = null)
 		{
 			using (SqlConnection conn = new SqlConnection(ConnectionString)) {
-				return Queries.Get<KeyType>(conn, key, null, commandTimeout);
+				return Queries.Get(conn, key, null, commandTimeout);
 			}
 		}
 

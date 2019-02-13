@@ -14,9 +14,15 @@ namespace Dapper.Extension
 {
 	public static class TableData<T> where T : class
 	{
-		public static TableAttribute TableAttribute { get; private set; } = typeof(T).GetCustomAttribute<TableAttribute>(false);
-		public static ITableData<T> Queries { get; private set; } = TableDataImpl<T>.Default;
-		public static string TableName { get; private set; } = TableAttribute?.Name.Replace("'", "") ?? typeof(T).Name;
+		static TableData() {
+			TableAttribute = typeof(T).GetCustomAttribute<TableAttribute>(false);
+			TableName = TableAttribute?.Name.Replace("'", "") ?? typeof(T).Name;
+			Queries = TableDataImpl<T>.Default;
+		}
+
+		public static TableAttribute TableAttribute { get; private set; }
+		public static ITableData<T> Queries { get; private set; }
+		public static string TableName { get; private set; }
 
 		public static PropertyInfo[] Properties => Queries.Properties;
 		public static PropertyInfo[] KeyProperties => Queries.KeyProperties;
@@ -47,7 +53,7 @@ namespace Dapper.Extension
 		/// </summary>
 		public static void SetKey<KeyType>(T obj, KeyType key)
 		{
-			TableData<T>.Queries.KeyProperties[0].SetValue(obj, key);
+			Queries.KeyProperties[0].SetValue(obj, key);
 		}
 
 		/// <summary>
@@ -55,8 +61,8 @@ namespace Dapper.Extension
 		/// </summary>
 		public static object CreateKey<KeyType>(KeyType value)
 		{
-			dynamic newKey = new ExpandoObject();
-			newKey[TableData<T>.Queries.KeyProperties[0].Name] = value;
+			IDictionary<string, object> newKey = new ExpandoObject();
+			newKey[Queries.KeyProperties[0].Name] = value;
 			return newKey;
 		}
 
@@ -68,7 +74,7 @@ namespace Dapper.Extension
 		/// <returns>The value of the key.</returns>
 		public static KeyType GetKey<KeyType>(T obj)
 		{
-			return (KeyType) TableData<T>.Queries.KeyProperties[0].GetValue(obj);
+			return (KeyType) Queries.KeyProperties[0].GetValue(obj);
 		}
 
 

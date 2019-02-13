@@ -29,8 +29,8 @@ namespace Dapper.Extension
 			Constructor = constructor;
 		}
 
-		protected IDictionary<KeyType, Ret> Map = null;
-		public IReadOnlyDictionary<KeyType, Ret> Items;
+		protected IDictionary<KeyType, Ret> Map { get; set; }
+		public IReadOnlyDictionary<KeyType, Ret> Items { get; private set; }
 
 		public DataAccessObject<T, KeyType> DAO { get; private set; }
 
@@ -39,12 +39,12 @@ namespace Dapper.Extension
 
 		public IEnumerator<Ret> GetEnumerator()
 		{
-			return Items.Values.GetEnumerator();
+			return Map.Values.GetEnumerator();
 		}
 
 		IEnumerator IEnumerable.GetEnumerator()
 		{
-			return Items.Values.GetEnumerator();
+			return Map.Values.GetEnumerator();
 		}
 
 		public override IDbConnection Connection()
@@ -69,6 +69,15 @@ namespace Dapper.Extension
 			return list;
 		}
 
+		public Ret Find(KeyType key, int? commandTimeout = null)
+		{
+			return Map.TryGetValue(key, out Ret value) ? value : Get(key, commandTimeout);
+		}
+
+		public Ret Find(T obj, int? commandTimeout = null)
+		{
+			return Find(TableData<T>.GetKey<KeyType>(obj), commandTimeout);
+		}
 
 		#region IDataAccessObjectSync<T, KeyType, Ret>
 		public override List<KeyType> GetKeys(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
@@ -103,7 +112,8 @@ namespace Dapper.Extension
 
 		public override Ret Get(KeyType key, int? commandTimeout = null)
 		{
-			return UpsertItem(DAO.Get(key, commandTimeout));
+			T obj = DAO.Get(key, commandTimeout);
+			return obj == null ? default(Ret) : UpsertItem(obj);
 		}
 
 		public override bool Delete(object key, int? commandTimeout = null)
@@ -148,7 +158,14 @@ namespace Dapper.Extension
 
 		public override Ret Upsert(T obj, int? commandTimeout = null)
 		{
-			return UpsertItem(DAO.Upsert(obj, commandTimeout));
+			obj = DAO.Upsert(obj, commandTimeout);
+			if (obj == null) {
+				if (Map.TryGetValue(TableData<T>.GetKey<KeyType>(obj), out Ret value)) {
+					return value;
+				}
+				return default(Ret);
+			}
+			return UpsertItem(obj);
 		}
 
 		public override IEnumerable<Ret> Upsert(IEnumerable<T> objs, int? commandTimeout = null)
@@ -158,12 +175,12 @@ namespace Dapper.Extension
 
 		public override Ret Get(object key, int? commandTimeout = null)
 		{
-			return UpsertItem(DAO.Get(key, commandTimeout));
+			return Get(TableData<T>.GetKey<KeyType>(key), commandTimeout);
 		}
 
 		public override Ret Get(T obj, int? commandTimeout = null)
 		{
-			return UpsertItem(DAO.Get(obj, commandTimeout));
+			return Get(TableData<T>.GetKey<KeyType>(obj), commandTimeout);
 		}
 
 		public override List<Ret> GetList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
@@ -300,12 +317,12 @@ namespace Dapper.Extension
 
 		public IEnumerator<Ret> GetEnumerator()
 		{
-			return Items.Values.GetEnumerator();
+			return Map.Values.GetEnumerator();
 		}
 
 		IEnumerator IEnumerable.GetEnumerator()
 		{
-			return Items.Values.GetEnumerator();
+			return Map.Values.GetEnumerator();
 		}
 
 		public TableCache(DataAccessObject<T> dao, Func<T, Ret> constructor, Func<T, Ret, Ret> update)
@@ -447,7 +464,7 @@ namespace Dapper.Extension
 		public override List<T> DeleteList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
 			List<T> objs = DAO.DeleteList(transaction, whereCondition, param, buffered, commandTimeout);
-			foreach(T obj in objs) {
+			foreach (T obj in objs) {
 				Map.Remove(obj);
 			}
 			return objs;
@@ -468,7 +485,7 @@ namespace Dapper.Extension
 		public override int Delete(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
 		{
 			int deleted = DAO.Delete(transaction, objs, commandTimeout);
-			foreach(T obj in objs) {
+			foreach (T obj in objs) {
 				Map.Remove(obj);
 			}
 			return deleted;
