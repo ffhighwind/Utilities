@@ -28,6 +28,7 @@ namespace Dapper.Extension.Interfaces
 		public abstract int Update(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null);
 		public abstract Ret Upsert(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		public abstract IEnumerable<Ret> Upsert(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null);
+		public abstract List<T> DeleteList(IDbTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 		#endregion // ITransactionQueriesSync<T>
 
 
@@ -111,6 +112,11 @@ namespace Dapper.Extension.Interfaces
 		{
 			return await Task.Run(() => Upsert(transaction, objs, commandTimeout));
 		}
+
+		public async Task<List<T>> DeleteListAsync(IDbTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			return await Task.Run(() => DeleteList(transaction, objs, buffered, commandTimeout));
+		}
 		#endregion // ITransactionQueriesAsync<T>
 	}
 
@@ -136,6 +142,7 @@ namespace Dapper.Extension.Interfaces
 		public abstract Ret Get(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		public abstract List<Ret> GetList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		public abstract int RecordCount(IDbTransaction transaction, string whereCondition = "", object param = null, int? commandTimeout = null);
+		public abstract List<KeyType> DeleteList(IDbTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 		#endregion // ITransactionQueriesSync<T, KeyType, Ret>
 
 
@@ -233,6 +240,11 @@ namespace Dapper.Extension.Interfaces
 		public async Task<List<KeyType>> DeleteListAsync(IDbTransaction transaction, string whereCondition, object param, bool buffered, int? commandTimeout)
 		{
 			return await Task.Run(() => DeleteList(transaction, whereCondition, param, buffered, commandTimeout));
+		}
+
+		public async Task<List<KeyType>> DeleteListAsync(IDbTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			return await Task.Run(() => DeleteList(transaction, objs, buffered, commandTimeout));
 		}
 		#endregion ITransactionQueriesAsync<T, KeyType Ret>
 	}

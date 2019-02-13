@@ -13,6 +13,7 @@ namespace Dapper.Extension.Interfaces
 	{
 		Task<List<T>> GetKeysAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		Task<List<T>> DeleteListAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		Task<List<T>> DeleteListAsync(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 
 		Task<bool> DeleteAsync(object key, int? commandTimeout = null);
 		Task<bool> DeleteAsync(T obj, int? commandTimeout = null);
@@ -44,6 +45,7 @@ namespace Dapper.Extension.Interfaces
 		Task<int> DeleteAsync(IEnumerable<KeyType> keys, int? commandTimeout = null);
 		Task<List<KeyType>> DeleteListAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		Task<Ret> GetAsync(KeyType key, int? commandTimeout = null);
+		Task<List<KeyType>> DeleteListAsync(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 
 		Task<bool> DeleteAsync(object key, int? commandTimeout = null);
 		Task<bool> DeleteAsync(T obj, int? commandTimeout = null);

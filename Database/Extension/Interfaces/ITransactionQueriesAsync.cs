@@ -13,6 +13,7 @@ namespace Dapper.Extension.Interfaces
 	{
 		Task<List<T>> GetKeysAsync(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		Task<List<T>> DeleteListAsync(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		Task<List<T>> DeleteListAsync(IDbTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 
 		Task<bool> DeleteAsync(IDbTransaction transaction, object key, int? commandTimeout = null);
 		Task<bool> DeleteAsync(IDbTransaction transaction, T obj, int? commandTimeout = null);
@@ -44,6 +45,7 @@ namespace Dapper.Extension.Interfaces
 		Task<int> DeleteAsync(IDbTransaction transaction, IEnumerable<KeyType> keys, int? commandTimeout = null);
 		Task<Ret> GetAsync(IDbTransaction transaction, KeyType key, int? commandTimeout = null);
 		Task<List<KeyType>> DeleteListAsync(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		Task<List<KeyType>> DeleteListAsync(IDbTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 
 		Task<bool> DeleteAsync(IDbTransaction transaction, object key, int? commandTimeout = null);
 		Task<bool> DeleteAsync(IDbTransaction transaction, T obj, int? commandTimeout = null);

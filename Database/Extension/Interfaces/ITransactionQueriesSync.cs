@@ -14,6 +14,7 @@ namespace Dapper.Extension.Interfaces
 	{
 		List<T> GetKeys(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		List<T> DeleteList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		List<T> DeleteList(IDbTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 
 		bool Delete(IDbTransaction transaction, object key, int? commandTimeout = null);
 		bool Delete(IDbTransaction transaction, T obj, int? commandTimeout = null);
@@ -45,6 +46,7 @@ namespace Dapper.Extension.Interfaces
 		int Delete(IDbTransaction transaction, IEnumerable<KeyType> keys, int? commandTimeout = null);
 		Ret Get(IDbTransaction transaction, KeyType key, int? commandTimeout = null);
 		List<KeyType> DeleteList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		List<KeyType> DeleteList(IDbTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 
 		bool Delete(IDbTransaction transaction, object key, int? commandTimeout = null);
 		bool Delete(IDbTransaction transaction, T obj, int? commandTimeout = null);

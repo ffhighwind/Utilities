@@ -283,6 +283,24 @@ namespace Dapper.Extension
 		{
 			return DAO.RecordCount(transaction, whereCondition, param, commandTimeout);
 		}
+
+		public override List<KeyType> DeleteList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			List<KeyType> keys = DAO.DeleteList(objs, buffered, commandTimeout);
+			foreach (KeyType key in keys) {
+				Map.Remove(key);
+			}
+			return keys;
+		}
+
+		public override List<KeyType> DeleteList(IDbTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			List<KeyType> keys = DAO.DeleteList(transaction, objs, buffered, commandTimeout);
+			foreach (KeyType key in keys) {
+				Map.Remove(key);
+			}
+			return keys;
+		}
 		#endregion // ITransactionQueriesSync<T, KeyType, Ret>
 	}
 
@@ -447,7 +465,7 @@ namespace Dapper.Extension
 		public override List<T> DeleteList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
 			List<T> objs = DAO.DeleteList(transaction, whereCondition, param, buffered, commandTimeout);
-			foreach(T obj in objs) {
+			foreach (T obj in objs) {
 				Map.Remove(obj);
 			}
 			return objs;
@@ -468,7 +486,7 @@ namespace Dapper.Extension
 		public override int Delete(IDbTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
 		{
 			int deleted = DAO.Delete(transaction, objs, commandTimeout);
-			foreach(T obj in objs) {
+			foreach (T obj in objs) {
 				Map.Remove(obj);
 			}
 			return deleted;
@@ -527,6 +545,24 @@ namespace Dapper.Extension
 		public override int RecordCount(IDbTransaction transaction, string whereCondition = "", object param = null, int? commandTimeout = null)
 		{
 			return DAO.RecordCount(transaction, whereCondition, param, commandTimeout);
+		}
+
+		public override List<T> DeleteList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			List<T> keys = DAO.DeleteList(objs, buffered, commandTimeout);
+			foreach (T key in keys) {
+				Map.Remove(key);
+			}
+			return keys;
+		}
+
+		public override List<T> DeleteList(IDbTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			List<T> keys = DAO.DeleteList(transaction, objs, buffered, commandTimeout);
+			foreach (T key in keys) {
+				Map.Remove(key);
+			}
+			return keys;
 		}
 		#endregion // ITransactionQueriesSync<T, T, Ret>
 	}

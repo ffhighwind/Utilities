@@ -34,6 +34,7 @@ namespace Dapper.Extension.Interfaces
 		public abstract int Update(IEnumerable<T> objs, int? commandTimeout = null);
 		public abstract Ret Upsert(T obj, int? commandTimeout = null);
 		public abstract IEnumerable<Ret> Upsert(IEnumerable<T> objs, int? commandTimeout = null);
+		public abstract List<T> DeleteList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 		#endregion IDataAccessObjectSync<T>
 
 
@@ -117,6 +118,11 @@ namespace Dapper.Extension.Interfaces
 		{
 			return await Task.Run(() => Upsert(objs, commandTimeout));
 		}
+
+		public async Task<List<T>> DeleteListAsync(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			return await Task.Run(() => DeleteList(objs, buffered, commandTimeout));
+		}
 		#endregion // IDataAccessObjectAsync<T>
 	}
 
@@ -153,6 +159,7 @@ namespace Dapper.Extension.Interfaces
 		public abstract int Update(IEnumerable<T> objs, int? commandTimeout = null);
 		public abstract Ret Upsert(T obj, int? commandTimeout = null);
 		public abstract IEnumerable<Ret> Upsert(IEnumerable<T> objs, int? commandTimeout = null);
+		public abstract List<KeyType> DeleteList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 		#endregion // IDataAccessObjectSync<T, KeyType, Ret>
 
 
@@ -250,6 +257,11 @@ namespace Dapper.Extension.Interfaces
 		public async Task<IEnumerable<Ret>> UpsertAsync(IEnumerable<T> objs, int? commandTimeout = null)
 		{
 			return await Task.Run(() => Upsert(objs, commandTimeout));
+		}
+
+		public async Task<List<KeyType>> DeleteListAsync(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			return await Task.Run(() => DeleteList(objs, buffered, commandTimeout));
 		}
 		#endregion // IDataAccessObjectAsync<T, KeyType, Ret>
 	}

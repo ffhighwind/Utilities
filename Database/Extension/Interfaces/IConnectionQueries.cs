@@ -31,6 +31,8 @@ namespace Dapper.Extension.Interfaces
 		public abstract int Update(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null);
 		public abstract T Upsert(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null);
 		public abstract IEnumerable<T> Upsert(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null);
+		public abstract List<KeyType> DeleteList<KeyType>(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
+		public abstract List<T> DeleteList(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
 		#endregion // IConnectionQueriesSync<T>
 
 
@@ -138,6 +140,16 @@ namespace Dapper.Extension.Interfaces
 		public async Task<IEnumerable<T>> UpsertAsync(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
 			return await Task.Run(() => Upsert(connection, objs, transaction, commandTimeout));
+		}
+
+		public async Task<List<KeyType>> DeleteListAsync<KeyType>(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		{
+			return await Task.Run(() => DeleteList<KeyType>(connection, objs, transaction, buffered, commandTimeout));
+		}
+
+		public async Task<List<T>> DeleteListAsync(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		{
+			return await Task.Run(() => DeleteList(connection, objs, transaction, buffered, commandTimeout));
 		}
 		#endregion // IConnectionQueriesAsync<T>
 	}

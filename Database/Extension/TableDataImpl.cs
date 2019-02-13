@@ -12,7 +12,7 @@ namespace Dapper.Extension
 {
 	public class TableDataImpl<T> : ITableData<T> where T : class
 	{
-		public static TableDataImpl<T> Default { get; private set; }  = new TableDataImpl<T>();
+		public static TableDataImpl<T> Default { get; private set; } = new TableDataImpl<T>();
 
 		public TableDataImpl(BindingFlags propertyFlags = BindingFlags.Public | BindingFlags.Instance)
 		{
@@ -182,6 +182,7 @@ namespace Dapper.Extension
 		public string[] SelectColumns => GetColumnNames(SelectProperties);
 		public string[] UpdateColumns => GetColumnNames(UpdateProperties);
 		public string[] InsertColumns => GetColumnNames(InsertProperties);
+		public string[] EqualityColumns => GetColumnNames(EqualityProperties);
 
 		#region ITableQueries<T>
 		public override List<T> GetKeys(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
@@ -202,12 +203,19 @@ namespace Dapper.Extension
 		public override int Delete(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
 			int count = 0;
-			foreach (T obj in objs) {
-				if (Delete(connection, obj, transaction, commandTimeout)) {
-					count++;
-				}
+			foreach (var param in CreateDynamicParams(objs)) {
+				count += connection.Execute(DeleteQuery + param.Item1, param.Item2, transaction, commandTimeout);
 			}
 			return count;
+		}
+
+		public override List<T> DeleteList(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		{
+			List<T> list = new List<T>();
+			foreach (var param in CreateDynamicParams(objs)) {
+				list.AddRange(DeleteList(connection, param.Item1, param.Item2, transaction, buffered, commandTimeout));
+			}
+			return list;
 		}
 
 		public override int Delete(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
@@ -306,7 +314,11 @@ namespace Dapper.Extension
 
 		public override int Delete<KeyType>(IDbConnection connection, IEnumerable<KeyType> keys, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
-			return Delete(connection, "WHERE [" + KeyColumns[0] + "] in @keys", new { keys }, transaction, false, commandTimeout);
+			int count = 0;
+			foreach (IEnumerable<KeyType> Keys in Partition<KeyType>(keys, 2000)) {
+				count += Delete(connection, "WHERE [" + KeyColumns[0] + "] in @Keys", new { Keys }, transaction, true, commandTimeout);
+			}
+			return count;
 		}
 
 		public override T Get<KeyType>(IDbConnection connection, KeyType key, IDbTransaction transaction = null, int? commandTimeout = null)
@@ -319,6 +331,41 @@ namespace Dapper.Extension
 		public override List<KeyType> DeleteList<KeyType>(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 		{
 			return connection.Query<KeyType>(DeleteListQuery + whereCondition, param, transaction, buffered, commandTimeout).AsList();
+		}
+
+		public override List<KeyType> DeleteList<KeyType>(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		{
+			List<KeyType> list = new List<KeyType>();
+			foreach (var param in CreateDynamicParams(objs)) {
+				list.AddRange(DeleteList<KeyType>(connection, param.Item1, param.Item2, transaction, buffered, commandTimeout));
+			}
+			return list;
+		}
+
+		private IEnumerable<Tuple<string, DynamicParameters>> CreateDynamicParams(IEnumerable<T> objs)
+		{
+			int max = 2000 / EqualityProperties.Length;
+
+			foreach (IEnumerable<T> part in Partition<T>(objs, max)) {
+				int k = 0;
+				StringBuilder sb = new StringBuilder("WHERE ");
+				DynamicParameters param = new DynamicParameters();
+
+				foreach (T obj in part) {
+					sb.Append("([" + KeyColumns[0] + "] = @p" + k);
+					param.Add("@p" + k, KeyProperties[0].GetValue(obj));
+					k++;
+					for (int j = 1; j < KeyColumns.Length; j++) {
+						sb.Append(" AND [" + KeyColumns[j] + "] = @p" + k);
+						param.Add("@p" + k, KeyProperties[j].GetValue(obj));
+						k++;
+					}
+					sb.Append(")");
+					sb.Append(" OR ");
+				}
+				sb.Remove(sb.Length - 4, 4);
+				yield return new Tuple<string, DynamicParameters>(sb.ToString(), param);
+			}
 		}
 	}
 }

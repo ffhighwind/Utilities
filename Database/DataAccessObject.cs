@@ -226,6 +226,16 @@ namespace Dapper
 		{
 			return Queries.Upsert(transaction.Connection, objs, transaction, commandTimeout);
 		}
+
+		public override List<T> DeleteList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			throw new NotImplementedException();
+		}
+
+		public override List<T> DeleteList(IDbTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			return Queries.DeleteList<T>(transaction.Connection, objs, transaction, buffered, commandTimeout);
+		}
 		#endregion // ITransactionQueriesSync<T>
 	}
 
@@ -385,6 +395,13 @@ namespace Dapper
 				return Queries.Upsert(conn, objs, null, commandTimeout);
 			}
 		}
+
+		public override List<KeyType> DeleteList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			using (SqlConnection conn = new SqlConnection(ConnectionString)) {
+				return Queries.DeleteList<KeyType>(conn, objs, null, buffered, commandTimeout);
+			}
+		}
 		#endregion // IDataAccessObjectSync<T, KeyType, Ret>
 
 
@@ -482,6 +499,11 @@ namespace Dapper
 		public override int RecordCount(IDbTransaction transaction, string whereCondition = "", object param = null, int? commandTimeout = null)
 		{
 			return Queries.RecordCount(transaction.Connection, whereCondition, param, transaction, commandTimeout);
+		}
+
+		public override List<KeyType> DeleteList(IDbTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			return Queries.DeleteList<KeyType>(transaction.Connection, objs, transaction, buffered, commandTimeout);
 		}
 		#endregion // ITransactionQueriesSync<T, KeyType, Ret>
 	}
