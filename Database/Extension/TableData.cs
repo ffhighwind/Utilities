@@ -14,7 +14,8 @@ namespace Dapper.Extension
 {
 	public static class TableData<T> where T : class
 	{
-		static TableData() {
+		static TableData()
+		{
 			TableAttribute = typeof(T).GetCustomAttribute<TableAttribute>(false);
 			TableName = TableAttribute?.Name.Replace("'", "") ?? typeof(T).Name;
 			Queries = TableDataImpl<T>.Default;

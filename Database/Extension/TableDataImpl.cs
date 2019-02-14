@@ -23,23 +23,45 @@ namespace Dapper.Extension
 				&& prop.CanRead && prop.CanWrite && (!prop.PropertyType.IsClass || prop.PropertyType == typeof(string))).ToArray();
 			KeyProperties = Properties.Where(prop => prop.GetCustomAttribute<KeyAttribute>(false) != null).ToArray();
 			AutoKeyProperties = KeyProperties.Where(prop => !prop.GetCustomAttribute<KeyAttribute>(false).Required).ToArray();
-			SelectProperties = GetProperties(Array.Empty<PropertyInfo>(), typeof(IgnoreSelectAttribute), typeof(IgnoreAttribute));
-			InsertProperties = GetProperties(AutoKeyProperties, typeof(IgnoreInsertAttribute), typeof(IgnoreAttribute));
-			UpdateProperties = GetProperties(AutoKeyProperties, typeof(IgnoreUpdateAttribute), typeof(IgnoreAttribute));
-			EqualityProperties = KeyProperties.Length == 0 ? Properties : KeyProperties;
+			SelectProperties = GetProperties(Array.Empty<PropertyInfo>(), (prop) => true, typeof(IgnoreSelectAttribute), typeof(IgnoreAttribute));
+			InsertProperties = GetProperties(AutoKeyProperties, (prop) => { var attr = prop.GetCustomAttribute<IgnoreInsertAttribute>(); return attr == null || attr.Value != null; }, typeof(IgnoreAttribute));
+			UpdateProperties = GetProperties(AutoKeyProperties, (prop) => { var attr = prop.GetCustomAttribute<IgnoreUpdateAttribute>(); return attr == null || attr.Value != null; }, typeof(IgnoreAttribute));
+
+			Columns = GetColumnNames(Properties);
+			KeyColumns = GetColumnNames(KeyProperties);
+			AutoKeyColumns = GetColumnNames(AutoKeyProperties);
+			SelectColumns = GetColumnNames(SelectProperties);
+			UpdateColumns = GetColumnNames(UpdateProperties);
+			InsertColumns = GetColumnNames(InsertProperties);
+
+			if (KeyProperties.Length == 0) {
+				EqualityProperties = Properties;
+				EqualityColumns = Columns;
+			}
+			else {
+				EqualityProperties = KeyProperties;
+				EqualityColumns = KeyColumns;
+			}
+			InsertDefaults = new string[InsertProperties.Length];
+			for(int i = 0; i < InsertProperties.Length; i++) {
+				InsertDefaults[i] = InsertProperties[i].GetCustomAttribute<IgnoreInsertAttribute>()?.Value;
+			}
+			UpdateDefaults = new string[UpdateProperties.Length];
+			for (int i = 0; i < UpdateProperties.Length; i++) {
+				UpdateDefaults[i] = UpdateProperties[i].GetCustomAttribute<IgnoreUpdateAttribute>()?.Value;
+			}
 			GenerateQueries();
 		}
 
 		protected void GenerateQueries()
 		{
-			Columns = GetColumnNames(Properties);
-			KeyColumns = GetColumnNames(KeyProperties);
+			string[] empty = new string[Properties.Length];
 			string selectQueryPart = "[" + string.Join("],[", GetColumnNames(SelectProperties)) + "] FROM " + TableName;
-			string whereEqualsQuery = "WHERE " + GetEqualsParams(" AND ", EqualityProperties);
+			string whereEqualsQuery = "WHERE " + GetEqualsParams(" AND ", EqualityProperties, empty);
 			string whereKeyQuery = KeyProperties.Length == 0 ? "" : whereEqualsQuery;
 			string insertIntoQuery = "INSERT INTO " + TableName + " ([" + string.Join("],[", InsertColumns) + "])\n";
 			string insertValuesQuery = "VALUES (" + GetParams(InsertProperties) + ")";
-			string whereInsertedEqualsQuery = "\nWHERE " + GetEqualsParams(" AND ", InsertProperties);
+			string whereInsertedEqualsQuery = "\nWHERE " + GetEqualsParams(" AND ", InsertProperties, InsertDefaults);
 
 			InsertQuery = insertIntoQuery + GetOutput("INSERTED", false) + insertValuesQuery;
 			SelectListQuery = "SELECT " + selectQueryPart + "\n";
@@ -50,7 +72,7 @@ namespace Dapper.Extension
 			DeleteSingleQuery = DeleteQuery + whereEqualsQuery;
 			DeleteListQuery = DeleteQuery + GetOutput("DELETED", true) + "\n";
 
-			string updateQuery = "UPDATE " + TableName + "\nSET " + GetEqualsParams(",", UpdateProperties);
+			string updateQuery = "UPDATE " + TableName + "\nSET " + GetEqualsParams(",", UpdateProperties, UpdateDefaults);
 
 			UpsertQuery = "IF NOT EXISTS (\nSELECT TOP(1) * FROM " + TableName + "\n" + whereEqualsQuery + ")\n" + insertIntoQuery + GetOutput("INSERTED", true) + insertValuesQuery;
 
@@ -82,14 +104,14 @@ namespace Dapper.Extension
 		/// x = @x AND y = @y
 		/// x = @x OR  y = @y
 		/// </summary>
-		private string GetEqualsParams(string joinString, params PropertyInfo[] properties)
+		private string GetEqualsParams(string joinString, PropertyInfo[] properties, string[] defaultValues)
 		{
 			if (properties.Length == 0)
 				return "";
 			string[] columnNames = GetColumnNames(properties);
 			StringBuilder sb = new StringBuilder();
 			for (int i = 0; i < columnNames.Length; i++) {
-				sb.AppendFormat("\t{0}[{1}] = @{2}\n", joinString, columnNames[i], properties[i].Name);
+				sb.AppendFormat("\t{0}[{1}] = {2}\n", joinString, columnNames[i], defaultValues[i] ?? "@" + properties[i].Name);
 			}
 			return "\t" + sb.Remove(0, joinString.Length + 1).ToString();
 		}
@@ -133,7 +155,7 @@ namespace Dapper.Extension
 		/// <param name="ignoredProperties">PropertyInfos in this list are ignored.</param>
 		/// <param name="ignoredAttributes">PropertyInfos with these any of these Attributes are ignored.</param>
 		/// <returns>A set of PropertyInfos.</returns>
-		protected PropertyInfo[] GetProperties(PropertyInfo[] ignoredProperties, params Type[] ignoredAttributes)
+		protected PropertyInfo[] GetProperties(PropertyInfo[] ignoredProperties, Func<PropertyInfo, bool> accepted, params Type[] ignoredAttributes)
 		{
 			List<PropertyInfo> properties = new List<PropertyInfo>();
 			for (int i = 0; i < Properties.Length; i++) {
@@ -147,7 +169,7 @@ namespace Dapper.Extension
 						break;
 					}
 				}
-				if (ignoredAttr == null) {
+				if (ignoredAttr == null && accepted(Properties[i])) {
 					properties.Add(Properties[i]);
 				}
 			}
@@ -182,11 +204,14 @@ namespace Dapper.Extension
 		internal string DeleteListQuery { get; private set; }
 		internal string CountQuery { get; private set; }
 
-		public string[] AutoKeyColumns => GetColumnNames(AutoKeyProperties);
-		public string[] SelectColumns => GetColumnNames(SelectProperties);
-		public string[] UpdateColumns => GetColumnNames(UpdateProperties);
-		public string[] InsertColumns => GetColumnNames(InsertProperties);
-		public string[] EqualityColumns => GetColumnNames(EqualityProperties);
+		public string[] AutoKeyColumns { get; private set; }
+		public string[] SelectColumns { get; private set; }
+		public string[] UpdateColumns { get; private set; }
+		public string[] InsertColumns { get; private set; }
+		public string[] EqualityColumns { get; private set; }
+
+		public string[] InsertDefaults { get; set; }
+		public string[] UpdateDefaults { get; set; }
 
 		#region ITableQueries<T>
 		public override List<T> GetKeys(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
@@ -204,7 +229,7 @@ namespace Dapper.Extension
 			return 0 < connection.Execute(DeleteSingleQuery, obj, transaction, commandTimeout);
 		}
 
-		public override int Delete(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
+		public override int BulkDelete(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, int? commandTimeout = null)
 		{
 			int count = 0;
 
@@ -214,7 +239,7 @@ namespace Dapper.Extension
 			return count;
 		}
 
-		public override List<T> DeleteList(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		public override List<T> BulkDeleteList(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 		{
 			List<T> list = new List<T>();
 			foreach (var param in CreateDynamicParams(objs)) {
@@ -242,22 +267,14 @@ namespace Dapper.Extension
 			return obj;
 		}
 
-		public override IEnumerable<T> Insert(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
-		{
-			foreach (T obj in objs) {
-				Insert(connection, obj, transaction, commandTimeout);
-			}
-			return objs;
-		}
-
-		public override IEnumerable<T> Insert(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, int? commandTimeout = null)
+		public override IEnumerable<T> BulkInsert(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, int? commandTimeout = null)
 		{
 			using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connection, SqlBulkCopyOptions.Default, transaction)) {
-				return Insert(bulkCopy, objs, commandTimeout);
+				return BulkInsert(bulkCopy, objs, commandTimeout);
 			}
 		}
 
-		public override IEnumerable<T> Insert(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null)
+		public override IEnumerable<T> BulkInsert(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null)
 		{
 			using (GenericDataReader<T> dataReader = new GenericDataReader<T>(objs, InsertColumns, InsertProperties)) {
 				bulkCopy.DestinationTableName = TableData<T>.TableName;
@@ -272,7 +289,7 @@ namespace Dapper.Extension
 			return 0 < connection.ExecuteScalar<int>(UpdateQuery, obj, transaction, commandTimeout);
 		}
 
-		public override int Update(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
+		public override int BulkUpdate(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, int? commandTimeout = null)
 		{
 			int count = 0;
 			foreach (T obj in objs) {
@@ -292,7 +309,7 @@ namespace Dapper.Extension
 			return obj;
 		}
 
-		public override IEnumerable<T> Upsert(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, int? commandTimeout = null)
+		public override IEnumerable<T> BulkUpsert(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, int? commandTimeout = null)
 		{
 			foreach (T obj in objs) {
 				Upsert(connection, obj, transaction, commandTimeout);
@@ -319,7 +336,7 @@ namespace Dapper.Extension
 		{
 			return connection.ExecuteScalar<int>(CountQuery + whereCondition, param, transaction, commandTimeout);
 		}
-	
+
 		public override List<KeyType> GetKeys<KeyType>(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 		{
 			return connection.Query<KeyType>(SelectListKeysQuery + whereCondition, param, transaction, buffered, commandTimeout).AsList();
@@ -332,7 +349,7 @@ namespace Dapper.Extension
 			return Delete(connection, newKey, transaction, commandTimeout);
 		}
 
-		public override int Delete<KeyType>(IDbConnection connection, IEnumerable<KeyType> keys, IDbTransaction transaction = null, int? commandTimeout = null)
+		public override int BulkDelete<KeyType>(SqlConnection connection, IEnumerable<KeyType> keys, SqlTransaction transaction = null, int? commandTimeout = null)
 		{
 			int count = 0;
 			foreach (IEnumerable<KeyType> Keys in Partition<KeyType>(keys, 2000)) {
@@ -345,7 +362,7 @@ namespace Dapper.Extension
 		{
 			dynamic newKey = new ExpandoObject();
 			((IDictionary<string, object>) newKey)[KeyColumns[0]] = key;
-			return Get(connection, (object)newKey, transaction, commandTimeout);
+			return Get(connection, (object) newKey, transaction, commandTimeout);
 		}
 
 		public override List<KeyType> DeleteList<KeyType>(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
@@ -353,7 +370,7 @@ namespace Dapper.Extension
 			return connection.Query<KeyType>(DeleteListQuery + whereCondition, param, transaction, buffered, commandTimeout).AsList();
 		}
 
-		public override List<KeyType> DeleteList<KeyType>(IDbConnection connection, IEnumerable<T> objs, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		public override List<KeyType> BulkDeleteList<KeyType>(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 		{
 			List<KeyType> list = new List<KeyType>();
 			foreach (var param in CreateDynamicParams(objs)) {
