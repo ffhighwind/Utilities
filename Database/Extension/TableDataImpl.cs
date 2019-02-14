@@ -43,7 +43,7 @@ namespace Dapper.Extension
 				EqualityColumns = KeyColumns;
 			}
 			InsertDefaults = new string[InsertProperties.Length];
-			for(int i = 0; i < InsertProperties.Length; i++) {
+			for (int i = 0; i < InsertProperties.Length; i++) {
 				InsertDefaults[i] = InsertProperties[i].GetCustomAttribute<IgnoreInsertAttribute>()?.Value;
 			}
 			UpdateDefaults = new string[UpdateProperties.Length];
@@ -60,7 +60,7 @@ namespace Dapper.Extension
 			string whereEqualsQuery = "WHERE " + GetEqualsParams(" AND ", EqualityProperties, empty);
 			string whereKeyQuery = KeyProperties.Length == 0 ? "" : whereEqualsQuery;
 			string insertIntoQuery = "INSERT INTO " + TableName + " ([" + string.Join("],[", InsertColumns) + "])\n";
-			string insertValuesQuery = "VALUES (" + GetParams(InsertProperties) + ")";
+			string insertValuesQuery = "VALUES (" + GetValues(InsertProperties, InsertDefaults) + ")";
 			string whereInsertedEqualsQuery = "\nWHERE " + GetEqualsParams(" AND ", InsertProperties, InsertDefaults);
 
 			InsertQuery = insertIntoQuery + GetOutput("INSERTED", false) + insertValuesQuery;
@@ -111,7 +111,7 @@ namespace Dapper.Extension
 			string[] columnNames = GetColumnNames(properties);
 			StringBuilder sb = new StringBuilder();
 			for (int i = 0; i < columnNames.Length; i++) {
-				sb.AppendFormat("\t{0}[{1}] = {2}\n", joinString, columnNames[i], defaultValues[i] ?? "@" + properties[i].Name);
+				sb.AppendFormat("\t{0}[{1}] = {2}\n", joinString, columnNames[i], defaultValues[i] ?? ("@" + properties[i].Name));
 			}
 			return "\t" + sb.Remove(0, joinString.Length + 1).ToString();
 		}
@@ -119,11 +119,15 @@ namespace Dapper.Extension
 		/// <summary>
 		/// @a,@b,@c
 		/// </summary>
-		private string GetParams(params PropertyInfo[] properties)
+		private string GetValues(PropertyInfo[] properties, string[] defaultValues)
 		{
 			if (properties.Length == 0)
 				return "";
-			return "@" + string.Join(",@", properties.Select(prop => prop.Name));
+			StringBuilder sb = new StringBuilder(defaultValues[0] ?? ("@" + properties[0].Name));
+			for (int i = 1; i < properties.Length; i++) {
+				sb.Append(',').Append(defaultValues[i] ?? ("@" + properties[i].Name));
+			}
+			return sb.ToString();
 		}
 
 		/// <summary>
