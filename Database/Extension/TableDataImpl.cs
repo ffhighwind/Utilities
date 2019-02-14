@@ -55,13 +55,11 @@ namespace Dapper.Extension
 
 		protected void GenerateQueries()
 		{
-			string[] empty = new string[Properties.Length];
 			string selectQueryPart = "[" + string.Join("],[", GetColumnNames(SelectProperties)) + "] FROM " + TableName;
-			string whereEqualsQuery = "WHERE " + GetEqualsParams(" AND ", EqualityProperties, empty);
+			string whereEqualsQuery = "WHERE " + GetEqualsParams(" AND ", EqualityProperties, new string[EqualityProperties.Length]);
 			string whereKeyQuery = KeyProperties.Length == 0 ? "" : whereEqualsQuery;
 			string insertIntoQuery = "INSERT INTO " + TableName + " ([" + string.Join("],[", InsertColumns) + "])\n";
 			string insertValuesQuery = "VALUES (" + GetValues(InsertProperties, InsertDefaults) + ")";
-			string whereInsertedEqualsQuery = "\nWHERE " + GetEqualsParams(" AND ", InsertProperties, InsertDefaults);
 
 			InsertQuery = insertIntoQuery + GetOutput("INSERTED", false) + insertValuesQuery;
 			SelectListQuery = "SELECT " + selectQueryPart + "\n";
