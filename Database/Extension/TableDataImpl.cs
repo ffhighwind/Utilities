@@ -288,7 +288,7 @@ namespace Dapper.Extension
 
 		public override bool Update(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
-			return 0 < connection.ExecuteScalar<int>(UpdateQuery, obj, transaction, commandTimeout);
+			return 0 < connection.Execute(UpdateQuery, obj, transaction, commandTimeout);
 		}
 
 		public override int BulkUpdate(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, int? commandTimeout = null)

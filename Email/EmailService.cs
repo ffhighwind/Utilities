@@ -327,6 +327,7 @@ namespace Utilities.Email
 		private IEnumerable<FileAttachment> GetNestedFileAttachments(Item item)
 		{
 			if (item.HasAttachments) {
+				item.Load();
 				foreach (Attachment att in item.Attachments) {
 					if (att is ItemAttachment iatt) {
 						if (iatt.Item == null)
