@@ -192,11 +192,6 @@ namespace Dapper.Extension
 		{
 			return DAO.RecordCount(whereCondition, param, commandTimeout);
 		}
-
-		public override IEnumerable<Ret> BulkInsert(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null)
-		{
-			return UpsertItems(DAO.BulkInsert(bulkCopy, objs, commandTimeout));
-		}
 		#endregion // IDataAccessObjectSync<T, KeyType, Ret>
 
 
@@ -474,11 +469,6 @@ namespace Dapper.Extension
 		public override int RecordCount(string whereCondition = "", object param = null, int? commandTimeout = null)
 		{
 			return DAO.RecordCount(whereCondition, param, commandTimeout);
-		}
-
-		public override IEnumerable<Ret> BulkInsert(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null)
-		{
-			return UpsertItems(DAO.BulkInsert(bulkCopy, objs, commandTimeout));
 		}
 		#endregion // IDataAccessObjectSync<T, T, Ret>
 

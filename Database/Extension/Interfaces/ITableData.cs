@@ -16,6 +16,7 @@ namespace Dapper.Extension.Interfaces
 		public PropertyInfo[] UpdateProperties { get; protected set; }
 		public PropertyInfo[] InsertProperties { get; protected set; }
 		public PropertyInfo[] EqualityProperties { get; protected set; }
+		public PropertyInfo[] UpsertProperties { get; protected set; }
 
 		public string[] Columns { get; protected set; }
 		public string[] KeyColumns { get; protected set; }

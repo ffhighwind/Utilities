@@ -34,7 +34,6 @@ namespace Dapper.Extension.Interfaces
 		int BulkUpdate(IEnumerable<T> objs, int? commandTimeout = null);
 		int BulkDelete(IEnumerable<T> objs, int? commandTimeout = null);
 		IEnumerable<Ret> BulkInsert(IEnumerable<T> objs, int? commandTimeout = null);
-		IEnumerable<Ret> BulkInsert(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null);
 	}
 
 
@@ -65,7 +64,6 @@ namespace Dapper.Extension.Interfaces
 		int BulkDelete(IEnumerable<T> objs, int? commandTimeout = null);
 		int BulkUpdate(IEnumerable<T> objs, int? commandTimeout = null);
 		IEnumerable<Ret> BulkInsert(IEnumerable<T> objs, int? commandTimeout = null);
-		IEnumerable<Ret> BulkInsert(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null);
 		IEnumerable<Ret> BulkUpsert(IEnumerable<T> objs, int? commandTimeout = null);
 	}
 }
