@@ -40,11 +40,11 @@ namespace Utilities.Converters
 		/// <param name="source">The <see cref="IEnumerable{T}"/> to read.</param>
 		/// <param name="columns">The names of the table columns that match the properties.</param>
 		/// <param name="props">The properties that will be read. If this is empty then all properties will be read.</param>
-		public GenericDataReader(IEnumerable<T> source, string[] columns, params PropertyInfo[] props)
+		public GenericDataReader(IEnumerable<T> source, string[] columns = null, params PropertyInfo[] props)
 		{
 			pinfos = props.Length == 0 ? props : typeof(T).GetProperties(DefaultBindingFlags);
 			enumerator = source.GetEnumerator();
-			columnNames = columns;
+			columnNames = columns ?? pinfos.Select(pinfo => pinfo.Name).ToArray();
 			types = new Type[pinfos.Length];
 			allowNull = new BitArray(pinfos.Length);
 			for (int i = 0; i < pinfos.Length; i++) {

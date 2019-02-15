@@ -30,7 +30,6 @@ namespace Dapper.Extension.Interfaces
 
 		public abstract int BulkDelete<KeyType>(SqlConnection connection, IEnumerable<KeyType> keys, SqlTransaction transaction = null, int? commandTimeout = null);
 		public abstract int BulkDelete(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, int? commandTimeout = null);
-		public abstract IEnumerable<T> BulkInsert(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout);
 		public abstract IEnumerable<T> BulkInsert(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, int? commandTimeout = null);
 		public abstract int BulkUpdate(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, int? commandTimeout = null);
 		public abstract IEnumerable<T> BulkUpsert(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, int? commandTimeout = null);
@@ -153,11 +152,6 @@ namespace Dapper.Extension.Interfaces
 		public async Task<List<T>> BulkDeleteListAsync(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 		{
 			return await Task.Run(() => BulkDeleteList(connection, objs, transaction, buffered, commandTimeout));
-		}
-
-		public async Task<IEnumerable<T>> BulkInsertAsync(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null)
-		{
-			return await Task.Run(() => BulkInsert(bulkCopy, objs, commandTimeout));
 		}
 		#endregion // IConnectionQueriesAsync<T>
 	}

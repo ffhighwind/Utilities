@@ -143,11 +143,6 @@ namespace Dapper
 				return Queries.BulkUpsert(conn, objs, null, commandTimeout);
 			}
 		}
-
-		public override IEnumerable<T> BulkInsert(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null)
-		{
-			return Queries.BulkInsert(bulkCopy, objs, commandTimeout);
-		}
 		#endregion IDataAccessObjectSync<T>
 
 
@@ -406,11 +401,6 @@ namespace Dapper
 			using (SqlConnection conn = new SqlConnection(ConnectionString)) {
 				return Queries.BulkDeleteList<KeyType>(conn, objs, null, buffered, commandTimeout);
 			}
-		}
-
-		public override IEnumerable<T> BulkInsert(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null)
-		{
-			return Queries.BulkInsert(bulkCopy, objs, commandTimeout);
 		}
 		#endregion // IDataAccessObjectSync<T, KeyType, Ret>
 

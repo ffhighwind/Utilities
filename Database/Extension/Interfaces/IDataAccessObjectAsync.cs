@@ -32,7 +32,6 @@ namespace Dapper.Extension.Interfaces
 		Task<List<T>> BulkDeleteListAsync(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 		Task<int> BulkDeleteAsync(IEnumerable<T> objs, int? commandTimeout = null);
 		Task<IEnumerable<Ret>> BulkInsertAsync(IEnumerable<T> objs, int? commandTimeout = null);
-		Task<IEnumerable<Ret>> BulkInsertAsync(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null);
 		Task<int> BulkUpdateAsync(IEnumerable<T> objs, int? commandTimeout = null);
 		Task<IEnumerable<Ret>> BulkUpsertAsync(IEnumerable<T> objs, int? commandTimeout = null);
 	}
@@ -63,7 +62,6 @@ namespace Dapper.Extension.Interfaces
 		Task<List<KeyType>> BulkDeleteListAsync(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 		Task<int> BulkDeleteAsync(IEnumerable<T> objs, int? commandTimeout = null);
 		Task<IEnumerable<Ret>> BulkInsertAsync(IEnumerable<T> objs, int? commandTimeout = null);
-		Task<IEnumerable<Ret>> BulkInsertAsync(SqlBulkCopy bulkCopy, IEnumerable<T> objs, int? commandTimeout = null);
 		Task<int> BulkUpdateAsync(IEnumerable<T> objs, int? commandTimeout = null);
 		Task<IEnumerable<Ret>> BulkUpsertAsync(IEnumerable<T> objs, int? commandTimeout = null);
 	}
