@@ -38,7 +38,7 @@ namespace Utilities.UnitTests
 				using (SqlTransaction trans = conn.BeginTransaction()) {
 
 					// Bulk Insert
-					list = conn.BulkInsert(list, trans).ToList();
+					list = conn.BulkInsert(list, trans).OrderBy(x => x.ID).ToList();
 					for (int i = 0; i < list.Count; i++) {
 						if (list[i].ID == -1) {
 							throw new InvalidOperationException();
@@ -47,7 +47,7 @@ namespace Utilities.UnitTests
 					// BulkDelete
 					int count = conn.BulkDelete(list, trans);
 
-					list = conn.BulkInsert(list, trans).ToList();
+					list = conn.BulkInsert(list, trans).OrderBy(x => x.ID).ToList();
 					// Update
 					for (int i = 0; i < list.Count; i++) {
 						list[i].Name = "Update " + list[i].Name;
@@ -62,7 +62,7 @@ namespace Utilities.UnitTests
 					}
 
 					// GetList
-					List<TestDTO> newList = conn.GetList<TestDTO>("", null, trans).OrderBy(y => y.ID).ToList();
+					List<TestDTO> newList = conn.GetList<TestDTO>("", null, trans).OrderBy(x => x.ID).ToList();
 					if (newList.Count != list.Count) {
 						throw new InvalidOperationException();
 					}
@@ -83,7 +83,7 @@ namespace Utilities.UnitTests
 						conn.Upsert(list[i], trans);
 					}
 					//conn.BulkUpsert(list, trans);
-					newList = conn.GetList<TestDTO>("", null, trans).OrderBy(y => y.ID).ToList();
+					newList = conn.GetList<TestDTO>("", null, trans).OrderBy(x => x.ID).ToList();
 					if (newList.Count != list.Count) {
 						throw new InvalidOperationException();
 					}
@@ -110,10 +110,10 @@ namespace Utilities.UnitTests
 
 					// Upsert
 					conn.Upsert(list[0], trans);
-					newList = conn.GetList<TestDTO>("", null, trans).ToList();
+					newList = conn.GetList<TestDTO>("", null, trans).OrderBy(x => x.ID).ToList();
 					if (newList.Count != 1)
 						throw new InvalidOperationException();
-					if (list[0].ID != newList[0].ID || list[0].ID < 3)
+					if (list[0].ID != newList[0].ID)
 						throw new InvalidOperationException();
 
 					// Insert
@@ -122,15 +122,13 @@ namespace Utilities.UnitTests
 					}
 
 					// DeleteList
-					newList = conn.DeleteList<TestDTO>("", null, trans).ToList();
-					if (count != 4)
+					newList = conn.DeleteList<TestDTO>("", null, trans).OrderBy(x => x.ID).ToList();
+					if (newList.Count != 4)
 						throw new InvalidOperationException();
 					for (int i = 0; i < newList.Count; i++) {
 						if (list[i].ID != newList[i].ID)
 							throw new InvalidOperationException();
 					}
-
-					trans.Commit();
 				}
 			}
 		}

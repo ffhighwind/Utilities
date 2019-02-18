@@ -14,16 +14,22 @@ namespace Dapper.Extension
 {
 	public class TableDataImpl<T> : ITableData<T> where T : class
 	{
-		private const string BulkTempStagingTable = "Tmp";
+		private const string BulkTempStagingTable = "#_DappBulkTable_";
 
 		public static TableDataImpl<T> Default { get; private set; } = new TableDataImpl<T>();
 
 		public TableDataImpl(BindingFlags propertyFlags = BindingFlags.Public | BindingFlags.Instance)
 		{
-			Properties = typeof(T).GetProperties(propertyFlags).Where(prop => prop.GetCustomAttribute<IgnoreAttribute>(false) == null
-				&& prop.CanRead && prop.CanWrite && (!prop.PropertyType.IsClass || prop.PropertyType == typeof(string))).ToArray();
+			Properties = typeof(T).GetProperties(propertyFlags).Where(prop => prop.CanRead && prop.CanWrite && (!prop.PropertyType.IsClass || prop.PropertyType == typeof(string))).ToArray();
 			KeyProperties = Properties.Where(prop => prop.GetCustomAttribute<KeyAttribute>(false) != null).ToArray();
 			AutoKeyProperties = KeyProperties.Where(prop => !prop.GetCustomAttribute<KeyAttribute>(false).Required).ToArray();
+			for(int i = 0; i < KeyProperties.Length; i++) {
+				if(KeyProperties[i].GetCustomAttribute<IgnoreSelectAttribute>(false) != null || KeyProperties[i].GetCustomAttribute<IgnoreAttribute>(false) != null) {
+					throw new InvalidOperationException("Cannot ignore key properties");
+				}
+			}
+			Properties = Properties.Where(prop => prop.GetCustomAttribute<IgnoreAttribute>(false) == null && (prop.GetCustomAttribute<IgnoreSelectAttribute>(false) == null 
+				|| prop.GetCustomAttribute<IgnoreInsertAttribute>(false) == null || prop.GetCustomAttribute<IgnoreUpdateAttribute>(false) == null)).ToArray();
 			SelectProperties = GetProperties(Array.Empty<PropertyInfo>(), (prop) => true, typeof(IgnoreSelectAttribute), typeof(IgnoreAttribute));
 			InsertProperties = GetProperties(AutoKeyProperties, (prop) => { var attr = prop.GetCustomAttribute<IgnoreInsertAttribute>(); return attr == null || attr.Value != null; }, typeof(IgnoreAttribute));
 			UpdateProperties = GetProperties(AutoKeyProperties, (prop) => { var attr = prop.GetCustomAttribute<IgnoreUpdateAttribute>(); return attr == null || attr.Value != null; }, typeof(IgnoreAttribute));
