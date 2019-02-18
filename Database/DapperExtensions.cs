@@ -12,7 +12,7 @@ namespace Dapper
 	public static class DapperExtensions
 	{
 		#region ITableQueries<T>
-		public static List<T> GetKeys<T>(this IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		public static IEnumerable<T> GetKeys<T>(this IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 			where T : class
 		{
 			return TableData<T>.Queries.GetKeys(connection, whereCondition, param, transaction, buffered, commandTimeout);
@@ -42,7 +42,7 @@ namespace Dapper
 			return TableData<T>.Queries.Delete(connection, whereCondition, param, transaction, buffered, commandTimeout);
 		}
 
-		public static List<T> DeleteList<T>(this IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		public static IEnumerable<T> DeleteList<T>(this IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 			where T : class
 		{
 			return TableData<T>.Queries.DeleteList(connection, whereCondition, param, transaction, buffered, commandTimeout);
@@ -54,10 +54,10 @@ namespace Dapper
 			TableData<T>.Queries.Insert(connection, obj, transaction, commandTimeout);
 		}
 
-		public static void BulkInsert<T>(this SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, int? commandTimeout = null)
+		public static IEnumerable<T> BulkInsert<T>(this SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 			where T : class
 		{
-			TableData<T>.Queries.BulkInsert(connection, objs, transaction, commandTimeout);
+			return TableData<T>.Queries.BulkInsert(connection, objs, transaction, buffered, commandTimeout);
 		}
 
 		public static bool Update<T>(this IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null)
@@ -65,6 +65,11 @@ namespace Dapper
 		{
 			return TableData<T>.Queries.Update(connection, obj, transaction, commandTimeout);
 		}
+
+		//public static async int Update<T>(this IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		//{
+		//	return TableData<T>.Queries.Update(connection, whereCondition, param, transaction, buffered, commandTimeout);
+		//}
 
 		public static int BulkUpdate<T>(this SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, int? commandTimeout = null)
 			where T : class
@@ -78,10 +83,10 @@ namespace Dapper
 			TableData<T>.Queries.Upsert(connection, obj, transaction, commandTimeout);
 		}
 
-		public static void BulkUpsert<T>(this SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, int? commandTimeout = null)
+		public static IEnumerable<T> BulkUpsert<T>(this SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 			where T : class
 		{
-			TableData<T>.Queries.BulkUpsert(connection, objs, transaction, commandTimeout);
+			return TableData<T>.Queries.BulkUpsert(connection, objs, transaction, buffered, commandTimeout);
 		}
 
 		public static T Get<T>(this IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null)
@@ -96,7 +101,7 @@ namespace Dapper
 			return TableData<T>.Queries.Get(connection, obj, transaction, commandTimeout);
 		}
 
-		public static List<T> GetList<T>(this IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		public static IEnumerable<T> GetList<T>(this IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 			where T : class
 		{
 			return TableData<T>.Queries.GetList(connection, whereCondition, param, transaction, buffered, commandTimeout);
@@ -110,7 +115,7 @@ namespace Dapper
 		#endregion // ITableQueries<T>
 
 		#region ITableQueriesAsync<T>
-		public static async Task<List<T>> GetKeysAsync<T>(this IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		public static async Task<IEnumerable<T>> GetKeysAsync<T>(this IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 			where T : class
 		{
 			return await Task.Run(() => GetKeys<T>(connection, whereCondition, param, transaction, buffered, commandTimeout));
@@ -140,7 +145,7 @@ namespace Dapper
 			return await Task.Run(() => Delete<T>(connection, whereCondition, param, transaction, buffered, commandTimeout));
 		}
 
-		public static async Task<List<T>> DeleteListAsync<T>(this IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		public static async Task<IEnumerable<T>> DeleteListAsync<T>(this IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 			where T : class
 		{
 			return await Task.Run(() => DeleteList<T>(connection, whereCondition, param, transaction, buffered, commandTimeout));
@@ -163,6 +168,11 @@ namespace Dapper
 		{
 			return await Task.Run(() => Update(connection, obj, transaction, commandTimeout));
 		}
+
+		//public static async Task<int> UpdateAsync<T>(this IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		//{
+		//	return await Task.Run(() => Update<T>(connection, whereCondition, param, transaction, buffered, commandTimeout));
+		//}
 
 		public static async Task<int> BulkUpdateAsync<T>(this SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, int? commandTimeout = null)
 			where T : class
@@ -194,7 +204,7 @@ namespace Dapper
 			return await Task.Run(() => Get(connection, obj, transaction, commandTimeout));
 		}
 
-		public static async Task<List<T>> GetListAsync<T>(this IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		public static async Task<IEnumerable<T>> GetListAsync<T>(this IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 			where T : class
 		{
 			return await Task.Run(() => GetList<T>(connection, whereCondition, param, transaction, buffered, commandTimeout));

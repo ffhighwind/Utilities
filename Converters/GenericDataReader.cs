@@ -17,7 +17,6 @@ namespace Utilities.Converters
 	{
 		private IEnumerator enumerator;
 		private readonly PropertyInfo[] pinfos;
-		private readonly string[] columnNames;
 		private readonly Type[] types;
 		private readonly BitArray allowNull;
 		private object current = null;
@@ -31,7 +30,7 @@ namespace Utilities.Converters
 		/// <param name="flags">The <see cref="BindingFlags"/> for the type's properties.</param>
 		/// <param name="props">The property names that will be read. If this is empty then all properties will be read.</param>
 		public GenericDataReader(IEnumerable<T> source, BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly, params string[] props)
-			: this(source, props, typeof(T).GetProperties(flags).Where(pinfo => props.Contains(pinfo.Name)).ToArray())
+			: this(source, typeof(T).GetProperties(flags).Where(pinfo => props.Contains(pinfo.Name)).ToArray())
 		{ }
 
 		/// <summary>
@@ -40,11 +39,10 @@ namespace Utilities.Converters
 		/// <param name="source">The <see cref="IEnumerable{T}"/> to read.</param>
 		/// <param name="columns">The names of the table columns that match the properties.</param>
 		/// <param name="props">The properties that will be read. If this is empty then all properties will be read.</param>
-		public GenericDataReader(IEnumerable<T> source, string[] columns = null, params PropertyInfo[] props)
+		public GenericDataReader(IEnumerable<T> source, PropertyInfo[] props)
 		{
-			pinfos = props.Length == 0 ? props : typeof(T).GetProperties(DefaultBindingFlags);
+			pinfos = props.Length == 0 ? typeof(T).GetProperties(DefaultBindingFlags) : props;
 			enumerator = source.GetEnumerator();
-			columnNames = columns ?? pinfos.Select(pinfo => pinfo.Name).ToArray();
 			types = new Type[pinfos.Length];
 			allowNull = new BitArray(pinfos.Length);
 			for (int i = 0; i < pinfos.Length; i++) {
@@ -106,7 +104,7 @@ namespace Utilities.Converters
 			object[] rowData = new object[5];
 			for (int i = 0; i < pinfos.Length; i++) {
 				rowData[0] = i;
-				rowData[1] = columnNames[i];
+				rowData[1] = pinfos[i].Name;
 				rowData[2] = types[i];
 				rowData[3] = -1;
 				rowData[4] = allowNull[i];
@@ -202,7 +200,7 @@ namespace Utilities.Converters
 		/// <returns>The value of the specified column.</returns>
 		public override bool GetBoolean(int ordinal)
 		{
-			return (bool)this[ordinal];
+			return (bool) this[ordinal];
 		}
 
 		/// <summary>
@@ -212,7 +210,7 @@ namespace Utilities.Converters
 		/// <returns>The value of the specified column.</returns>
 		public override byte GetByte(int ordinal)
 		{
-			return (byte)this[ordinal];
+			return (byte) this[ordinal];
 		}
 
 		/// <summary>
@@ -227,13 +225,13 @@ namespace Utilities.Converters
 		/// <returns>The actual number of bytes read.</returns>
 		public override long GetBytes(int ordinal, long dataOffset, byte[] buffer, int bufferOffset, int length)
 		{
-			byte[] s = (byte[])this[ordinal];
-			int available = s.Length - (int)dataOffset;
+			byte[] s = (byte[]) this[ordinal];
+			int available = s.Length - (int) dataOffset;
 			if (available <= 0)
 				return 0;
 
 			int count = Math.Min(length, available);
-			Buffer.BlockCopy(s, (int)dataOffset, buffer, bufferOffset, count);
+			Buffer.BlockCopy(s, (int) dataOffset, buffer, bufferOffset, count);
 			return count;
 		}
 
@@ -244,7 +242,7 @@ namespace Utilities.Converters
 		/// <returns>The value of the specified column.</returns>
 		public override char GetChar(int ordinal)
 		{
-			return (char)this[ordinal];
+			return (char) this[ordinal];
 		}
 
 		/// <summary>
@@ -259,13 +257,13 @@ namespace Utilities.Converters
 		/// <returns>The actual number of characters read.</returns>
 		public override long GetChars(int ordinal, long dataOffset, char[] buffer, int bufferOffset, int length)
 		{
-			string s = (string)this[ordinal];
-			int available = s.Length - (int)dataOffset;
+			string s = (string) this[ordinal];
+			int available = s.Length - (int) dataOffset;
 			if (available <= 0)
 				return 0;
 
 			int count = Math.Min(length, available);
-			s.CopyTo((int)dataOffset, buffer, bufferOffset, count);
+			s.CopyTo((int) dataOffset, buffer, bufferOffset, count);
 			return count;
 		}
 
@@ -296,7 +294,7 @@ namespace Utilities.Converters
 		/// <returns>The value of the specified column.</returns>
 		public override DateTime GetDateTime(int ordinal)
 		{
-			return (DateTime)this[ordinal];
+			return (DateTime) this[ordinal];
 		}
 
 		/// <summary>
@@ -306,7 +304,7 @@ namespace Utilities.Converters
 		/// <returns>The value of the specified column.</returns>
 		public override decimal GetDecimal(int ordinal)
 		{
-			return (decimal)this[ordinal];
+			return (decimal) this[ordinal];
 		}
 
 		/// <summary>
@@ -316,7 +314,7 @@ namespace Utilities.Converters
 		/// <returns>The value of the specified column.</returns>
 		public override double GetDouble(int ordinal)
 		{
-			return (double)this[ordinal];
+			return (double) this[ordinal];
 		}
 
 		/// <summary>
@@ -336,7 +334,7 @@ namespace Utilities.Converters
 		/// <returns>The value of the specified column.</returns>
 		public override float GetFloat(int ordinal)
 		{
-			return (float)this[ordinal];
+			return (float) this[ordinal];
 		}
 
 		/// <summary>
@@ -346,7 +344,7 @@ namespace Utilities.Converters
 		/// <returns>The value of the specified column.</returns>
 		public override Guid GetGuid(int ordinal)
 		{
-			return (Guid)this[ordinal];
+			return (Guid) this[ordinal];
 		}
 
 		/// <summary>
@@ -356,7 +354,7 @@ namespace Utilities.Converters
 		/// <returns>The value of the specified column.</returns>
 		public override short GetInt16(int ordinal)
 		{
-			return (short)this[ordinal];
+			return (short) this[ordinal];
 		}
 
 		/// <summary>
@@ -366,7 +364,7 @@ namespace Utilities.Converters
 		/// <returns>The value of the specified column.</returns>
 		public override int GetInt32(int ordinal)
 		{
-			return (int)this[ordinal];
+			return (int) this[ordinal];
 		}
 
 		/// <summary>
@@ -376,7 +374,7 @@ namespace Utilities.Converters
 		/// <returns>The value of the specified column.</returns>
 		public override long GetInt64(int ordinal)
 		{
-			return (long)this[ordinal];
+			return (long) this[ordinal];
 		}
 
 		/// <summary>
@@ -386,7 +384,7 @@ namespace Utilities.Converters
 		/// <returns>The name of the specified column.</returns>
 		public override string GetName(int ordinal)
 		{
-			return columnNames[ordinal];
+			return pinfos[ordinal].Name;
 		}
 
 		/// <summary>
@@ -396,7 +394,12 @@ namespace Utilities.Converters
 		/// <returns>The zero-based column ordinal.</returns>
 		public override int GetOrdinal(string name)
 		{
-			return Array.IndexOf(columnNames, name);
+			for (int i = 0; i < pinfos.Length; i++) {
+				if (pinfos[i].Name == name) {
+					return i;
+				}
+			}
+			throw new ArgumentException(name);
 		}
 
 		/// <summary>
@@ -406,7 +409,7 @@ namespace Utilities.Converters
 		/// <returns>The value of the specified column.</returns>
 		public override string GetString(int ordinal)
 		{
-			return (string)this[ordinal];
+			return (string) this[ordinal];
 		}
 
 		/// <summary>

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace Utilities.UnitTests
 {
+	[Table("Test")]
 	public class TestDTO
 	{
 		[Key]
@@ -14,7 +15,8 @@ namespace Utilities.UnitTests
 
 		[Column("FirstName")]
 		public string Name { get; set; }
-		public string Email { get; set; }
+		[IgnoreInsert("getdate()")]
+		[IgnoreUpdate("getdate()")]
 		public DateTime? CreatedDt { get; set; }
 	}
 }

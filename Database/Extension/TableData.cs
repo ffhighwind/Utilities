@@ -167,10 +167,11 @@ namespace Dapper.Extension
 			return false;
 		}
 
-		public static void CloneTable(IDbConnection conn, string tempTable, IDbTransaction trans = null, params string[] columns)
+		public static void CreateTable(IDbConnection conn, string tempTable, IDbTransaction trans, string[] columns, int? commandTimeout)
 		{
 			string columnNames = columns.Length == 0 ? "*" : string.Join(",", columns);
-			conn.Execute("SELECT TOP(0) " + columnNames + " INTO " + tempTable + " FROM " + TableName);
+			string sql = "SELECT TOP(0) " + columnNames + " INTO " + tempTable + " FROM " + TableName;
+			conn.Execute(sql, null, trans, commandTimeout);
 		}
 	}
 }

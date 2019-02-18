@@ -49,6 +49,7 @@
       <ExcludeFromStyleCop>True</ExcludeFromStyleCop>
     </Compile>
     <Compile Include="Comparers\DataRowEqualityComparer.cs" />
+    <Compile Include="Database\ConnectedEnumerable.cs" />
     <Compile Include="Database\ColumnAttribute.cs" />
     <Compile Include="Database\DapperExtensions.cs" />
     <Compile Include="Database\DataAccessObject.cs" />

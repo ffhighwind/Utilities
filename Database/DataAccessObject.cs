@@ -56,15 +56,19 @@ namespace Dapper
 		public override int Delete(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
 			using (SqlConnection conn = new SqlConnection(ConnectionString)) {
-				return Queries.Delete(conn, whereCondition, param, null, buffered, commandTimeout);
+				return Queries.Delete(conn, whereCondition, param, null, true, commandTimeout);
 			}
 		}
 
-		public override List<T> DeleteList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		public override IEnumerable<T> DeleteList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
-			using (SqlConnection conn = new SqlConnection(ConnectionString)) {
-				return Queries.DeleteList(conn, whereCondition, param, null, buffered, commandTimeout);
+			SqlConnection conn = new SqlConnection(ConnectionString);
+			IEnumerable<T> list = Queries.DeleteList(conn, whereCondition, param, null, buffered, commandTimeout);
+			if (buffered) {
+				conn.Dispose(); // conn.Close();
+				return list;
 			}
+			return new ConnectedEnumerable<T>(list, conn);
 		}
 
 		public override T Get(object key, int? commandTimeout = null)
@@ -81,18 +85,26 @@ namespace Dapper
 			}
 		}
 
-		public override List<T> GetKeys(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		public override IEnumerable<T> GetKeys(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
-			using (SqlConnection conn = new SqlConnection(ConnectionString)) {
-				return Queries.GetKeys(conn, whereCondition, param, null, buffered, commandTimeout);
+			SqlConnection conn = new SqlConnection(ConnectionString);
+			IEnumerable<T> list = Queries.GetKeys(conn, whereCondition, param, null, buffered, commandTimeout);
+			if (buffered) {
+				conn.Dispose(); // conn.Close();
+				return list;
 			}
+			return new ConnectedEnumerable<T>(list, conn);
 		}
 
-		public override List<T> GetList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		public override IEnumerable<T> GetList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
-			using (SqlConnection conn = new SqlConnection(ConnectionString)) {
-				return Queries.GetList(conn, whereCondition, param, null, buffered, commandTimeout);
+			SqlConnection conn = new SqlConnection(ConnectionString);
+			IEnumerable<T> list = Queries.GetList(conn, whereCondition, param, null, buffered, commandTimeout);
+			if (buffered) {
+				conn.Dispose(); // conn.Close();
+				return list;
 			}
+			return new ConnectedEnumerable<T>(list, conn);
 		}
 
 		public override T Insert(T obj, int? commandTimeout = null)
@@ -102,11 +114,15 @@ namespace Dapper
 			}
 		}
 
-		public override IEnumerable<T> BulkInsert(IEnumerable<T> objs, int? commandTimeout = null)
+		public override IEnumerable<T> BulkInsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
-			using (SqlConnection conn = new SqlConnection(ConnectionString)) {
-				return Queries.BulkInsert(conn, objs, null, commandTimeout);
+			SqlConnection conn = new SqlConnection(ConnectionString);
+			IEnumerable<T> list = Queries.BulkInsert(conn, objs, null, buffered, commandTimeout);
+			if (buffered) {
+				conn.Dispose(); // conn.Close();
+				return list;
 			}
+			return new ConnectedEnumerable<T>(list, conn);
 		}
 
 		public override int RecordCount(string whereCondition = "", object param = null, int? commandTimeout = null)
@@ -137,11 +153,15 @@ namespace Dapper
 			}
 		}
 
-		public override IEnumerable<T> BulkUpsert(IEnumerable<T> objs, int? commandTimeout = null)
+		public override IEnumerable<T> BulkUpsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
-			using (SqlConnection conn = new SqlConnection(ConnectionString)) {
-				return Queries.BulkUpsert(conn, objs, null, commandTimeout);
+			SqlConnection conn = new SqlConnection(ConnectionString);
+			IEnumerable<T> list = Queries.BulkUpsert(conn, objs, null, buffered, commandTimeout);
+			if (buffered) {
+				conn.Dispose(); // conn.Close();
+				return list;
 			}
+			return new ConnectedEnumerable<T>(list, conn);
 		}
 		#endregion IDataAccessObjectSync<T>
 
@@ -164,10 +184,10 @@ namespace Dapper
 
 		public override int Delete(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
-			return Queries.Delete(transaction.Connection, whereCondition, param, transaction, buffered, commandTimeout);
+			return Queries.Delete(transaction.Connection, whereCondition, param, transaction, true, commandTimeout);
 		}
 
-		public override List<T> DeleteList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		public override IEnumerable<T> DeleteList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
 			return Queries.DeleteList(transaction.Connection, whereCondition, param, transaction, buffered, commandTimeout);
 		}
@@ -182,12 +202,12 @@ namespace Dapper
 			return Queries.Get(transaction.Connection, obj, transaction, commandTimeout);
 		}
 
-		public override List<T> GetKeys(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		public override IEnumerable<T> GetKeys(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
 			return Queries.GetKeys(transaction.Connection, whereCondition, param, transaction, buffered, commandTimeout);
 		}
 
-		public override List<T> GetList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		public override IEnumerable<T> GetList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
 			return Queries.GetList(transaction.Connection, whereCondition, param, transaction, buffered, commandTimeout);
 		}
@@ -197,9 +217,9 @@ namespace Dapper
 			return Queries.Insert(transaction.Connection, obj, transaction, commandTimeout);
 		}
 
-		public override IEnumerable<T> BulkInsert(SqlTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
+		public override IEnumerable<T> BulkInsert(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
-			return Queries.BulkInsert(transaction.Connection, objs, transaction, commandTimeout);
+			return Queries.BulkInsert(transaction.Connection, objs, transaction, buffered, commandTimeout);
 		}
 
 		public override int RecordCount(IDbTransaction transaction, string whereCondition = "", object param = null, int? commandTimeout = null)
@@ -222,17 +242,17 @@ namespace Dapper
 			return Queries.Upsert(transaction.Connection, obj, transaction, commandTimeout);
 		}
 
-		public override IEnumerable<T> BulkUpsert(SqlTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
+		public override IEnumerable<T> BulkUpsert(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
-			return Queries.BulkUpsert(transaction.Connection, objs, transaction, commandTimeout);
+			return Queries.BulkUpsert(transaction.Connection, objs, transaction, buffered, commandTimeout);
 		}
 
-		public override List<T> BulkDeleteList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		public override IEnumerable<T> BulkDeleteList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
 			throw new NotImplementedException();
 		}
 
-		public override List<T> BulkDeleteList(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		public override IEnumerable<T> BulkDeleteList(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
 			return Queries.BulkDeleteList<T>(transaction.Connection, objs, transaction, buffered, commandTimeout);
 		}
@@ -301,15 +321,19 @@ namespace Dapper
 		public override int Delete(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
 			using (SqlConnection conn = new SqlConnection(ConnectionString)) {
-				return Queries.Delete(conn, whereCondition, param, null, buffered, commandTimeout);
+				return Queries.Delete(conn, whereCondition, param, null, true, commandTimeout);
 			}
 		}
 
-		public override List<KeyType> DeleteList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		public override IEnumerable<KeyType> DeleteList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
-			using (SqlConnection conn = new SqlConnection(ConnectionString)) {
-				return Queries.DeleteList<KeyType>(conn, whereCondition, param, null, buffered, commandTimeout);
+			SqlConnection conn = new SqlConnection(ConnectionString);
+			IEnumerable<KeyType> keys = Queries.DeleteList<KeyType>(conn, whereCondition, param, null, buffered, commandTimeout);
+			if (buffered) {
+				conn.Dispose(); // conn.Close();
+				return keys;
 			}
+			return new ConnectedEnumerable<KeyType>(keys, conn);
 		}
 
 		public override T Get(KeyType key, int? commandTimeout = null)
@@ -333,18 +357,26 @@ namespace Dapper
 			}
 		}
 
-		public override List<KeyType> GetKeys(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		public override IEnumerable<KeyType> GetKeys(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
-			using (SqlConnection conn = new SqlConnection(ConnectionString)) {
-				return Queries.GetKeys<KeyType>(conn, whereCondition, param, null, buffered, commandTimeout);
+			SqlConnection conn = new SqlConnection(ConnectionString);
+			IEnumerable<KeyType> keys = Queries.GetKeys<KeyType>(conn, whereCondition, param, null, buffered, commandTimeout);
+			if(buffered) {
+				conn.Dispose(); // conn.Close();
+				return keys;
 			}
+			return new ConnectedEnumerable<KeyType>(keys, conn);
 		}
 
-		public override List<T> GetList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		public override IEnumerable<T> GetList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
-			using (SqlConnection conn = new SqlConnection(ConnectionString)) {
-				return Queries.GetList(conn, whereCondition, param, null, buffered, commandTimeout);
+			SqlConnection conn = new SqlConnection(ConnectionString);
+			IEnumerable<T> objs = Queries.GetList(conn, whereCondition, param, null, buffered, commandTimeout);
+			if (buffered) {
+				conn.Dispose(); // conn.Close();
+				return objs;
 			}
+			return new ConnectedEnumerable<T>(objs, conn);
 		}
 
 		public override T Insert(T obj, int? commandTimeout = null)
@@ -354,11 +386,15 @@ namespace Dapper
 			}
 		}
 
-		public override IEnumerable<T> BulkInsert(IEnumerable<T> objs, int? commandTimeout = null)
+		public override IEnumerable<T> BulkInsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
-			using (SqlConnection conn = new SqlConnection(ConnectionString)) {
-				return Queries.BulkInsert(conn, objs, null, commandTimeout);
+			SqlConnection conn = new SqlConnection(ConnectionString);
+			IEnumerable<T> list = Queries.BulkInsert(conn, objs, null, buffered, commandTimeout);
+			if (buffered) {
+				conn.Dispose(); // conn.Close();
+				return list;
 			}
+			return new ConnectedEnumerable<T>(list, conn);
 		}
 
 		public override int RecordCount(string whereCondition = "", object param = null, int? commandTimeout = null)
@@ -389,24 +425,32 @@ namespace Dapper
 			}
 		}
 
-		public override IEnumerable<T> BulkUpsert(IEnumerable<T> objs, int? commandTimeout = null)
+		public override IEnumerable<T> BulkUpsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
-			using (SqlConnection conn = new SqlConnection(ConnectionString)) {
-				return Queries.BulkUpsert(conn, objs, null, commandTimeout);
+			SqlConnection conn = new SqlConnection(ConnectionString);
+			IEnumerable<T> list = Queries.BulkUpsert(conn, objs, null, buffered, commandTimeout);
+			if (buffered) {
+				conn.Dispose(); // conn.Close();
+				return list;
 			}
+			return new ConnectedEnumerable<T>(list, conn);
 		}
 
-		public override List<KeyType> BulkDeleteList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		public override IEnumerable<KeyType> BulkDeleteList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
-			using (SqlConnection conn = new SqlConnection(ConnectionString)) {
-				return Queries.BulkDeleteList<KeyType>(conn, objs, null, buffered, commandTimeout);
+			SqlConnection conn = new SqlConnection(ConnectionString);
+			IEnumerable<KeyType> keys = Queries.BulkDeleteList<KeyType>(conn, objs, null, buffered, commandTimeout);
+			if (buffered) {
+				conn.Dispose(); // conn.Close();
+				return keys;
 			}
+			return new ConnectedEnumerable<KeyType>(keys, conn);
 		}
 		#endregion // IDataAccessObjectSync<T, KeyType, Ret>
 
 
 		#region ITransactionQueriesSync<T, KeyType, Ret>
-		public override List<KeyType> GetKeys(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		public override IEnumerable<KeyType> GetKeys(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
 			return Queries.GetKeys<KeyType>(transaction.Connection, whereCondition, param, transaction, buffered, commandTimeout);
 		}
@@ -426,7 +470,7 @@ namespace Dapper
 			return Queries.Get(transaction.Connection, key, transaction, commandTimeout);
 		}
 
-		public override List<KeyType> DeleteList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		public override IEnumerable<KeyType> DeleteList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
 			return Queries.DeleteList<KeyType>(transaction.Connection, whereCondition, param, transaction, buffered, commandTimeout);
 		}
@@ -456,9 +500,9 @@ namespace Dapper
 			return Queries.Insert(transaction.Connection, obj, transaction, commandTimeout);
 		}
 
-		public override IEnumerable<T> BulkInsert(SqlTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
+		public override IEnumerable<T> BulkInsert(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
-			return Queries.BulkInsert(transaction.Connection, objs, transaction, commandTimeout);
+			return Queries.BulkInsert(transaction.Connection, objs, transaction, buffered, commandTimeout);
 		}
 
 		public override bool Update(IDbTransaction transaction, T obj, int? commandTimeout = null)
@@ -476,9 +520,9 @@ namespace Dapper
 			return Queries.Upsert(transaction.Connection, obj, transaction, commandTimeout);
 		}
 
-		public override IEnumerable<T> BulkUpsert(SqlTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
+		public override IEnumerable<T> BulkUpsert(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
-			return Queries.BulkUpsert(transaction.Connection, objs, transaction, commandTimeout);
+			return Queries.BulkUpsert(transaction.Connection, objs, transaction, buffered, commandTimeout);
 		}
 
 		public override T Get(IDbTransaction transaction, object key, int? commandTimeout = null)
@@ -491,7 +535,7 @@ namespace Dapper
 			return Queries.Get(transaction.Connection, obj, transaction, commandTimeout);
 		}
 
-		public override List<T> GetList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		public override IEnumerable<T> GetList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
 			return Queries.GetList(transaction.Connection, whereCondition, param, transaction, buffered, commandTimeout);
 		}
@@ -501,7 +545,7 @@ namespace Dapper
 			return Queries.RecordCount(transaction.Connection, whereCondition, param, transaction, commandTimeout);
 		}
 
-		public override List<KeyType> BulkDeleteList(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		public override IEnumerable<KeyType> BulkDeleteList(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
 			return Queries.BulkDeleteList<KeyType>(transaction.Connection, objs, transaction, buffered, commandTimeout);
 		}

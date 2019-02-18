@@ -15,14 +15,14 @@ namespace Dapper.Extension.Interfaces
 		public abstract bool Delete(IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null);
 		public abstract bool Delete(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null);
 		public abstract int Delete(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
-		public abstract List<KeyType> DeleteList<KeyType>(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
-		public abstract List<T> DeleteList(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
+		public abstract IEnumerable<KeyType> DeleteList<KeyType>(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
+		public abstract IEnumerable<T> DeleteList(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
 		public abstract T Get<KeyType>(IDbConnection connection, KeyType key, IDbTransaction transaction = null, int? commandTimeout = null);
 		public abstract T Get(IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null);
 		public abstract T Get(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null);
-		public abstract List<KeyType> GetKeys<KeyType>(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
-		public abstract List<T> GetKeys(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
-		public abstract List<T> GetList(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
+		public abstract IEnumerable<KeyType> GetKeys<KeyType>(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
+		public abstract IEnumerable<T> GetKeys(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
+		public abstract IEnumerable<T> GetList(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
 		public abstract T Insert(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null);
 		public abstract int RecordCount(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, int? commandTimeout = null);
 		public abstract bool Update(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null);
@@ -30,11 +30,11 @@ namespace Dapper.Extension.Interfaces
 
 		public abstract int BulkDelete<KeyType>(SqlConnection connection, IEnumerable<KeyType> keys, SqlTransaction transaction = null, int? commandTimeout = null);
 		public abstract int BulkDelete(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, int? commandTimeout = null);
-		public abstract IEnumerable<T> BulkInsert(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, int? commandTimeout = null);
+		public abstract IEnumerable<T> BulkInsert(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
 		public abstract int BulkUpdate(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, int? commandTimeout = null);
-		public abstract IEnumerable<T> BulkUpsert(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, int? commandTimeout = null);
-		public abstract List<KeyType> BulkDeleteList<KeyType>(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
-		public abstract List<T> BulkDeleteList(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
+		public abstract IEnumerable<T> BulkUpsert(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
+		public abstract IEnumerable<KeyType> BulkDeleteList<KeyType>(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
+		public abstract IEnumerable<T> BulkDeleteList(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
 		#endregion // IConnectionQueriesSync<T>
 
 
@@ -69,12 +69,12 @@ namespace Dapper.Extension.Interfaces
 			return await Task.Run(() => Delete(connection, whereCondition, param, transaction, buffered, commandTimeout));
 		}
 
-		public async Task<List<KeyType>> DeleteListAsync<KeyType>(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		public async Task<IEnumerable<KeyType>> DeleteListAsync<KeyType>(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 		{
 			return await Task.Run(() => DeleteList<KeyType>(connection, whereCondition, param, transaction, buffered, commandTimeout));
 		}
 
-		public async Task<List<T>> DeleteListAsync(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		public async Task<IEnumerable<T>> DeleteListAsync(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 		{
 			return await Task.Run(() => DeleteList(connection, whereCondition, param, transaction, buffered, commandTimeout));
 		}
@@ -94,17 +94,17 @@ namespace Dapper.Extension.Interfaces
 			return await Task.Run(() => Get(connection, obj, transaction, commandTimeout));
 		}
 
-		public async Task<List<KeyType>> GetKeysAsync<KeyType>(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		public async Task<IEnumerable<KeyType>> GetKeysAsync<KeyType>(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 		{
 			return await Task.Run(() => GetKeys<KeyType>(connection, whereCondition, param, transaction, buffered, commandTimeout));
 		}
 
-		public async Task<List<T>> GetKeysAsync(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		public async Task<IEnumerable<T>> GetKeysAsync(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 		{
 			return await Task.Run(() => GetKeys(connection, whereCondition, param, transaction, buffered, commandTimeout));
 		}
 
-		public async Task<List<T>> GetListAsync(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		public async Task<IEnumerable<T>> GetListAsync(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 		{
 			return await Task.Run(() => GetList(connection, whereCondition, param, transaction, buffered, commandTimeout));
 		}
@@ -114,9 +114,9 @@ namespace Dapper.Extension.Interfaces
 			return await Task.Run(() => Insert(connection, obj, transaction, commandTimeout));
 		}
 
-		public async Task<IEnumerable<T>> BulkInsertAsync(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, int? commandTimeout = null)
+		public async Task<IEnumerable<T>> BulkInsertAsync(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 		{
-			return await Task.Run(() => BulkInsert(connection, objs, transaction, commandTimeout));
+			return await Task.Run(() => BulkInsert(connection, objs, transaction, buffered, commandTimeout));
 		}
 
 		public async Task<int> RecordCountAsync(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, int? commandTimeout = null)
@@ -139,17 +139,17 @@ namespace Dapper.Extension.Interfaces
 			return await Task.Run(() => Upsert(connection, obj, transaction, commandTimeout));
 		}
 
-		public async Task<IEnumerable<T>> BulkUpsertAsync(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, int? commandTimeout = null)
+		public async Task<IEnumerable<T>> BulkUpsertAsync(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 		{
-			return await Task.Run(() => BulkUpsert(connection, objs, transaction, commandTimeout));
+			return await Task.Run(() => BulkUpsert(connection, objs, transaction, buffered, commandTimeout));
 		}
 
-		public async Task<List<KeyType>> BulkDeleteListAsync<KeyType>(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		public async Task<IEnumerable<KeyType>> BulkDeleteListAsync<KeyType>(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 		{
 			return await Task.Run(() => BulkDeleteList<KeyType>(connection, objs, transaction, buffered, commandTimeout));
 		}
 
-		public async Task<List<T>> BulkDeleteListAsync(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		public async Task<IEnumerable<T>> BulkDeleteListAsync(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 		{
 			return await Task.Run(() => BulkDeleteList(connection, objs, transaction, buffered, commandTimeout));
 		}
