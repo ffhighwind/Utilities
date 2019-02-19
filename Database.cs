@@ -14,7 +14,7 @@ namespace Utilities
 	/// <summary>
 	/// Database utilities class.
 	/// </summary>
-	public static class DB
+	public static class Database
 	{
 		private const BindingFlags DefaultBindingFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly;
 		private const SqlBulkCopyOptions BulkCopyOptions = SqlBulkCopyOptions.FireTriggers | SqlBulkCopyOptions.UseInternalTransaction | SqlBulkCopyOptions.TableLock;
@@ -710,26 +710,21 @@ SELECT 1 ELSE SELECT 0", new { tablename });
 		/// </summary>
 		/// <param name="conn">The database connection.</param>
 		/// <param name="tablename">The name of the table to remove duplicates from.</param>
+		/// <param name="trans">The database transaction.</param>
 		/// <param name="distinctColumns">The columns to select on to check for duplicates.
 		/// If no columns are input them all columns are used.</param>
 		/// <returns>The number of rows affected by the query.</returns>
-		public static int RemoveDuplicates(SqlConnection conn, string tablename, params string[] distinctColumns)
+		public static int RemoveDuplicates(SqlConnection conn, string tablename, SqlTransaction trans = null, params string[] distinctColumns)
 		{
-			using (SqlTransaction trans = conn.BeginTransaction()) {
-				return conn.Execute(
-@"WHILE 1=1
+			return conn.Execute(@"
+WHILE EXISTS (SELECT COUNT(*) FROM " + tablename + " GROUP BY " + distinctColumns[0] + " HAVING COUNT(*) > 1" + @")
 BEGIN
-WITH CTE AS (
-    SELECT ROW_NUMBER() OVER (PARTITION BY @columns ORDER BY (SELECT NULL)) AS DuplicateRows
-    FROM @tablename
-)
-DELETE TOP (4000)
-FROM @tablename
-WHERE DuplicateRows > 1
-IF @@ROWCOUNT < 4000
-    BREAK;
-END", new { tablename, columns = distinctColumns.Length > 0 ? string.Join(",", distinctColumns) : "*" }, trans);
-			}
+    DELETE FROM " + tablename + @" WHERE " + distinctColumns[0] + @" IN 
+    (
+        SELECT MIN(" + distinctColumns[0] + @") as [DeleteID]
+        " + " FROM " + tablename + " GROUP BY " + distinctColumns[0] + " HAVING COUNT(*) > 1" + @"
+	)
+END");
 		}
 	}
 }

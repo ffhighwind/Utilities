@@ -10,6 +10,8 @@ namespace Dapper.Extension.Interfaces
 {
 	public abstract class IConnectionQueries<T> : IConnectionQueriesSync<T>, IConnectionQueriesAsync<T> where T : class
 	{
+		public abstract int RemoveDuplicates(IDbConnection connection, IDbTransaction transaction, int? commandTimeout = null);
+
 		#region IConnectionQueriesSync<T>
 		public abstract bool Delete<KeyType>(IDbConnection connection, KeyType key, IDbTransaction transaction = null, int? commandTimeout = null);
 		public abstract bool Delete(IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null);

@@ -54,8 +54,10 @@
     <Compile Include="Compare.cs" />
     <Compile Include="Convert.cs" />
     <Compile Include="DapperExtension.cs" />
+    <Compile Include="Database.cs" />
     <Compile Include="Test16.cs" />
     <Compile Include="Test16S.cs" />
+    <Compile Include="Test2.cs" />
     <Compile Include="Test6.cs" />
     <Compile Include="IO.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

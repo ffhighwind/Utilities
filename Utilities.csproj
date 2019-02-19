@@ -73,7 +73,7 @@
     <Compile Include="Database\IgnoreUpdateAttribute.cs" />
     <Compile Include="Database\KeyAttribute.cs" />
     <Compile Include="Database\TableAttribute.cs" />
-    <Compile Include="DB.cs" />
+    <Compile Include="Database.cs" />
     <Compile Include="Email\Extensions.cs" />
     <Compile Include="Email\ItemClass.cs" />
     <Compile Include="Email\PropertySets.cs" />

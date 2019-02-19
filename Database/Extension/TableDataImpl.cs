@@ -23,12 +23,12 @@ namespace Dapper.Extension
 			Properties = typeof(T).GetProperties(propertyFlags).Where(prop => prop.CanRead && prop.CanWrite && (!prop.PropertyType.IsClass || prop.PropertyType == typeof(string))).ToArray();
 			KeyProperties = Properties.Where(prop => prop.GetCustomAttribute<KeyAttribute>(false) != null).ToArray();
 			AutoKeyProperties = KeyProperties.Where(prop => !prop.GetCustomAttribute<KeyAttribute>(false).Required).ToArray();
-			for(int i = 0; i < KeyProperties.Length; i++) {
-				if(KeyProperties[i].GetCustomAttribute<IgnoreSelectAttribute>(false) != null || KeyProperties[i].GetCustomAttribute<IgnoreAttribute>(false) != null) {
+			for (int i = 0; i < KeyProperties.Length; i++) {
+				if (KeyProperties[i].GetCustomAttribute<IgnoreSelectAttribute>(false) != null || KeyProperties[i].GetCustomAttribute<IgnoreAttribute>(false) != null) {
 					throw new InvalidOperationException("Cannot ignore key properties");
 				}
 			}
-			Properties = Properties.Where(prop => prop.GetCustomAttribute<IgnoreAttribute>(false) == null && (prop.GetCustomAttribute<IgnoreSelectAttribute>(false) == null 
+			Properties = Properties.Where(prop => prop.GetCustomAttribute<IgnoreAttribute>(false) == null && (prop.GetCustomAttribute<IgnoreSelectAttribute>(false) == null
 				|| prop.GetCustomAttribute<IgnoreInsertAttribute>(false) == null || prop.GetCustomAttribute<IgnoreUpdateAttribute>(false) == null)).ToArray();
 			SelectProperties = GetProperties(Array.Empty<PropertyInfo>(), (prop) => true, typeof(IgnoreSelectAttribute), typeof(IgnoreAttribute));
 			InsertProperties = GetProperties(AutoKeyProperties, (prop) => { var attr = prop.GetCustomAttribute<IgnoreInsertAttribute>(); return attr == null || attr.Value != null; }, typeof(IgnoreAttribute));
@@ -186,7 +186,7 @@ namespace Dapper.Extension
 			StringBuilder sb = new StringBuilder();
 			for (int i = 0; i < properties.Length; i++) {
 				sb.Append("[" + columnNames[i] + "]");
-				if(properties[i].Name != columnNames[i]) {
+				if (properties[i].Name != columnNames[i]) {
 					sb.Append(" as [" + properties[i].Name + "]");
 				}
 				sb.Append(',');
@@ -313,7 +313,8 @@ namespace Dapper.Extension
 
 		public override int Delete(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 		{
-			return connection.Execute(DeleteQuery + whereCondition, param, transaction, commandTimeout);
+			string query = string.IsNullOrWhiteSpace(whereCondition) ? "TRUNCATE TABLE " + TableName : DeleteQuery + whereCondition;
+			return connection.Execute(query, param, transaction, commandTimeout);
 		}
 
 		public override IEnumerable<T> DeleteList(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
@@ -408,7 +409,7 @@ namespace Dapper.Extension
 
 		public override IEnumerable<T> BulkInsert(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 		{
-			if(AutoKeyProperties.Length > 0) {
+			if (AutoKeyProperties.Length > 0) {
 				TableData<T>.CreateTable(connection, BulkTempStagingTable, transaction, InsertColumns, commandTimeout);
 				BulkInsert_(connection, objs, transaction, BulkTempStagingTable, InsertColumns, InsertProperties, commandTimeout);
 				IEnumerable<T> values = connection.Query<T>(BulkInsertListQuery, null, transaction, true, commandTimeout);
@@ -472,6 +473,50 @@ namespace Dapper.Extension
 			return keys;
 		}
 		#endregion // ITableQueries<T>
+
+		public override int RemoveDuplicates(IDbConnection connection, IDbTransaction transaction, int? commandTimeout = null)
+		{
+			if (KeyProperties.Length == 1) {
+				try {
+					return RemoveDuplicatesKey_(connection, KeyColumns[0], transaction, commandTimeout);
+				}
+				catch { }
+			}
+			else if (KeyProperties.Length == 0) {
+				try {
+					connection.Execute(@"ALTER TABLE " + TableName + " ADD _TempIDColumn INT IDENTITY(1,1)", null, transaction, commandTimeout);
+					int count = RemoveDuplicatesKey_(connection, "_TempIDColumn", transaction, commandTimeout);
+					connection.Execute(@"ALTER TABLE " + TableName + " DROP COLUMN _TempIDColumn", null, transaction, commandTimeout);
+					return count;
+				}
+				catch {	}
+			}
+			return RemoveDuplicates_(connection, transaction, commandTimeout);
+		}
+
+		private int RemoveDuplicates_(IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null)
+		{
+			//connection.Execute("DROP TABLE " + BulkTempStagingTable, null, transaction, commandTimeout);
+			string sql = "SELECT DISTINCT [" + string.Join("],[", GetColumnNames(Properties.Where(x => !KeyProperties.Contains(x)).ToArray())) + "]\nINTO " + BulkTempStagingTable + " FROM " + TableName;
+			int currCount = RecordCount(connection, "", null, transaction, commandTimeout);
+			connection.Execute(sql, null, transaction, commandTimeout);
+			connection.Execute("TRUNCATE TABLE " + TableName, null, transaction, commandTimeout);
+			int count = connection.Execute("INSERT INTO " + TableName + " SELECT * FROM " + BulkTempStagingTable, null, transaction, commandTimeout);
+			connection.Execute("DROP TABLE " + BulkTempStagingTable, null, transaction, commandTimeout);
+			return currCount - count;
+		}
+
+		private int RemoveDuplicatesKey_(IDbConnection connection, string keyColumn, IDbTransaction transaction = null, int? commandTimeout = null)
+		{
+			return connection.Execute(@"WHILE EXISTS (SELECT COUNT(*) FROM [" + TableName + "] GROUP BY [" + keyColumn + "] HAVING COUNT(*) > 1" + @")
+BEGIN
+    DELETE FROM " + TableName + @" WHERE " + keyColumn + @" IN 
+    (
+        SELECT MIN([" + keyColumn + @"]) as [DeleteID]
+        " + " FROM " + TableName + " GROUP BY [" + keyColumn + "] HAVING COUNT(*) > 1" + @"
+	)
+END", null, transaction, commandTimeout);
+		}
 
 		private IEnumerable<Tuple<string, DynamicParameters>> CreateDynamicParams(IEnumerable<T> objs)
 		{
