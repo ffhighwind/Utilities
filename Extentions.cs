@@ -269,7 +269,7 @@ namespace Utilities
 				for (int i = 0; i < properties.Length; i++) {
 					object val = properties[i].GetValue(entity);
 					if (val != null)
-						row[i] = val;
+						row[properties[i].Name] = val;
 				}
 				table.Rows.Add(row);
 			}
