@@ -20,7 +20,12 @@ namespace Utilities.Email
 		private string _Username;
 		private string _Url;
 
-		public EmailService() { }
+		public EmailService(string url = null, string email = null, string username = null)
+		{
+			_Url = url;
+			_Email = email;
+			_Username = username;
+		}
 
 		public string Email {
 			get => _Email;
@@ -53,9 +58,17 @@ namespace Utilities.Email
 
 		public ExchangeService Service { get; private set; }
 
-		public bool Connect(string password = null, ExchangeVersion version = ExchangeVersion.Exchange2010_SP1)
+		public bool Connect(string email, string password, ExchangeVersion version = ExchangeVersion.Exchange2010_SP1)
 		{
+			return Connect(_Url, email, _Username, password, version);
+		}
+
+		public bool Connect(string url, string email, string username, string password = null, ExchangeVersion version = ExchangeVersion.Exchange2010_SP1)
+		{
+			Url = url;
 			try {
+				_Email = email;
+				_Username = username;
 				Service = new ExchangeService(version)
 				{
 					Credentials = new WebCredentials(Username ?? Email, password),
@@ -71,6 +84,11 @@ namespace Utilities.Email
 				Service = null;
 			}
 			return IsConnected;
+		}
+
+		public bool Connect(string password = null, ExchangeVersion version = ExchangeVersion.Exchange2010_SP1)
+		{
+			return Connect(_Url, _Email, _Username, password, version);
 		}
 
 		public EmailMessage CreateEmail()

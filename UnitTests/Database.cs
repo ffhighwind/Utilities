@@ -36,7 +36,6 @@ namespace Utilities.UnitTests
 
 					TableData<Test2>.Queries.RemoveDuplicates(conn, trans);
 
-					int count = Utilities.Database.RemoveDuplicates(conn, "Test2", null, "Col1", "Col2", "Col3");
 					int k = 0;
 				//}
 			}

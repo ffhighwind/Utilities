@@ -112,7 +112,7 @@
       <HintPath>packages\CsvHelper.12.1.2\lib\net45\CsvHelper.dll</HintPath>
     </Reference>
     <Reference Include="Dapper, Version=1.50.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\DoorDataUpload\packages\Dapper.1.50.7\lib\net451\Dapper.dll</HintPath>
+      <HintPath>packages\Dapper.1.50.7\lib\net451\Dapper.dll</HintPath>
     </Reference>
     <Reference Include="EPPlus, Version=4.5.3.1, Culture=neutral, PublicKeyToken=ea159fdaa78159a1, processorArchitecture=MSIL">
       <HintPath>packages\EPPlus.4.5.3.1\lib\net40\EPPlus.dll</HintPath>

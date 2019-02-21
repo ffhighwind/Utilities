@@ -12,7 +12,7 @@ namespace Utilities.Email
 		/// Allows saving of file attachments from a MailMessage.
 		/// </summary>
 		/// <param name="message">The email.</param>
-		/// <param name="filename">Tht file to save.</param>
+		/// <param name="filename">The file to save.</param>
 		/// <see href="https://www.codeproject.com/KB/IP/smtpclientext.aspx?display=PrintAll&fid=1533533&df=90&mpp=25&noise=3&sort=Position&view=Quick&select=2876398"/>
 		public static void Save(this MailMessage message, string filename)
 		{

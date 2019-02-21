@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
@@ -30,14 +31,14 @@ namespace Utilities
 		/// <param name="testConnection">Determines if the connection should be tested before being returned.</param>
 		/// <param name="timeoutSecs">The maximum timeout in seconds for the connection.</param>
 		/// <returns>The connection string builder or null if the connection failed.</returns>
-		public static SqlConnectionStringBuilder ConnString(string server, string database, string username, string password, bool testConnection = false, int timeoutSecs = 15)
+		public static SqlConnectionStringBuilder ConnString(string server, string database, string username, string password, bool testConnection = false, int? commandTimeout = null)
 		{
 			////SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder("Integrated Security=SSPI;");
 			SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder
 			{
 				DataSource = server,
 				InitialCatalog = database,
-				ConnectTimeout = timeoutSecs
+				ConnectTimeout = commandTimeout ?? 15
 			};
 			if (username == null || password == null)
 				sb.IntegratedSecurity = true;
@@ -62,9 +63,9 @@ namespace Utilities
 		/// <param name="testConnection">Determines if the connection should be tested before being returned.</param>
 		/// <param name="timeoutSecs">The maximum timeout in seconds for the connection.</param>
 		/// <returns>The connection string builder or null if the connection failed.</returns>
-		public static SqlConnectionStringBuilder ConnString(string server, string database, bool testConnection = false, int timeoutSecs = 15)
+		public static SqlConnectionStringBuilder ConnString(string server, string database, bool testConnection = false, int? commandTimeout = null)
 		{
-			return ConnString(server, database, null, null, testConnection, timeoutSecs);
+			return ConnString(server, database, null, null, testConnection, commandTimeout);
 		}
 
 		/// <summary>
@@ -73,9 +74,11 @@ namespace Utilities
 		/// <param name="conn">The database connection.</param>
 		/// <param name="tablename">The name of the table.</param>
 		/// <returns>An empty table representing the database, or null on error.</returns>
-		public static DataTable CreateDataTable(SqlConnection conn, string tablename)
+		public static DataTable CreateDataTable(SqlConnection conn, string tablename, SqlTransaction transaction = null, int? commandTimeout = null)
 		{
-			using (SqlDataAdapter adapter = new SqlDataAdapter("SELECT TOP 0 * FROM " + tablename, conn)) {
+			using (SqlCommand cmd = new SqlCommand($"SELECT TOP 0 * FROM {tablename}", conn, transaction))
+			using (SqlDataAdapter adapter = new SqlDataAdapter(cmd)) {
+				cmd.CommandTimeout = commandTimeout ?? 0;
 				DataTable table = adapter.FillSchema(new DataTable(tablename), SchemaType.Source);
 				table.TableName = tablename;
 				return table;
@@ -88,12 +91,16 @@ namespace Utilities
 		/// <param name="conn">The database connection.</param>
 		/// <param name="selectCmd">The select command.</param>
 		/// <returns>A DataTable with the schema information of an SQL table, or null on error.</returns>
-		public static SchemaTable SelectSchema(SqlConnection conn, string selectCmd)
+		public static SchemaTable SelectSchema(IDbConnection conn, string selectCmd, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
-			using (SqlCommand cmd = new SqlCommand(selectCmd, conn))
-			using (SqlDataReader reader = cmd.ExecuteReader(CommandBehavior.KeyInfo | CommandBehavior.SchemaOnly)) {
-				DataTable tableSchema = reader.GetSchemaTable();
-				return new SchemaTable(tableSchema);
+
+			using (IDbCommand cmd = conn.CreateCommand()) {
+				cmd.Transaction = transaction;
+				cmd.CommandTimeout = commandTimeout ?? 0;
+				using (IDataReader reader = cmd.ExecuteReader(CommandBehavior.KeyInfo | CommandBehavior.SchemaOnly)) {
+					DataTable tableSchema = reader.GetSchemaTable();
+					return new SchemaTable(tableSchema);
+				}
 			}
 		}
 
@@ -103,9 +110,9 @@ namespace Utilities
 		/// <param name="conn">The database connection.</param>
 		/// <param name="tablename">The name of the table.</param>
 		/// <returns>A DataTable with the schema information of an SQL table, or null on error.</returns>
-		public static SchemaTable TableSchema(SqlConnection conn, string tablename)
+		public static SchemaTable TableSchema(SqlConnection conn, string tablename, SqlTransaction transaction = null, int? commandTimeout = null)
 		{
-			return SelectSchema(conn, "SELECT TOP 0 * FROM " + tablename);
+			return SelectSchema(conn, $"SELECT TOP 0 * FROM {tablename}", transaction, commandTimeout);
 		}
 
 		/// <summary>
@@ -145,391 +152,16 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Executes an SQL query.
-		/// </summary>
-		/// <typeparam name="T">The type of object to return from the query.</typeparam>
-		/// <param name="conn">The database connection.</param>
-		/// <param name="cmd">The command to execute.</param>
-		/// <param name="param">The parameters to pass to the command.</param>
-		/// <param name="timeoutSecs">The timeout in seconds for the command. A value of 0 means no timeout.</param>
-		/// <param name="maxRetries">The number of attempts to retry the command.</param>
-		/// <returns>The results from the query, or null on error.</returns>
-		public static IEnumerable<T> Query<T>(SqlConnection conn, string cmd, object param = null, int timeoutSecs = 0, int maxRetries = 5)
-		{
-			for (int i = 0; i < maxRetries; i++) {
-				try {
-					return conn.Query<T>(cmd, param, null, true, timeoutSecs);
-				}
-				catch {
-					if (i == maxRetries - 1)
-						throw; // keeps StackTrace
-				}
-			}
-			throw new ArgumentOutOfRangeException("maxRetries: " + maxRetries);
-		}
-
-		/// <summary>
-		/// Executes an SQL query asynchronously.
-		/// </summary>
-		/// <typeparam name="T">The type of object to return from the query.</typeparam>
-		/// <param name="conn">The database connection.</param>
-		/// <param name="cmd">The command to execute.</param>
-		/// <param name="param">The parameters to pass to the command.</param>
-		/// <param name="timeoutSecs">The timeout in seconds for the command. A value of 0 means no timeout.</param>
-		/// <param name="maxRetries">The number of attempts to retry the command.</param>
-		/// <returns>The results from the query, or null on error.</returns>
-		public static Task<IEnumerable<T>> QueryAsync<T>(SqlConnection conn, string cmd, object param = null, int timeoutSecs = 0, int maxRetries = 5)
-		{
-			return Task.Run(() =>
-			{
-				return Query<T>(conn, cmd, param, timeoutSecs, maxRetries);
-			});
-		}
-
-		/// <summary>
-		/// Executes an SQL query.
-		/// </summary>
-		/// <param name="conn">The database connection.</param>
-		/// <param name="cmd">The command to execute.</param>
-		/// <param name="param">The parameters and values.</param>
-		/// <param name="timeoutSecs">The command timeout in seconds. A value of 0 means no timeout.</param>
-		/// <param name="maxRetries">The maximum number of attempts to retry the command on failure.</param>
-		/// <returns>The results from the query, or null on error.</returns>
-		public static DataTable Query(SqlConnection conn, string cmd, object param = null, int timeoutSecs = 0, int maxRetries = 5)
-		{
-			for (int i = 0; i < maxRetries; i++) {
-				try {
-					using (IDataReader reader = conn.ExecuteReader(cmd, param, null, timeoutSecs)) {
-						DataTable table = new DataTable();
-						table.Load(reader);
-						return table;
-					}
-				}
-				catch {
-					if (i == maxRetries - 1)
-						throw; // keeps StackTrace
-				}
-			}
-			throw new ArgumentOutOfRangeException("maxRetries: " + maxRetries);
-		}
-
-		/// <summary>
-		/// Executes an SQL query asynchronously.
-		/// </summary>
-		/// <param name="conn">The database connection.</param>
-		/// <param name="cmd">The command to execute.</param>
-		/// <param name="param">The parameters and values.</param>
-		/// <param name="timeoutSecs">The command timeout in seconds. A value of 0 means no timeout.</param>
-		/// <param name="maxRetries">The maximum number of attempts to retry the command on failure.</param>
-		/// <returns>The results from the query, or null on error.</returns>
-		public static Task<DataTable> QueryAsync(SqlConnection conn, string cmd, object param = null, int timeoutSecs = 0, int maxRetries = 5)
-		{
-			return Task.Run(() =>
-			{
-				return Query(conn, cmd, param, timeoutSecs, maxRetries);
-			});
-		}
-
-		/// <summary>
-		/// Executes an SQL command.
-		/// </summary>
-		/// <param name="conn">The database connection.</param>
-		/// <param name="cmd">The command to execute.</param>
-		/// <param name="param">The parameters and values.</param>
-		/// <param name="timeoutSecs">The command timeout in seconds. A value of 0 means no timeout.</param>
-		/// <param name="maxRetries">The maximum number of attempts to retry the command on failure.</param>
-		/// <returns>The number of rows affected, or -1 on error.</returns>
-		public static int Execute(SqlConnection conn, string cmd, object param = null, int timeoutSecs = 0, int maxRetries = 5)
-		{
-			for (int i = 0; i < maxRetries; i++) {
-				try {
-					using (SqlTransaction trans = conn.BeginTransaction()) {
-						int count = conn.Execute(cmd, param, trans, timeoutSecs);
-						if (count > 0)
-							trans.Commit();
-						return count;
-					}
-				}
-				catch {
-					if (i == maxRetries - 1)
-						throw; // keeps StackTrace
-				}
-			}
-			throw new ArgumentOutOfRangeException("maxRetries: " + maxRetries);
-		}
-
-		/// <summary>
-		/// Executes an SQL command asynchronously.
-		/// </summary>
-		/// <param name="conn">The database connection.</param>
-		/// <param name="cmd">The command to execute.</param>
-		/// <param name="param">The parameters and values.</param>
-		/// <param name="timeoutSecs">The command timeout in seconds. A value of 0 means no timeout.</param>
-		/// <param name="maxRetries">The maximum number of attempts to retry the command on failure.</param>
-		/// <returns>The number of rows affected, or -1 on error.</returns>
-		public static Task<int> ExecuteAsync(SqlConnection conn, string cmd, object param = null, int timeoutSecs = 0, int maxRetries = 5)
-		{
-			return Task.Run(() =>
-			{
-				return Execute(conn, cmd, param, timeoutSecs, maxRetries);
-			});
-		}
-
-		/// <summary>
-		/// Uploads a collection to a database.
-		/// </summary>
-		/// <typeparam name="T">The type of object in the collection.</typeparam>
-		/// <param name="conn">The database connection.</param>
-		/// <param name="tablename">The name of the database table to upload data to.</param>
-		/// <param name="list">The List to upload.</param>
-		/// <param name="columns">The column names.</param>
-		public static void BulkInsert<T>(SqlConnection conn, string tablename, IEnumerable<T> list, params string[] columns) where T : class
-		{
-			BulkInsert<T>(conn, tablename, list, 0, CreateMappings(columns));
-		}
-
-		/// <summary>
-		/// Uploads a collection to a database.
-		/// </summary>
-		/// <typeparam name="T">The type of object in the collection.</typeparam>
-		/// <param name="conn">The database connection.</param>
-		/// <param name="tablename">The name of the database table to upload data to.</param>
-		/// <param name="list">The List to upload.</param>
-		/// <param name="timeoutSecs">The timeout in seconds for the command. A value of 0 means no timeout.</param>
-		/// <param name="columns">The columns names. If no columns are given then all columns are mapped automatically by name using reflection.</param>
-		public static void BulkInsert<T>(SqlConnection conn, string tablename, IEnumerable<T> list, int timeoutSecs, params string[] columns) where T : class
-		{
-			BulkInsert<T>(conn, tablename, list, timeoutSecs, CreateMappings(columns));
-		}
-
-		/// <summary>
-		/// Uploads a collection to a database.
-		/// </summary>
-		/// <typeparam name="T">The type of object in the collection.</typeparam>
-		/// <param name="conn">The database connection.</param>
-		/// <param name="tablename">The name of the database table to upload data to.</param>
-		/// <param name="list">The List to upload.</param>
-		/// <param name="timeoutSecs">The maximum timeout in seconds for the command.</param>
-		/// <param name="mappings">The column mappings.</param>
-		public static void BulkInsert<T>(SqlConnection conn, string tablename, IEnumerable<T> list, int timeoutSecs = 0, params SqlBulkCopyColumnMapping[] mappings) where T : class
-		{
-			using (GenericDataReader<T> reader = new GenericDataReader<T>(list))
-			using (SqlBulkCopy bulkCpy = new SqlBulkCopy(conn, BulkCopyOptions, null)) {
-				bulkCpy.DestinationTableName = tablename;
-				bulkCpy.BulkCopyTimeout = timeoutSecs;
-				if (mappings.Length == 0)
-					mappings = CreateMappings<T>();
-				foreach (SqlBulkCopyColumnMapping mapping in mappings) {
-					bulkCpy.ColumnMappings.Add(mapping);
-				}
-				bulkCpy.WriteToServer(reader);
-			}
-		}
-
-		private static SqlBulkCopyColumnMapping[] CreateMappings(params string[] columns)
-		{
-			if (columns.Length == 0)
-				return EmptyColumnMappings;
-
-			SqlBulkCopyColumnMapping[] mappings = new SqlBulkCopyColumnMapping[columns.Length];
-			for (int i = 0; i < columns.Length; i++) {
-				mappings[i] = new SqlBulkCopyColumnMapping(columns[i], columns[i]);
-			}
-			return mappings;
-		}
-
-		private static SqlBulkCopyColumnMapping[] CreateMappings<T>()
-		{
-			PropertyInfo[] pinfos = typeof(T).GetProperties(DefaultBindingFlags);
-			SqlBulkCopyColumnMapping[] mappings = new SqlBulkCopyColumnMapping[pinfos.Length];
-			for (int i = 0; i < pinfos.Length; i++) {
-				mappings[i] = new SqlBulkCopyColumnMapping(pinfos[i].Name, pinfos[i].Name);
-			}
-			return mappings;
-		}
-
-		private static SqlBulkCopyColumnMapping[] CreateMappings(DataTable table)
-		{
-			SqlBulkCopyColumnMapping[] mappings = new SqlBulkCopyColumnMapping[table.Columns.Count];
-			for (int i = 0; i < table.Columns.Count; i++) {
-				mappings[i] = new SqlBulkCopyColumnMapping(table.Columns[i].ColumnName, table.Columns[i].ColumnName);
-			}
-			return mappings;
-		}
-
-		/// <summary>
-		/// Uploads a DataTable to a database.
-		/// </summary>
-		/// <param name="conn">The database connection.</param>
-		/// <param name="table">The DataTable to upload.</param>
-		/// <param name="timeoutSecs">The maximum timeout in seconds for the command. A value of 0 means no timeout.</param>
-		/// <param name="mappings">The column mappings. If no mappings are given then all columns are mapped.</param>
-		public static void BulkInsert(SqlConnection conn, DataTable table, int timeoutSecs = 0, params SqlBulkCopyColumnMapping[] mappings)
-		{
-			using (SqlBulkCopy bulkCpy = new SqlBulkCopy(conn, BulkCopyOptions, null)) {
-				bulkCpy.DestinationTableName = table.TableName;
-				bulkCpy.BulkCopyTimeout = timeoutSecs;
-				if (mappings.Length == 0)
-					mappings = CreateMappings(table);
-				foreach (SqlBulkCopyColumnMapping mapping in mappings) {
-					bulkCpy.ColumnMappings.Add(mapping);
-				}
-				bulkCpy.WriteToServer(table);
-			}
-		}
-
-		/// <summary>
-		/// Inserts and optionally updates rows in a database.
-		/// </summary>
-		/// <typeparam name="T">The Type of object to upload.</typeparam>
-		/// <param name="conn">The database connection.</param>
-		/// <param name="tablename">The name of the database table to upload data to.</param>
-		/// <param name="list">The List to upload.</param>
-		/// <param name="timeoutSecs">The maximum timeout in seconds for the command. A value of 0 means no timeout.</param>
-		/// <param name="update">Determines if duplicate rows should be updated.</param>
-		/// <param name="mappings">The column mappings.</param>
-		public static void BulkUpsert<T>(SqlConnection conn, string tablename, IEnumerable<T> list, int timeoutSecs = 0, bool update = true, params SqlBulkCopyColumnMapping[] mappings) where T : class
-		{
-			if (!list.Any())
-				return;
-			if (mappings.Length == 0)
-				mappings = CreateMappings<T>();
-			using (GenericDataReader<T> reader = new GenericDataReader<T>(list)) {
-				BulkUpsert(conn, tablename, (bc) => bc.WriteToServer(reader), timeoutSecs, update, mappings);
-			}
-		}
-
-		/// <summary>
-		/// Inserts and optionally updates rows in a database.
-		/// </summary>
-		/// <param name="conn">The database connection.</param>
-		/// <param name="table">The DataTable to upload.</param>
-		/// <param name="timeoutSecs">The maximum timeout in seconds for the command. A value of 0 means no timeout.</param>
-		/// <param name="update">Determines if duplicate rows should be updated.</param>
-		/// <param name="mappings">The column mappings.</param>
-		public static void BulkUpsert(SqlConnection conn, DataTable table, int timeoutSecs = 0, bool update = true, params SqlBulkCopyColumnMapping[] mappings)
-		{
-			if (table.Rows.Count == 0)
-				return;
-			if (mappings.Length == 0)
-				mappings = CreateMappings(table);
-			BulkUpsert(conn, table.TableName, (bc) => bc.WriteToServer(table), timeoutSecs, update, mappings);
-		}
-
-		/// <summary>
-		/// Inserts and optionally updates rows in a database.
-		/// </summary>
-		/// <param name="conn">The database connection.</param>
-		/// <param name="tablename">The name of the database table to upload data to.</param>
-		/// <param name="writeAction">A function for bulk uploading to the temporary table.</param>
-		/// <param name="timeoutSecs">The maximum timeout in seconds for the command. A value of 0 means no timeout.</param>
-		/// <param name="update">Determines if duplicate rows should be updated.</param>
-		/// <param name="mappings">The column mappings.</param>
-		private static void BulkUpsert(SqlConnection conn, string tablename, Action<SqlBulkCopy> writeAction, int timeoutSecs, bool update, SqlBulkCopyColumnMapping[] mappings)
-		{
-			using (SqlTransaction trans = conn.BeginTransaction())
-			using (SqlCommand cmd = conn.CreateCommand()) {
-				string tempTableName = "#Tmp_" + tablename;
-				cmd.Transaction = trans;
-				cmd.CommandText = @"SELECT * INTO " + tablename + " FROM " + tempTableName + " WHERE 1 = 0";
-				if (cmd.ExecuteNonQuery() < 1)
-					return;
-
-				using (SqlBulkCopy bulkCpy = new SqlBulkCopy(conn, SqlBulkCopyOptions.FireTriggers | SqlBulkCopyOptions.TableLock, trans)) {
-					bulkCpy.DestinationTableName = tempTableName;
-					bulkCpy.BulkCopyTimeout = timeoutSecs;
-					foreach (SqlBulkCopyColumnMapping mapping in mappings) {
-						bulkCpy.ColumnMappings.Add(mapping);
-					}
-					writeAction(bulkCpy);
-				}
-				SqlBulkCopyColumnMapping[] bulkMappings = new SqlBulkCopyColumnMapping[mappings.Length];
-				for (int i = 0; i < bulkMappings.Length; i++) {
-					bulkMappings[i] = new SqlBulkCopyColumnMapping(mappings[i].DestinationColumn, mappings[i].DestinationColumn);
-				}
-				if (MergeTables(conn, tablename, tempTableName, trans, update, bulkMappings) >= 0) {
-					cmd.Parameters.Clear();
-					cmd.CommandText = "DROP TABLE " + tempTableName;
-					if (cmd.ExecuteNonQuery() >= 0)
-						trans.Commit();
-				}
-			}
-		}
-
-		/// <summary>
-		/// Merges two tables together using the column mappings.
-		/// </summary>
-		/// <param name="conn">The database connection.</param>
-		/// <param name="source">The source table.</param>
-		/// <param name="target">The destination table.</param>
-		/// <param name="update">Determines if duplicate rows should be updated.</param>
-		/// <param name="mappings">The column mappings between the tables.</param>
-		/// <returns>The number of rows affected by the merge command.</returns>
-		public static int MergeTables(SqlConnection conn, string source, string target, bool update, SqlBulkCopyColumnMapping[] mappings)
-		{
-			using (SqlTransaction trans = conn.BeginTransaction()) {
-				int result = MergeTables(conn, source, target, trans, update, mappings);
-				if (result >= 0)
-					trans.Commit();
-				return result;
-			}
-		}
-
-		/// <summary>
-		/// Merges two tables together using the column mappings.
-		/// </summary>
-		/// <param name="conn">The database connection.</param>
-		/// <param name="source">The source table.</param>
-		/// <param name="target">The destination table.</param>
-		/// /<param name="trans">The database transaction.</param>
-		/// <param name="update">Determines if duplicate rows should be updated.</param>
-		/// <param name="mappings">The column mappings between the tables.</param>
-		/// <returns>The number of rows affected by the merge command.</returns>
-		public static int MergeTables(SqlConnection conn, string source, string target, SqlTransaction trans, bool update, SqlBulkCopyColumnMapping[] mappings)
-		{
-			using (SqlCommand cmd = conn.CreateCommand()) {
-				cmd.Transaction = trans;
-				StringBuilder onStringBuilder = new StringBuilder("MERGE INTO ").Append(target)
-					.Append(" AS Target\nUSING ").Append(source).Append(" AS Source\n\tON");
-				StringBuilder updateStringBuilder = new StringBuilder("WHEN MATCHED THEN UPDATE SET\n\t");
-				StringBuilder insertStringBuilder = new StringBuilder("WHEN NOT MATCHED THEN\tINSERT (");
-				StringBuilder valuesStringBuilder = new StringBuilder("\tVALUES (");
-				for (int i = 0; i < mappings.Length; i++) {
-					string targetP = "@Target" + (i + 1).ToString();
-					string sourceP = "@Source" + (i + 1).ToString();
-					cmd.Parameters.AddWithValue(targetP, mappings[i].DestinationColumn);
-					cmd.Parameters.AddWithValue(sourceP, mappings[i].SourceColumn);
-					onStringBuilder.Append(" Target.[").Append(targetP).Append("] = Source.[").Append(sourceP).Append("]\n\tAND");
-					updateStringBuilder.Append(" Target.[").Append(targetP).Append("] = Source.").Append(sourceP).Append(",\n\t");
-					insertStringBuilder.Append(targetP).Append(", ");
-					valuesStringBuilder.Append(" Source.[").Append(sourceP).Append("], ");
-				}
-				onStringBuilder.Remove(updateStringBuilder.Length - 4, 4);
-				updateStringBuilder.Remove(updateStringBuilder.Length - 3, 3);
-				insertStringBuilder.Remove(updateStringBuilder.Length - 2, 2).Append(")\n");
-				valuesStringBuilder.Remove(updateStringBuilder.Length - 2, 2).Append(")");
-				if (update)
-					onStringBuilder.Append(updateStringBuilder);
-				cmd.CommandText = onStringBuilder.Append(insertStringBuilder).Append(valuesStringBuilder).ToString();
-				return cmd.ExecuteNonQuery();
-			}
-		}
-
-		/// <summary>
 		/// Deletes all rows from a database table.
 		/// </summary>
 		/// <param name="conn">The database connection.</param>
 		/// <param name="tablename">The name of the table.</param>
-		/// <param name="timeoutSecs">The maximum timeout in seconds for the command. A value of 0 means no timeout.</param>
+		/// <param name="transaction">The database transaction.</param>
+		/// <param name="commandTimeout">The maximum timeout in seconds for the command. A value of 0 means no timeout.</param>
 		/// <returns>The number of rows that were deleted from the database.</returns>
-		public static int DeleteTable(SqlConnection conn, string tablename, int timeoutSecs = 0)
+		public static int DeleteTable(IDbConnection conn, string tablename, IDbTransaction transaction, int? commandTimeout = null)
 		{
-			using (SqlTransaction trans = conn.BeginTransaction()) {
-				int result = conn.Execute("DELETE FROM " + tablename, null, trans, timeoutSecs);
-				if (result > 0)
-					trans.Commit();
-				return result;
-			}
+			return conn.Execute($"TRUNCATE TABLE {tablename}", null, transaction, commandTimeout);
 		}
 
 		/// <summary>
@@ -593,7 +225,7 @@ namespace Utilities
 			if (table.PrimaryKey.Length > 0) {
 				sql.AppendFormat(
 					",\n\tCONSTRAINT PK_{0} PRIMARY KEY ({1})",
-					tableName,
+					tableName + tableName.GetHashCode().ToString(),
 					string.Join(",", table.PrimaryKey.Select(col => col.ColumnName)));
 			}
 
@@ -669,11 +301,12 @@ namespace Utilities
 		/// </summary>
 		/// <param name="conn">The database connection.</param>
 		/// <param name="tablename">The name of the table.</param>
+		/// <param name="transaction">The database transaction.</param>
+		/// <param name="commandTimeout"></param>
 		/// <returns>True if the table was dropped. False otherwise.</returns>
-		public static bool DropTable(SqlConnection conn, string tablename)
+		public static void DropTable(IDbConnection conn, string tablename, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
-			conn.Execute("DROP TABLE " + tablename);
-			return true;
+			conn.Execute($"DROP TABLE {tablename}", null, transaction, commandTimeout);
 		}
 
 		/// <summary>
@@ -681,50 +314,30 @@ namespace Utilities
 		/// </summary>
 		/// <param name="conn">The database connection.</param>
 		/// <param name="tablename">The name of the table.</param>
+		/// <param name="transaction">The database transaction.</param>
+		/// <param name="commandTimeout"></param>
 		/// <returns>True if the table exists. False otherwise.</returns>
-		public static bool TableExists(SqlConnection conn, string tablename)
+		public static bool TableExists(IDbConnection conn, string tablename, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
 			try {
 				// ANSI SQL way.  Works in PostgreSQL, MSSQL, MySQL.
 				return 1 == conn.ExecuteScalar<int>(
-@"IF EXISTS (
+$@"IF EXISTS (
     SELECT 1 FROM INFORMATION_SCHEMA.TABLES
-    WHERE TABLE_NAME = @tablename
+    WHERE TABLE_NAME = {tablename}
 )
-SELECT 1 ELSE SELECT 0", new { tablename });
+SELECT 1 ELSE SELECT 0", null, transaction, commandTimeout);
 			}
 			catch {
 				try {
 					// Other RDBMS.  Graceful degradation
-					return 1 == conn.ExecuteScalar<int>("SELECT 1 FROM @tablename WHERE 1 = 0", new { tablename });
+					return 1 == conn.ExecuteScalar<int>($"SELECT 1 FROM {tablename} WHERE 1 = 0", null, transaction, commandTimeout);
 				}
 				catch {
 					// ignore
 				}
 			}
 			return false;
-		}
-
-		/// <summary>
-		/// Removes duplicate rows from a database.
-		/// </summary>
-		/// <param name="conn">The database connection.</param>
-		/// <param name="tablename">The name of the table to remove duplicates from.</param>
-		/// <param name="trans">The database transaction.</param>
-		/// <param name="distinctColumns">The columns to select on to check for duplicates.
-		/// If no columns are input them all columns are used.</param>
-		/// <returns>The number of rows affected by the query.</returns>
-		public static int RemoveDuplicates(SqlConnection conn, string tablename, SqlTransaction trans = null, params string[] distinctColumns)
-		{
-			return conn.Execute(@"
-WHILE EXISTS (SELECT COUNT(*) FROM " + tablename + " GROUP BY " + distinctColumns[0] + " HAVING COUNT(*) > 1" + @")
-BEGIN
-    DELETE FROM " + tablename + @" WHERE " + distinctColumns[0] + @" IN 
-    (
-        SELECT MIN(" + distinctColumns[0] + @") as [DeleteID]
-        " + " FROM " + tablename + " GROUP BY " + distinctColumns[0] + " HAVING COUNT(*) > 1" + @"
-	)
-END");
 		}
 	}
 }
