@@ -34,9 +34,9 @@ namespace Dapper.Extension
 			SelectProperties = GetProperties(Array.Empty<PropertyInfo>(), (prop) => true, typeof(IgnoreSelectAttribute), typeof(IgnoreAttribute));
 			InsertProperties = GetProperties(AutoKeyProperties, (prop) => { var attr = prop.GetCustomAttribute<IgnoreInsertAttribute>(true); return attr == null || attr.Value != null; }, typeof(IgnoreAttribute));
 			UpdateProperties = GetProperties(KeyProperties, (prop) => { var attr = prop.GetCustomAttribute<IgnoreUpdateAttribute>(true); return attr == null || attr.Value != null; }, typeof(IgnoreAttribute));
-			PropertyInfo[] MatchUpdateProperties = UpdateProperties.Where(x => x.GetCustomAttribute<MatchUpdateAttribute>(true) != null).ToArray();
+			PropertyInfo[] MatchUpdateProperties = UpdateProperties.Where(prop => prop.GetCustomAttribute<MatchUpdateAttribute>(true) != null).ToArray();
 			if (MatchUpdateProperties.Length > 0) {
-				UpdateProperties = UpdateProperties.Where(x => !MatchUpdateProperties.Contains(x)).ToArray();
+				UpdateProperties = UpdateProperties.Where(prop => !MatchUpdateProperties.Contains(prop) || prop.GetCustomAttribute<IgnoreUpdateAttribute>(true)?.Value != null).ToArray();
 			}
 			PropertyInfo[] MatchDeleteProperties = Properties.Where(prop => prop.GetCustomAttribute<KeyAttribute>(true) != null || prop.GetCustomAttribute<MatchDeleteAttribute>(true) != null).ToArray();
 
@@ -510,7 +510,7 @@ namespace Dapper.Extension
 		private int RemoveDuplicates_(IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
 			//connection.Execute("DROP TABLE " + BulkTempStagingTable, null, transaction, commandTimeout);
-			string sql = "SELECT DISTINCT [" + string.Join("],[", GetColumnNames(Properties.Where(x => !KeyProperties.Contains(x)).ToArray())) + "]\nINTO " + BulkTempStagingTable + " FROM " + TableName;
+			string sql = "SELECT DISTINCT [" + string.Join("],[", GetColumnNames(Properties.Where(prop => !KeyProperties.Contains(prop)).ToArray())) + "]\nINTO " + BulkTempStagingTable + " FROM " + TableName;
 			int currCount = RecordCount(connection, "", null, transaction, commandTimeout);
 			connection.Execute(sql, null, transaction, commandTimeout);
 			connection.Execute("TRUNCATE TABLE " + TableName, null, transaction, commandTimeout);
