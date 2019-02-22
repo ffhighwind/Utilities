@@ -16,7 +16,7 @@ namespace Dapper.Extension
 	{
 		static TableData()
 		{
-			TableAttribute = typeof(T).GetCustomAttribute<TableAttribute>(false);
+			TableAttribute = typeof(T).GetCustomAttribute<TableAttribute>(true);
 			TableName = TableAttribute?.Name.Replace("'", "") ?? typeof(T).Name;
 			Queries = TableDataImpl<T>.Default;
 		}
@@ -32,6 +32,8 @@ namespace Dapper.Extension
 		public static PropertyInfo[] UpdateProperties => Queries.UpdateProperties;
 		public static PropertyInfo[] InsertProperties => Queries.InsertProperties;
 		public static PropertyInfo[] EqualityProperties => Queries.EqualityProperties;
+		public static PropertyInfo[] UpdateEqualityProperties => Queries.UpdateEqualityProperties;
+		public static PropertyInfo[] DeleteEqualityProperties => Queries.DeleteEqualityProperties;
 
 		public static string[] Columns => Queries.Columns;
 		public static string[] KeyColumns => Queries.KeyColumns;

@@ -30,6 +30,13 @@ namespace Utilities.UnitTests
 				new TestDTO() { ID = -1, CreatedDt = new DateTime(2019, 1, 3), Name = "Wesley3" }
 			};
 
+			List<TestDTO4> list2 = new List<TestDTO4>()
+			{
+				new TestDTO4() { ID = -1, FirstName = "Wesley1", LastName = "Hamilton" },
+				new TestDTO4() { ID = -1, FirstName = "Wesley2", LastName = "Hamilton"  },
+				new TestDTO4() { ID = -1, FirstName = "Wesley3", LastName = "Hamilton"  }
+			};
+
 			TestDTO dto = new TestDTO() { CreatedDt = new DateTime(2019, 1, 15), Name = "Test" };
 
 
@@ -79,7 +86,7 @@ namespace Utilities.UnitTests
 					}
 
 					//upsert
-					for(int i = 0; i < list.Count; i++) {
+					for (int i = 0; i < list.Count; i++) {
 						conn.Upsert(list[i], trans);
 					}
 					//conn.BulkUpsert(list, trans);
@@ -128,6 +135,23 @@ namespace Utilities.UnitTests
 					for (int i = 0; i < newList.Count; i++) {
 						if (list[i].ID != newList[i].ID)
 							throw new InvalidOperationException();
+					}
+
+					conn.Insert(list2[0], trans);
+					conn.Insert(list2[1], trans);
+					list2[0].LastName = "Hamilton2"; // MatchUpdate
+					list2[1].FirstName = "Wesley"; // MatchDelete
+					if (conn.Update(list2[0], trans)) {
+						throw new InvalidOperationException();
+					}
+					if (!conn.Delete(list2[0], trans)) {
+						throw new InvalidOperationException();
+					}
+					if (!conn.Update(list2[1], trans)) {
+						throw new InvalidOperationException();
+					}
+					if (!conn.Delete(list2[1], trans)) {
+						throw new InvalidOperationException();
 					}
 				}
 			}

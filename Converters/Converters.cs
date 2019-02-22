@@ -98,7 +98,7 @@ namespace Utilities.Converters
 			PropertyInfo[] pinfosOut = typeof(Tout).GetProperties(flags);
 			foreach (PropertyInfo pout in pinfosOut) {
 				if (!propertyNames.Contains(pout.Name)) {
-					if (!pout.GetCustomAttributes(false).Any(attr => attr is OptionalAttribute))
+					if (!pout.GetCustomAttributes(true).Any(attr => attr is OptionalAttribute))
 						throw new InvalidOperationException("Missing property: " + typeof(Tout).FullName + "." + pout.Name);
 				}
 			}

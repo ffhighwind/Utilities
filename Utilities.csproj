@@ -63,6 +63,7 @@
     <Compile Include="Database\Extension\Interfaces\ITransactionQueries.cs" />
     <Compile Include="Database\Extension\Interfaces\ITransactionQueriesSync.cs" />
     <Compile Include="Database\Extension\Interfaces\ITransactionQueriesAsync.cs" />
+    <Compile Include="Database\MatchDeleteAttribute.cs" />
     <Compile Include="Database\Extension\TableCache.cs" />
     <Compile Include="Database\Extension\TableData.cs" />
     <Compile Include="Database\Extension\TableDataImpl.cs" />
@@ -72,6 +73,7 @@
     <Compile Include="Database\IgnoreSelectAttribute.cs" />
     <Compile Include="Database\IgnoreUpdateAttribute.cs" />
     <Compile Include="Database\KeyAttribute.cs" />
+    <Compile Include="Database\MatchUpdateAttribute.cs" />
     <Compile Include="Database\TableAttribute.cs" />
     <Compile Include="Database.cs" />
     <Compile Include="Email\Extensions.cs" />

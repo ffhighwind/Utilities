@@ -21,19 +21,24 @@ namespace Dapper.Extension
 		public TableDataImpl(BindingFlags propertyFlags = BindingFlags.Public | BindingFlags.Instance)
 		{
 			Properties = typeof(T).GetProperties(propertyFlags).Where(prop => prop.CanRead && prop.CanWrite && (!prop.PropertyType.IsClass || prop.PropertyType == typeof(string))).ToArray();
-			KeyProperties = Properties.Where(prop => prop.GetCustomAttribute<KeyAttribute>(false) != null).ToArray();
-			AutoKeyProperties = KeyProperties.Where(prop => !prop.GetCustomAttribute<KeyAttribute>(false).Required).ToArray();
+			KeyProperties = Properties.Where(prop => prop.GetCustomAttribute<KeyAttribute>(true) != null).ToArray();
+			AutoKeyProperties = KeyProperties.Where(prop => !prop.GetCustomAttribute<KeyAttribute>(true).Required).ToArray();
 			for (int i = 0; i < KeyProperties.Length; i++) {
-				if (KeyProperties[i].GetCustomAttribute<IgnoreSelectAttribute>(false) != null || KeyProperties[i].GetCustomAttribute<IgnoreAttribute>(false) != null) {
+				if (KeyProperties[i].GetCustomAttribute<IgnoreSelectAttribute>(true) != null || KeyProperties[i].GetCustomAttribute<IgnoreAttribute>(true) != null
+					|| KeyProperties[i].GetCustomAttribute<IgnoreUpdateAttribute>(true) != null || KeyProperties[i].GetCustomAttribute<IgnoreInsertAttribute>(true) != null) {
 					throw new InvalidOperationException("Cannot ignore key properties");
 				}
 			}
-			Properties = Properties.Where(prop => prop.GetCustomAttribute<IgnoreAttribute>(false) == null && (prop.GetCustomAttribute<IgnoreSelectAttribute>(false) == null
-				|| prop.GetCustomAttribute<IgnoreInsertAttribute>(false) == null || prop.GetCustomAttribute<IgnoreUpdateAttribute>(false) == null)).ToArray();
+			Properties = Properties.Where(prop => prop.GetCustomAttribute<IgnoreAttribute>(true) == null && (prop.GetCustomAttribute<IgnoreSelectAttribute>(true) == null
+				|| prop.GetCustomAttribute<IgnoreInsertAttribute>(true) == null || prop.GetCustomAttribute<IgnoreUpdateAttribute>(true) == null)).ToArray();
 			SelectProperties = GetProperties(Array.Empty<PropertyInfo>(), (prop) => true, typeof(IgnoreSelectAttribute), typeof(IgnoreAttribute));
-			InsertProperties = GetProperties(AutoKeyProperties, (prop) => { var attr = prop.GetCustomAttribute<IgnoreInsertAttribute>(); return attr == null || attr.Value != null; }, typeof(IgnoreAttribute));
-			UpdateProperties = GetProperties(AutoKeyProperties, (prop) => { var attr = prop.GetCustomAttribute<IgnoreUpdateAttribute>(); return attr == null || attr.Value != null; }, typeof(IgnoreAttribute));
-			UpsertProperties = GetProperties(AutoKeyProperties, (prop) => true, typeof(IgnoreAttribute));
+			InsertProperties = GetProperties(AutoKeyProperties, (prop) => { var attr = prop.GetCustomAttribute<IgnoreInsertAttribute>(true); return attr == null || attr.Value != null; }, typeof(IgnoreAttribute));
+			UpdateProperties = GetProperties(KeyProperties, (prop) => { var attr = prop.GetCustomAttribute<IgnoreUpdateAttribute>(true); return attr == null || attr.Value != null; }, typeof(IgnoreAttribute));
+			PropertyInfo[] MatchUpdateProperties = UpdateProperties.Where(x => x.GetCustomAttribute<MatchUpdateAttribute>(true) != null).ToArray();
+			if (MatchUpdateProperties.Length > 0) {
+				UpdateProperties = UpdateProperties.Where(x => !MatchUpdateProperties.Contains(x)).ToArray();
+			}
+			PropertyInfo[] MatchDeleteProperties = Properties.Where(prop => prop.GetCustomAttribute<KeyAttribute>(true) != null || prop.GetCustomAttribute<MatchDeleteAttribute>(true) != null).ToArray();
 
 			Columns = GetColumnNames(Properties);
 			KeyColumns = GetColumnNames(KeyProperties);
@@ -41,16 +46,23 @@ namespace Dapper.Extension
 			SelectColumns = GetColumnNames(SelectProperties);
 			UpdateColumns = GetColumnNames(UpdateProperties);
 			InsertColumns = GetColumnNames(InsertProperties);
-			UpsertColumns = GetColumnNames(UpsertProperties);
 
 			if (KeyProperties.Length == 0) {
 				EqualityProperties = Properties;
 				EqualityColumns = Columns;
+				UpdateEqualityProperties = EqualityProperties;
+				UpdateEqualityColumns = Columns;
+				DeleteEqualityColumns = Columns;
 			}
 			else {
 				EqualityProperties = KeyProperties;
 				EqualityColumns = KeyColumns;
+				UpdateEqualityProperties = EqualityProperties.Union(MatchUpdateProperties).ToArray();
+				DeleteEqualityProperties = EqualityProperties.Union(MatchDeleteProperties).ToArray();
+				UpdateEqualityColumns = GetColumnNames(UpdateEqualityProperties);
+				DeleteEqualityColumns = GetColumnNames(DeleteEqualityProperties);
 			}
+
 			GenerateQueries();
 		}
 
@@ -58,18 +70,20 @@ namespace Dapper.Extension
 		{
 			string[] insertDefaults = new string[InsertProperties.Length];
 			for (int i = 0; i < InsertProperties.Length; i++) {
-				insertDefaults[i] = InsertProperties[i].GetCustomAttribute<IgnoreInsertAttribute>()?.Value;
+				insertDefaults[i] = InsertProperties[i].GetCustomAttribute<IgnoreInsertAttribute>(true)?.Value;
 			}
 			string[] updateDefaults = new string[UpdateProperties.Length];
 			for (int i = 0; i < UpdateProperties.Length; i++) {
-				updateDefaults[i] = UpdateProperties[i].GetCustomAttribute<IgnoreUpdateAttribute>()?.Value;
+				updateDefaults[i] = UpdateProperties[i].GetCustomAttribute<IgnoreUpdateAttribute>(true)?.Value;
 			}
 
 			string whereEquals = "WHERE " + GetEqualsParams(" AND ", EqualityProperties, EqualityColumns, new string[EqualityProperties.Length]);
+			string whereUpdateEquals = "WHERE " + GetEqualsParams(" AND ", UpdateEqualityProperties, UpdateEqualityColumns, new string[UpdateEqualityProperties.Length]);
+			string whereDeleteEquals = "WHERE " + GetEqualsParams(" AND ", DeleteEqualityProperties, DeleteEqualityColumns, new string[DeleteEqualityProperties.Length]);
+
 			string paramsInsert = "[" + string.Join("],[", InsertColumns) + "]";
 			string insertTableParams = "INSERT " + TableName + " (" + paramsInsert + ")\n";
 			string valuesInserted = "VALUES (" + GetValues(InsertProperties, insertDefaults) + ")\n";
-			string stagingEquals = GetTempAndEqualsParams(EqualityColumns);
 			string outputInserted = GetOutput("INSERTED", Properties) + "\n";
 			string outputInsertedKeys = KeyProperties.Length == 0 ? outputInserted : (GetOutput("INSERTED", KeyProperties) + "\n");
 			string outputDeleted = GetOutput("DELETED", Properties) + "\n";
@@ -81,31 +95,29 @@ namespace Dapper.Extension
 			SelectSingleQuery = SelectListQuery + whereEquals;
 			CountQuery = "SELECT COUNT(*) FROM " + TableName + "\n";
 			DeleteQuery = "DELETE FROM " + TableName + "\n";
-			DeleteSingleQuery = DeleteQuery + whereEquals;
+			DeleteSingleQuery = DeleteQuery + whereDeleteEquals;
 			DeleteListQuery = DeleteQuery + outputDeleted;
 			DeleteListKeysQuery = DeleteQuery + outputDeletedKeys;
 
-			UpsertQuery = "IF NOT EXISTS (\nSELECT TOP(1) * FROM " + TableName + "\n" + whereEquals + ")\n" + insertTableParams + outputInserted + valuesInserted;
+			UpsertQuery = "IF NOT EXISTS (\nSELECT TOP(1) * FROM " + TableName + "\n" +  whereEquals + ")\n" + insertTableParams + outputInserted + valuesInserted;
 
 			BulkUpdateQuery = "UPDATE " + TableName + "\nSET " + GetTempSetParams(UpdateColumns, updateDefaults)
-				+ "\nFROM " + BulkTempStagingTable + "\nWHERE " + stagingEquals;
-			BulkInsertNotExistsQuery = insertTableParams + outputInserted + "SELECT " + paramsInsert + "\nFROM " + BulkTempStagingTable + "\nWHERE NOT EXISTS (\nSELECT * FROM " + TableName + "\nWHERE " + stagingEquals + ")";
-			string whereExistsTemp = "WHERE EXISTS (\nSELECT * FROM [" + BulkTempStagingTable + "]\nWHERE " + stagingEquals + ")";
-			BulkDeleteQuery = DeleteQuery + whereExistsTemp;
-			//BulkDeleteQuery = "DELETE " + TableName + " FROM " + TableName + "\n" + "INNER JOIN " + BulkTempStagingTable + "\n\tON " + stagingEquals;
-			BulkDeleteListQuery = DeleteListQuery + whereExistsTemp;
+				+ "\nFROM " + BulkTempStagingTable + "\nWHERE " + GetTempAndEqualsParams(UpdateEqualityColumns);
+			BulkInsertNotExistsQuery = insertTableParams + outputInserted + "SELECT " + paramsInsert + "\nFROM " + BulkTempStagingTable + "\nWHERE NOT EXISTS (\nSELECT * FROM " + TableName + "\nWHERE " + GetTempAndEqualsParams(EqualityColumns) + ")";
+			string whereDeleteExistsBulk = "WHERE EXISTS (\nSELECT * FROM [" + BulkTempStagingTable + "]\nWHERE " + GetTempAndEqualsParams(DeleteEqualityColumns) + ")";
+			BulkDeleteQuery = DeleteQuery + whereDeleteExistsBulk;
+			BulkDeleteListQuery = DeleteListQuery + whereDeleteExistsBulk;
 			BulkInsertListQuery = insertTableParams + outputInserted + "SELECT * FROM " + BulkTempStagingTable;
 
 			if (KeyProperties.Length == 0) {
-				UpdateQuery = ""; //no keys means can't update with type T, but can with type object
+				UpdateQuery = ""; //no keys means can't update
+				BulkUpdateQuery = "";
 				BulkUpsertQuery = BulkInsertNotExistsQuery;
 				SelectListKeysQuery = SelectListQuery;
-				BulkUpdateQuery = "";
-				//TODO: add Update(where, params)
 			}
 			else {
-				UpdateQuery = updateTableSetParams + whereEquals;
-				UpsertQuery = UpsertQuery + "\n\nELSE\n\n" + updateTableSetParams + outputDeleted + whereEquals;
+				UpdateQuery = updateTableSetParams + whereUpdateEquals;
+				UpsertQuery = UpsertQuery + "\n\nELSE\n\n" + updateTableSetParams + outputDeleted + whereUpdateEquals;
 				SelectListKeysQuery = "SELECT " + GetAsParams(KeyProperties) + " FROM " + TableName + "\n";
 			}
 		}
@@ -241,7 +253,7 @@ namespace Dapper.Extension
 				}
 				Attribute ignoredAttr = null;
 				for (int j = 0; j < ignoredAttributes.Length; j++) {
-					ignoredAttr = Properties[i].GetCustomAttribute(ignoredAttributes[j], false);
+					ignoredAttr = Properties[i].GetCustomAttribute(ignoredAttributes[j], true);
 					if (ignoredAttr != null) {
 						break;
 					}
@@ -262,7 +274,7 @@ namespace Dapper.Extension
 			string[] columnNames = new string[properties.Length];
 			for (int i = 0; i < properties.Length; i++) {
 				columnNames[i] = properties[i].Name;
-				ColumnAttribute colAttr = properties[i].GetCustomAttribute<ColumnAttribute>(false);
+				ColumnAttribute colAttr = properties[i].GetCustomAttribute<ColumnAttribute>(true);
 				if (colAttr != null) {
 					columnNames[i] = colAttr.Name.Replace("'", "''");
 				}
@@ -292,8 +304,9 @@ namespace Dapper.Extension
 		public string[] SelectColumns { get; private set; }
 		public string[] UpdateColumns { get; private set; }
 		public string[] InsertColumns { get; private set; }
-		public string[] UpsertColumns { get; private set; }
 		public string[] EqualityColumns { get; private set; }
+		public string[] UpdateEqualityColumns { get; private set; }
+		public string[] DeleteEqualityColumns { get; private set; }
 
 		#region ITableQueries<T>
 		public override IEnumerable<T> GetKeys(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
@@ -489,7 +502,7 @@ namespace Dapper.Extension
 					connection.Execute(@"ALTER TABLE " + TableName + " DROP COLUMN _TempIDColumn", null, transaction, commandTimeout);
 					return count;
 				}
-				catch {	}
+				catch { }
 			}
 			return RemoveDuplicates_(connection, transaction, commandTimeout);
 		}
