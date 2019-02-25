@@ -99,26 +99,31 @@ namespace Dapper.Extension
 			DeleteListQuery = DeleteQuery + outputDeleted;
 			DeleteListKeysQuery = DeleteQuery + outputDeletedKeys;
 
-			UpsertQuery = "IF NOT EXISTS (\nSELECT TOP(1) * FROM " + TableName + "\n" +  whereEquals + ")\n" + insertTableParams + outputInserted + valuesInserted;
+			UpsertQuery = "IF NOT EXISTS (\nSELECT TOP(1) * FROM " + TableName + "\n" + whereEquals + ")\n" + insertTableParams + outputInserted + valuesInserted;
 
-			BulkUpdateQuery = "UPDATE " + TableName + "\nSET " + GetTempSetParams(UpdateColumns, updateDefaults)
-				+ "\nFROM " + BulkTempStagingTable + "\nWHERE " + GetTempAndEqualsParams(UpdateEqualityColumns);
-			BulkInsertNotExistsQuery = insertTableParams + outputInserted + "SELECT " + paramsInsert + "\nFROM " + BulkTempStagingTable + "\nWHERE NOT EXISTS (\nSELECT * FROM " + TableName + "\nWHERE " + GetTempAndEqualsParams(EqualityColumns) + ")";
+			BulkInsertNotExistsOutputQuery = insertTableParams + outputInserted + "SELECT " + paramsInsert + "\nFROM " + BulkTempStagingTable + "\nWHERE NOT EXISTS (\nSELECT * FROM " + TableName + "\nWHERE " + GetTempAndEqualsParams(EqualityColumns) + ")";
+			BulkInsertNotExistsQuery = insertTableParams + "SELECT " + paramsInsert + "\nFROM " + BulkTempStagingTable + "\nWHERE NOT EXISTS (\nSELECT * FROM " + TableName + "\nWHERE " + GetTempAndEqualsParams(EqualityColumns) + ")";
 			string whereDeleteExistsBulk = "WHERE EXISTS (\nSELECT * FROM [" + BulkTempStagingTable + "]\nWHERE " + GetTempAndEqualsParams(DeleteEqualityColumns) + ")";
 			BulkDeleteQuery = DeleteQuery + whereDeleteExistsBulk;
 			BulkDeleteListQuery = DeleteListQuery + whereDeleteExistsBulk;
 			BulkInsertListQuery = insertTableParams + outputInserted + "SELECT * FROM " + BulkTempStagingTable;
 
+			//no keys means can't update
 			if (KeyProperties.Length == 0) {
-				UpdateQuery = ""; //no keys means can't update
+				UpdateQuery = "";
 				BulkUpdateQuery = "";
-				BulkUpsertQuery = BulkInsertNotExistsQuery;
+				BulkUpdateListQuery = "";
 				SelectListKeysQuery = SelectListQuery;
 			}
 			else {
-				UpdateQuery = updateTableSetParams + whereUpdateEquals;
 				UpsertQuery = UpsertQuery + "\n\nELSE\n\n" + updateTableSetParams + outputDeleted + whereUpdateEquals;
 				SelectListKeysQuery = "SELECT " + GetAsParams(KeyProperties) + " FROM " + TableName + "\n";
+
+				UpdateQuery = updateTableSetParams + whereUpdateEquals;
+				BulkUpdateQuery = "UPDATE " + TableName + "\nSET " + GetTempSetParams(UpdateColumns, updateDefaults)
+					+ "\nFROM " + BulkTempStagingTable + "\nWHERE " + GetTempAndEqualsParams(UpdateEqualityColumns);
+				BulkUpdateListQuery = "UPDATE " + TableName + "\nSET " + GetTempSetParams(UpdateColumns, updateDefaults)
+					+ "\n" + outputDeleted + "FROM " + BulkTempStagingTable + "\nWHERE " + GetTempAndEqualsParams(UpdateEqualityColumns);
 			}
 		}
 
@@ -294,9 +299,10 @@ namespace Dapper.Extension
 		internal string DeleteListKeysQuery { get; private set; }
 		internal string CountQuery { get; private set; }
 		internal string BulkUpdateQuery { get; private set; }
-		internal string BulkUpsertQuery { get; private set; }
+		internal string BulkUpdateListQuery { get; private set; }
 		internal string BulkInsertListQuery { get; private set; }
 		internal string BulkInsertNotExistsQuery { get; private set; }
+		internal string BulkInsertNotExistsOutputQuery { get; private set; }
 		internal string BulkDeleteQuery { get; private set; }
 		internal string BulkDeleteListQuery { get; private set; }
 
@@ -458,14 +464,14 @@ namespace Dapper.Extension
 			return count;
 		}
 
-		public override IEnumerable<T> BulkUpsert(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		public override int BulkUpsert(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 		{
 			TableData<T>.CreateTable(connection, BulkTempStagingTable, transaction, Columns, commandTimeout);
 			BulkInsert_(connection, objs, transaction, BulkTempStagingTable, Columns, Properties, commandTimeout);
-			int count2 = connection.Execute(BulkUpdateQuery, null, transaction, commandTimeout);
-			int count3 = connection.Execute(BulkInsertNotExistsQuery, null, transaction, commandTimeout);
+			int countUpdate = connection.Execute(BulkUpdateQuery, null, transaction, commandTimeout);
+			int countInsert = connection.Execute(BulkInsertNotExistsQuery, null, transaction, commandTimeout);
 			connection.Execute("DROP TABLE " + BulkTempStagingTable, null, transaction, commandTimeout);
-			return objs;
+			return countInsert;
 		}
 
 		public override int BulkDelete<KeyType>(SqlConnection connection, IEnumerable<KeyType> keys, SqlTransaction transaction = null, int? commandTimeout = null)
@@ -481,9 +487,29 @@ namespace Dapper.Extension
 		{
 			List<KeyType> keys = new List<KeyType>();
 			foreach (IEnumerable<KeyType> Keys in Partition<KeyType>(objs.Select(obj => TableData<T>.GetKey<KeyType>(obj)), 2000)) {
-				keys.AddRange(DeleteList<KeyType>(connection, "WHERE [" + KeyColumns[0] + "] in @Keys", new { Keys }, transaction, buffered, commandTimeout));
+				IEnumerable<KeyType> list = DeleteList<KeyType>(connection, "WHERE [" + KeyColumns[0] + "] in @Keys", new { Keys }, transaction, buffered, commandTimeout);
+				keys.AddRange(list);
 			}
 			return keys;
+		}
+
+		public override IEnumerable<T> BulkUpdateList(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		{
+			TableData<T>.CreateTable(connection, BulkTempStagingTable, transaction, Columns, commandTimeout);
+			BulkInsert_(connection, objs, transaction, BulkTempStagingTable, Columns, Properties, commandTimeout);
+			List<T> list = new List<T>(connection.Query<T>(BulkUpdateListQuery, null, transaction, buffered, commandTimeout));
+			connection.Execute("DROP TABLE " + BulkTempStagingTable, null, transaction, commandTimeout);
+			return list;
+		}
+
+		public override IEnumerable<T> BulkUpsertList(SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		{
+			TableData<T>.CreateTable(connection, BulkTempStagingTable, transaction, Columns, commandTimeout);
+			BulkInsert_(connection, objs, transaction, BulkTempStagingTable, Columns, Properties, commandTimeout);
+			List<T> list = new List<T>(connection.Query<T>(BulkUpdateListQuery, null, transaction, buffered, commandTimeout));
+			list.AddRange(connection.Query<T>(BulkInsertNotExistsOutputQuery, null, transaction, buffered, commandTimeout));
+			connection.Execute("DROP TABLE " + BulkTempStagingTable, null, transaction, commandTimeout);
+			return list;
 		}
 		#endregion // ITableQueries<T>
 

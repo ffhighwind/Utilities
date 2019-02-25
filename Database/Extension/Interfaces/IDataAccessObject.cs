@@ -31,11 +31,14 @@ namespace Dapper.Extension.Interfaces
 		public abstract Ret Upsert(T obj, int? commandTimeout = null);
 		public abstract int RecordCount(string whereCondition = "", object param = null, int? commandTimeout = null);
 
-		public abstract int BulkDelete(IEnumerable<T> objs, int? commandTimeout = null);
 		public abstract IEnumerable<Ret> BulkInsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 		public abstract int BulkUpdate(IEnumerable<T> objs, int? commandTimeout = null);
-		public abstract IEnumerable<Ret> BulkUpsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
+		public abstract int BulkDelete(IEnumerable<T> objs, int? commandTimeout = null);
+		public abstract int BulkUpsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
+
+		public abstract IEnumerable<Ret> BulkUpdateList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 		public abstract IEnumerable<T> BulkDeleteList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
+		public abstract IEnumerable<Ret> BulkUpsertList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 		#endregion IDataAccessObjectSync<T>
 
 
@@ -110,12 +113,23 @@ namespace Dapper.Extension.Interfaces
 			return await Task.Run(() => BulkUpdate(objs, commandTimeout));
 		}
 
+		public async Task<IEnumerable<Ret>> BulkUpdateListAsync(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			return await Task.Run(() => BulkUpdateList(objs, buffered, commandTimeout));
+		}
+
+
 		public async Task<Ret> UpsertAsync(T obj, int? commandTimeout = null)
 		{
 			return await Task.Run(() => Upsert(obj, commandTimeout));
 		}
 
-		public async Task<IEnumerable<Ret>> BulkUpsertAsync(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		public async Task<IEnumerable<Ret>> BulkUpsertListAsync(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			return await Task.Run(() => BulkUpsertList(objs, buffered, commandTimeout));
+		}
+
+		public async Task<int> BulkUpsertAsync(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
 			return await Task.Run(() => BulkUpsert(objs, buffered, commandTimeout));
 		}
@@ -157,11 +171,14 @@ namespace Dapper.Extension.Interfaces
 		public abstract int RecordCount(string whereCondition = "", object param = null, int? commandTimeout = null);
 
 		public abstract IEnumerable<Ret> BulkInsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
+		public abstract int BulkUpdate(IEnumerable<T> objs, int? commandTimeout = null);
 		public abstract int BulkDelete(IEnumerable<KeyType> keys, int? commandTimeout = null);
 		public abstract int BulkDelete(IEnumerable<T> objs, int? commandTimeout = null);
-		public abstract int BulkUpdate(IEnumerable<T> objs, int? commandTimeout = null);
-		public abstract IEnumerable<Ret> BulkUpsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
+		public abstract int BulkUpsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
+
+		public abstract IEnumerable<Ret> BulkUpdateList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 		public abstract IEnumerable<KeyType> BulkDeleteList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
+		public abstract IEnumerable<Ret> BulkUpsertList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 		#endregion // IDataAccessObjectSync<T, KeyType, Ret>
 
 
@@ -251,12 +268,22 @@ namespace Dapper.Extension.Interfaces
 			return await Task.Run(() => BulkUpdate(objs, commandTimeout));
 		}
 
+		public async Task<IEnumerable<Ret>> BulkUpdateListAsync(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			return await Task.Run(() => BulkUpdateList(objs, buffered, commandTimeout));
+		}
+
 		public async Task<Ret> UpsertAsync(T obj, int? commandTimeout = null)
 		{
 			return await Task.Run(() => Upsert(obj, commandTimeout));
 		}
 
-		public async Task<IEnumerable<Ret>> BulkUpsertAsync(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		public async Task<IEnumerable<Ret>> BulkUpsertListAsync(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			return await Task.Run(() => BulkUpsertList(objs, buffered, commandTimeout));
+		}
+
+		public async Task<int> BulkUpsertAsync(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
 			return await Task.Run(() => BulkUpsert(objs, buffered, commandTimeout));
 		}

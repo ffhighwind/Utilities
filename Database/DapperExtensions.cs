@@ -83,7 +83,7 @@ namespace Dapper
 			TableData<T>.Queries.Upsert(connection, obj, transaction, commandTimeout);
 		}
 
-		public static IEnumerable<T> BulkUpsert<T>(this SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+		public static int BulkUpsert<T>(this SqlConnection connection, IEnumerable<T> objs, SqlTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
 			where T : class
 		{
 			return TableData<T>.Queries.BulkUpsert(connection, objs, transaction, buffered, commandTimeout);

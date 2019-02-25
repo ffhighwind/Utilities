@@ -153,10 +153,38 @@ namespace Dapper
 			}
 		}
 
-		public override IEnumerable<T> BulkUpsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		public override int BulkUpsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
 			SqlConnection conn = new SqlConnection(ConnectionString);
-			IEnumerable<T> list = Queries.BulkUpsert(conn, objs, null, buffered, commandTimeout);
+			return Queries.BulkUpsert(conn, objs, null, true, commandTimeout);
+		}
+
+		public override IEnumerable<T> BulkDeleteList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			SqlConnection conn = new SqlConnection(ConnectionString);
+			IEnumerable<T> list = Queries.BulkDeleteList(conn, objs, null, buffered, commandTimeout);
+			if (buffered) {
+				conn.Dispose(); // conn.Close();
+				return list;
+			}
+			return new ConnectedEnumerable<T>(list, conn);
+		}
+
+		public override IEnumerable<T> BulkUpdateList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			SqlConnection conn = new SqlConnection(ConnectionString);
+			IEnumerable<T> list = Queries.BulkUpdateList(conn, objs, null, buffered, commandTimeout);
+			if (buffered) {
+				conn.Dispose(); // conn.Close();
+				return list;
+			}
+			return new ConnectedEnumerable<T>(list, conn);
+		}
+
+		public override IEnumerable<T> BulkUpsertList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			SqlConnection conn = new SqlConnection(ConnectionString);
+			IEnumerable<T> list = Queries.BulkUpsertList(conn, objs, null, buffered, commandTimeout);
 			if (buffered) {
 				conn.Dispose(); // conn.Close();
 				return list;
@@ -242,19 +270,24 @@ namespace Dapper
 			return Queries.Upsert(transaction.Connection, obj, transaction, commandTimeout);
 		}
 
-		public override IEnumerable<T> BulkUpsert(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		public override int BulkUpsert(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
 			return Queries.BulkUpsert(transaction.Connection, objs, transaction, buffered, commandTimeout);
-		}
-
-		public override IEnumerable<T> BulkDeleteList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
-		{
-			throw new NotImplementedException();
 		}
 
 		public override IEnumerable<T> BulkDeleteList(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
 			return Queries.BulkDeleteList<T>(transaction.Connection, objs, transaction, buffered, commandTimeout);
+		}
+
+		public override IEnumerable<T> BulkUpdateList(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			return Queries.BulkUpdateList(transaction.Connection, objs, transaction, buffered, commandTimeout);
+		}
+
+		public override IEnumerable<T> BulkUpsertList(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			return Queries.BulkUpsertList(transaction.Connection, objs, transaction, buffered, commandTimeout);
 		}
 		#endregion // ITransactionQueriesSync<T>
 	}
@@ -425,15 +458,11 @@ namespace Dapper
 			}
 		}
 
-		public override IEnumerable<T> BulkUpsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		public override int BulkUpsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
-			SqlConnection conn = new SqlConnection(ConnectionString);
-			IEnumerable<T> list = Queries.BulkUpsert(conn, objs, null, buffered, commandTimeout);
-			if (buffered) {
-				conn.Dispose(); // conn.Close();
-				return list;
+			using (SqlConnection conn = new SqlConnection(ConnectionString)) {
+				return Queries.BulkUpsert(conn, objs, null, true, commandTimeout);
 			}
-			return new ConnectedEnumerable<T>(list, conn);
 		}
 
 		public override IEnumerable<KeyType> BulkDeleteList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
@@ -445,6 +474,29 @@ namespace Dapper
 				return keys;
 			}
 			return new ConnectedEnumerable<KeyType>(keys, conn);
+		}
+
+
+		public override IEnumerable<T> BulkUpdateList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			SqlConnection conn = new SqlConnection(ConnectionString);
+			IEnumerable<T> list = Queries.BulkUpdateList(conn, objs, null, buffered, commandTimeout);
+			if (buffered) {
+				conn.Dispose(); // conn.Close();
+				return list;
+			}
+			return new ConnectedEnumerable<T>(list, conn);
+		}
+
+		public override IEnumerable<T> BulkUpsertList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			SqlConnection conn = new SqlConnection(ConnectionString);
+			IEnumerable<T> list = Queries.BulkUpsertList(conn, objs, null, buffered, commandTimeout);
+			if (buffered) {
+				conn.Dispose(); // conn.Close();
+				return list;
+			}
+			return new ConnectedEnumerable<T>(list, conn);
 		}
 		#endregion // IDataAccessObjectSync<T, KeyType, Ret>
 
@@ -520,7 +572,7 @@ namespace Dapper
 			return Queries.Upsert(transaction.Connection, obj, transaction, commandTimeout);
 		}
 
-		public override IEnumerable<T> BulkUpsert(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		public override int BulkUpsert(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
 			return Queries.BulkUpsert(transaction.Connection, objs, transaction, buffered, commandTimeout);
 		}
@@ -548,6 +600,16 @@ namespace Dapper
 		public override IEnumerable<KeyType> BulkDeleteList(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
 			return Queries.BulkDeleteList<KeyType>(transaction.Connection, objs, transaction, buffered, commandTimeout);
+		}
+
+		public override IEnumerable<T> BulkUpdateList(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			return Queries.BulkUpdateList(transaction.Connection, objs, transaction, buffered, commandTimeout);
+		}
+
+		public override IEnumerable<T> BulkUpsertList(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			return Queries.BulkUpsertList(transaction.Connection, objs, transaction, buffered, commandTimeout);
 		}
 		#endregion // ITransactionQueriesSync<T, KeyType, Ret>
 	}

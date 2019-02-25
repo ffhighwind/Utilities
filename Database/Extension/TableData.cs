@@ -172,7 +172,7 @@ namespace Dapper.Extension
 		public static void CreateTable(IDbConnection conn, string tempTable, IDbTransaction trans, string[] columns, int? commandTimeout)
 		{
 			string columnNames = columns.Length == 0 ? "*" : string.Join(",", columns);
-			string sql = "SELECT TOP(0) " + columnNames + " INTO " + tempTable + " FROM " + TableName;
+			string sql = $"DROP TABLE IF EXISTS {TableName}; SELECT TOP(0) {columnNames} INTO {tempTable} FROM {TableName}";
 			conn.Execute(sql, null, trans, commandTimeout);
 		}
 	}

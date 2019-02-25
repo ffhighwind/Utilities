@@ -10,23 +10,23 @@ namespace Dapper.Extension
 {
 	internal class ConnectedEnumerable<T> : IEnumerable<T>
 	{
-		public IEnumerable<T> list { get; private set; }
-		public IDbConnection conn { get; private set; }
+		public IEnumerable<T> List { get; private set; }
+		public IDbConnection Conn { get; private set; }
 
 		public ConnectedEnumerable(IEnumerable<T> list, IDbConnection connection)
 		{
-			this.list = list;
-			conn = connection;
+			this.List = list;
+			Conn = connection;
 		}
 
 		public IEnumerator<T> GetEnumerator()
 		{
-			return new Enumerator(conn, list.GetEnumerator());
+			return new Enumerator(Conn, List.GetEnumerator());
 		}
 
 		IEnumerator IEnumerable.GetEnumerator()
 		{
-			return new Enumerator(conn, list.GetEnumerator());
+			return new Enumerator(Conn, List.GetEnumerator());
 		}
 
 		internal class Enumerator : IEnumerator<T>

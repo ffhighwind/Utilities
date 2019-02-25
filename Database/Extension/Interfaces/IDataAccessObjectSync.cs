@@ -29,11 +29,14 @@ namespace Dapper.Extension.Interfaces
 
 		int RecordCount(string whereCondition = "", object param = null, int? commandTimeout = null);
 
-		IEnumerable<T> BulkDeleteList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
-		IEnumerable<Ret> BulkUpsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
+		IEnumerable<Ret> BulkInsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 		int BulkUpdate(IEnumerable<T> objs, int? commandTimeout = null);
 		int BulkDelete(IEnumerable<T> objs, int? commandTimeout = null);
-		IEnumerable<Ret> BulkInsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
+		int BulkUpsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
+
+		IEnumerable<Ret> BulkUpdateList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
+		IEnumerable<T> BulkDeleteList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
+		IEnumerable<Ret> BulkUpsertList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 	}
 
 
@@ -59,11 +62,14 @@ namespace Dapper.Extension.Interfaces
 
 		int RecordCount(string whereCondition = "", object param = null, int? commandTimeout = null);
 
-		int BulkDelete(IEnumerable<KeyType> keys, int? commandTimeout = null);
-		IEnumerable<KeyType> BulkDeleteList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
-		int BulkDelete(IEnumerable<T> objs, int? commandTimeout = null);
-		int BulkUpdate(IEnumerable<T> objs, int? commandTimeout = null);
 		IEnumerable<Ret> BulkInsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
-		IEnumerable<Ret> BulkUpsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
+		int BulkUpdate(IEnumerable<T> objs, int? commandTimeout = null);
+		int BulkDelete(IEnumerable<KeyType> keys, int? commandTimeout = null);
+		int BulkDelete(IEnumerable<T> objs, int? commandTimeout = null);
+		int BulkUpsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
+
+		IEnumerable<Ret> BulkUpdateList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
+		IEnumerable<KeyType> BulkDeleteList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
+		IEnumerable<Ret> BulkUpsertList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
 	}
 }

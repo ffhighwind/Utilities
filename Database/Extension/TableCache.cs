@@ -15,6 +15,7 @@ namespace Dapper.Extension
 {
 	public class TableCache<T, KeyType, Ret> : IDataAccessObject<T, KeyType, Ret>, IEnumerable<Ret>
 		where T : class
+		where Ret : class
 	{
 		public TableCache(DataAccessObject<T, KeyType> dao, Func<T, Ret> constructor, Func<T, Ret, Ret> update)
 		{
@@ -64,7 +65,8 @@ namespace Dapper.Extension
 		{
 			List<Ret> list = new List<Ret>();
 			foreach (T obj in objs) {
-				list.Add(UpsertItem(obj));
+				Ret item = UpsertItem(obj);
+				list.Add(item);
 			}
 			return list;
 		}
@@ -76,7 +78,8 @@ namespace Dapper.Extension
 
 		public Ret Find(T obj, int? commandTimeout = null)
 		{
-			return Find(TableData<T>.GetKey<KeyType>(obj), commandTimeout);
+			KeyType key = TableData<T>.GetKey<KeyType>(obj);
+			return Find(key, commandTimeout);
 		}
 
 		#region IDataAccessObjectSync<T, KeyType, Ret>
@@ -113,17 +116,19 @@ namespace Dapper.Extension
 		public override Ret Get(KeyType key, int? commandTimeout = null)
 		{
 			T obj = DAO.Get(key, commandTimeout);
-			return obj == null ? default(Ret) : UpsertItem(obj);
+			return obj == null ? null : UpsertItem(obj);
 		}
 
 		public override bool Delete(object key, int? commandTimeout = null)
 		{
-			return Delete(TableData<T>.GetKey<KeyType>(key), commandTimeout);
+			KeyType keyVal = TableData<T>.GetKey<KeyType>(key);
+			return Delete(keyVal, commandTimeout);
 		}
 
 		public override bool Delete(T obj, int? commandTimeout = null)
 		{
-			return Delete(TableData<T>.GetKey<KeyType>(obj), commandTimeout);
+			KeyType keyVal = TableData<T>.GetKey<KeyType>(obj);
+			return Delete(keyVal, commandTimeout);
 		}
 
 		public override int BulkDelete(IEnumerable<T> objs, int? commandTimeout = null)
@@ -138,12 +143,14 @@ namespace Dapper.Extension
 
 		public override Ret Insert(T obj, int? commandTimeout = null)
 		{
-			return UpsertItem(DAO.Insert(obj, commandTimeout));
+			T item = DAO.Insert(obj, commandTimeout);
+			return UpsertItem(item);
 		}
 
 		public override IEnumerable<Ret> BulkInsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
-			return UpsertItems(DAO.BulkInsert(objs, buffered, commandTimeout));
+			IEnumerable<T> list = DAO.BulkInsert(objs, buffered, commandTimeout);
+			return UpsertItems(list);
 		}
 
 		public override bool Update(T obj, int? commandTimeout = null)
@@ -159,38 +166,48 @@ namespace Dapper.Extension
 		public override Ret Upsert(T obj, int? commandTimeout = null)
 		{
 			obj = DAO.Upsert(obj, commandTimeout);
-			if (obj == null) {
-				if (Map.TryGetValue(TableData<T>.GetKey<KeyType>(obj), out Ret value)) {
-					return value;
-				}
-				return default(Ret);
-			}
-			return UpsertItem(obj);
+			return obj == null ? null : UpsertItem(obj);
 		}
 
-		public override IEnumerable<Ret> BulkUpsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		public override int BulkUpsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
-			return UpsertItems(DAO.BulkUpsert(objs, buffered, commandTimeout));
+			IEnumerable<T> list = DAO.BulkUpsertList(objs, buffered, commandTimeout);
+			return UpsertItems(list).Count;
 		}
 
 		public override Ret Get(object key, int? commandTimeout = null)
 		{
-			return Get(TableData<T>.GetKey<KeyType>(key), commandTimeout);
+			KeyType keyVal = TableData<T>.GetKey<KeyType>(key);
+			return Get(keyVal, commandTimeout);
 		}
 
 		public override Ret Get(T obj, int? commandTimeout = null)
 		{
-			return Get(TableData<T>.GetKey<KeyType>(obj), commandTimeout);
+			KeyType keyVal = TableData<T>.GetKey<KeyType>(obj);
+			return Get(keyVal, commandTimeout);
 		}
 
 		public override IEnumerable<Ret> GetList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
-			return UpsertItems(DAO.GetList(whereCondition, param, buffered, commandTimeout));
+			IEnumerable<T> list = DAO.GetList(whereCondition, param, buffered, commandTimeout);
+			return UpsertItems(list);
 		}
 
 		public override int RecordCount(string whereCondition = "", object param = null, int? commandTimeout = null)
 		{
 			return DAO.RecordCount(whereCondition, param, commandTimeout);
+		}
+
+		public override IEnumerable<Ret> BulkUpdateList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			IEnumerable<T> list = DAO.BulkUpdateList(objs, buffered, commandTimeout);
+			return UpsertItems(list);
+		}
+
+		public override IEnumerable<Ret> BulkUpsertList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			IEnumerable<T> list = DAO.BulkUpsertList(objs, buffered, commandTimeout);
+			return UpsertItems(list);
 		}
 		#endregion // IDataAccessObjectSync<T, KeyType, Ret>
 
@@ -276,9 +293,10 @@ namespace Dapper.Extension
 			return UpsertItem(DAO.Upsert(transaction, obj, commandTimeout));
 		}
 
-		public override IEnumerable<Ret> BulkUpsert(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		public override int BulkUpsert(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
-			return UpsertItems(DAO.BulkUpsert(transaction, objs, buffered, commandTimeout));
+			IEnumerable<T> list = DAO.BulkUpsertList(transaction, objs, buffered, commandTimeout);
+			return UpsertItems(list).Count;
 		}
 
 		public override Ret Get(IDbTransaction transaction, object key, int? commandTimeout = null)
@@ -318,6 +336,18 @@ namespace Dapper.Extension
 			}
 			return keys;
 		}
+
+		public override IEnumerable<Ret> BulkUpdateList(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			IEnumerable<T> list = DAO.BulkUpdateList(transaction, objs, buffered, commandTimeout);
+			return UpsertItems(list);
+		}
+
+		public override IEnumerable<Ret> BulkUpsertList(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			IEnumerable<T> list = DAO.BulkUpsertList(transaction, objs, buffered, commandTimeout);
+			return UpsertItems(list);
+		}
 		#endregion // ITransactionQueriesSync<T, KeyType, Ret>
 	}
 
@@ -325,6 +355,7 @@ namespace Dapper.Extension
 
 	public class TableCache<T, Ret> : IDataAccessObject<T, Ret>, IEnumerable<Ret>
 		where T : class
+		where Ret : class
 	{
 		protected IDictionary<T, Ret> Map = null;
 
@@ -374,7 +405,8 @@ namespace Dapper.Extension
 		{
 			List<Ret> list = new List<Ret>();
 			foreach (T obj in objs) {
-				list.Add(UpsertItem(obj));
+				Ret val = UpsertItem(obj);
+				list.Add(val);
 			}
 			return list;
 		}
@@ -397,7 +429,8 @@ namespace Dapper.Extension
 
 		public override bool Delete(object key, int? commandTimeout = null)
 		{
-			return Delete(TableData<T>.CreateObject(key), commandTimeout);
+			T keyVal = TableData<T>.CreateObject(key);
+			return Delete(keyVal, commandTimeout);
 		}
 
 		public override bool Delete(T obj, int? commandTimeout = null)
@@ -423,12 +456,14 @@ namespace Dapper.Extension
 
 		public override Ret Insert(T obj, int? commandTimeout = null)
 		{
-			return UpsertItem(DAO.Insert(obj, commandTimeout));
+			T item = DAO.Insert(obj, commandTimeout);
+			return UpsertItem(item);
 		}
 
 		public override IEnumerable<Ret> BulkInsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
-			return UpsertItems(DAO.BulkInsert(objs, buffered, commandTimeout));
+			IEnumerable<T> list = DAO.BulkInsert(objs, buffered, commandTimeout);
+			return UpsertItems(list);
 		}
 
 		public override bool Update(T obj, int? commandTimeout = null)
@@ -443,32 +478,49 @@ namespace Dapper.Extension
 
 		public override Ret Upsert(T obj, int? commandTimeout = null)
 		{
-			return UpsertItem(DAO.Upsert(obj, commandTimeout));
+			T item = DAO.Upsert(obj, commandTimeout);
+			return item == null ? null : UpsertItem(DAO.Upsert(obj, commandTimeout));
 		}
 
-		public override IEnumerable<Ret> BulkUpsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		public override int BulkUpsert(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
-			return UpsertItems(DAO.BulkUpsert(objs, buffered, commandTimeout));
+			IEnumerable<T> list = DAO.BulkUpsertList(objs, buffered, commandTimeout);
+			return UpsertItems(list).Count;
 		}
 
 		public override Ret Get(object key, int? commandTimeout = null)
 		{
-			return UpsertItem(DAO.Get(key, commandTimeout));
+			T val = DAO.Get(key, commandTimeout);
+			return UpsertItem(val);
 		}
 
 		public override Ret Get(T obj, int? commandTimeout = null)
 		{
-			return UpsertItem(DAO.Get(obj, commandTimeout));
+			T item = DAO.Get(obj, commandTimeout);
+			return item == null ? null : UpsertItem(item);
 		}
 
 		public override IEnumerable<Ret> GetList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
-			return UpsertItems(DAO.GetList(whereCondition, param, buffered, commandTimeout));
+			IEnumerable<T> list = DAO.GetList(whereCondition, param, buffered, commandTimeout);
+			return UpsertItems(list);
 		}
 
 		public override int RecordCount(string whereCondition = "", object param = null, int? commandTimeout = null)
 		{
 			return DAO.RecordCount(whereCondition, param, commandTimeout);
+		}
+
+		public override IEnumerable<Ret> BulkUpdateList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			IEnumerable<T> list = DAO.BulkUpdateList(objs, buffered, commandTimeout);
+			return UpsertItems(list);
+		}
+
+		public override IEnumerable<Ret> BulkUpsertList(IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			IEnumerable<T> list = DAO.BulkUpsertList(objs, buffered, commandTimeout);
+			return UpsertItems(list);
 		}
 		#endregion // IDataAccessObjectSync<T, T, Ret>
 
@@ -490,7 +542,8 @@ namespace Dapper.Extension
 
 		public override bool Delete(IDbTransaction transaction, object key, int? commandTimeout = null)
 		{
-			return Delete(transaction, TableData<T>.CreateObject(key), commandTimeout);
+			T obj = TableData<T>.CreateObject(key);
+			return Delete(transaction, obj, commandTimeout);
 		}
 
 		public override bool Delete(IDbTransaction transaction, T obj, int? commandTimeout = null)
@@ -516,12 +569,14 @@ namespace Dapper.Extension
 
 		public override Ret Insert(IDbTransaction transaction, T obj, int? commandTimeout = null)
 		{
-			return UpsertItem(DAO.Insert(transaction, obj, commandTimeout));
+			T val = DAO.Insert(transaction, obj, commandTimeout);
+			return UpsertItem(val);
 		}
 
 		public override IEnumerable<Ret> BulkInsert(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
-			return UpsertItems(DAO.BulkInsert(transaction, objs, buffered, commandTimeout));
+			IEnumerable<T> list = DAO.BulkInsert(transaction, objs, buffered, commandTimeout);
+			return UpsertItems(list);
 		}
 
 		public override bool Update(IDbTransaction transaction, T obj, int? commandTimeout = null)
@@ -536,27 +591,32 @@ namespace Dapper.Extension
 
 		public override Ret Upsert(IDbTransaction transaction, T obj, int? commandTimeout = null)
 		{
-			return UpsertItem(DAO.Upsert(transaction, obj, commandTimeout));
+			T val = DAO.Upsert(transaction, obj, commandTimeout);
+			return UpsertItem(val);
 		}
 
-		public override IEnumerable<Ret> BulkUpsert(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		public override int BulkUpsert(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
 		{
-			return UpsertItems(DAO.BulkUpsert(transaction, objs, buffered, commandTimeout));
+			IEnumerable<T> list = DAO.BulkUpsertList(transaction, objs, buffered, commandTimeout);
+			return UpsertItems(list).Count;
 		}
 
 		public override Ret Get(IDbTransaction transaction, object key, int? commandTimeout = null)
 		{
-			return UpsertItem(DAO.Get(transaction, key, commandTimeout));
+			T val = DAO.Get(transaction, key, commandTimeout);
+			return val == null ? null : UpsertItem(val);
 		}
 
 		public override Ret Get(IDbTransaction transaction, T obj, int? commandTimeout = null)
 		{
-			return UpsertItem(DAO.Get(transaction, obj, commandTimeout));
+			T val = DAO.Get(transaction, obj, commandTimeout);
+			return val == null ? null : UpsertItem(val);
 		}
 
 		public override IEnumerable<Ret> GetList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
-			return UpsertItems(DAO.GetList(transaction, whereCondition, param, buffered, commandTimeout));
+			IEnumerable<T> list = DAO.GetList(transaction, whereCondition, param, buffered, commandTimeout);
+			return UpsertItems(list);
 		}
 
 		public override int RecordCount(IDbTransaction transaction, string whereCondition = "", object param = null, int? commandTimeout = null)
@@ -580,6 +640,18 @@ namespace Dapper.Extension
 				Map.Remove(key);
 			}
 			return keys;
+		}
+
+		public override IEnumerable<Ret> BulkUpdateList(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			IEnumerable<T> list = DAO.BulkUpdateList(transaction, objs, buffered, commandTimeout);
+			return UpsertItems(list);
+		}
+
+		public override IEnumerable<Ret> BulkUpsertList(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null)
+		{
+			IEnumerable<T> list = DAO.BulkUpsertList(transaction, objs, buffered, commandTimeout);
+			return UpsertItems(list);
 		}
 		#endregion // ITransactionQueriesSync<T, T, Ret>
 	}

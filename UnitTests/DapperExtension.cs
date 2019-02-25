@@ -39,7 +39,6 @@ namespace Utilities.UnitTests
 
 			TestDTO dto = new TestDTO() { CreatedDt = new DateTime(2019, 1, 15), Name = "Test" };
 
-
 			using (SqlConnection conn = new SqlConnection(ConnString)) {
 				conn.Open();
 				using (SqlTransaction trans = conn.BeginTransaction()) {
