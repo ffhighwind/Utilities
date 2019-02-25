@@ -63,7 +63,7 @@ namespace Utilities.Converters
 			}
 			Tout objToObj(Tin input)
 			{
-				Tout tout = new Tout();
+				Tout tout = FastActivator<Tout>.Create();
 				for (int i = 0; i < pinfoOut.Count; i++) {
 					object value = pinfoIn[i].GetValue(input);
 					if (value != null)
@@ -98,7 +98,7 @@ namespace Utilities.Converters
 			PropertyInfo[] pinfosOut = typeof(Tout).GetProperties(flags);
 			foreach (PropertyInfo pout in pinfosOut) {
 				if (!propertyNames.Contains(pout.Name)) {
-					if (!pout.GetCustomAttributes(true).Any(attr => attr is OptionalAttribute))
+					if (pout.GetCustomAttribute<OptionalAttribute>(true) != null)
 						throw new InvalidOperationException("Missing property: " + typeof(Tout).FullName + "." + pout.Name);
 				}
 			}
@@ -125,7 +125,7 @@ namespace Utilities.Converters
 			}
 			Tout listToObj(IReadOnlyList<Tin> list)
 			{
-				Tout obj = new Tout();
+				Tout obj = FastActivator<Tout>.Create();
 				int count = Math.Min(list.Count, pinfos.Count);
 				for (int i = 0; i < count; i++) {
 					if (pinfos[i] != null) {

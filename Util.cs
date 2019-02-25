@@ -524,7 +524,7 @@ namespace Utilities
 		/// cloning methods such as Json Serialization or IL level cloning.
 		/// </summary>
 		/// <typeparam name="T">The <see cref="Type"/> to clone.</typeparam>
-		/// <param name="obj">The <see cref="cref="object"/> to clone</param>
+		/// <param name="obj">The <see cref="object"/> to clone</param>
 		/// <returns>A shallow clone of an object.</returns>
 		public static T Clone<T>(T obj) where T : class
 		{

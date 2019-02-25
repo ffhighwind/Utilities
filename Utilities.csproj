@@ -84,6 +84,7 @@
     <Compile Include="Excel\Sorting.cs" />
     <Compile Include="Extentions.cs" />
     <Compile Include="Converters\GenericDataReader.cs" />
+    <Compile Include="FastActivator.cs" />
     <Compile Include="IO.cs" />
     <Compile Include="Comparers\ListViewItemComparer.cs" />
     <Compile Include="Logging\Logger.cs" />

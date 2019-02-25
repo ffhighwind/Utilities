@@ -51,7 +51,7 @@ namespace Utilities.Converters
 
 		public T Convert(DataRow row)
 		{
-			T obj = new T();
+			T obj = FastActivator<T>.Create();
 			for (int i = 0; i < converters.Length; i++) {
 				converters[i]?.Invoke(obj);
 			}
