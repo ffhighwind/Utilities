@@ -20,13 +20,13 @@ namespace Utilities
 
 		#region Any
 		/// <summary>
-		/// Reads a file into a DataSet.
+		/// Reads a file into a <see cref="DataSet"/>.
 		/// </summary>
-		/// <param name="dataset">The DataSet to fill.</param>
+		/// <param name="dataset">The <see cref="DataSet"/> to fill.</param>
 		/// <param name="path">The path of the file.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the columns are named based on the first line.</param>
-		/// <returns>A DataSet with contents from the file.</returns>
+		/// <returns>A <see cref="DataSet"/> with contents from the file.</returns>
 		public static DataSet Read(this DataSet dataset, string path, bool hasHeaders = true)
 		{
 			string ext = Path.GetExtension(path)?.ToLower();
@@ -44,15 +44,15 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Reads a file into a DataTable.
+		/// Reads a file into a <see cref="DataTable"/>.
 		/// </summary>
-		/// <param name="table">The DataTable to fill.</param>
+		/// <param name="table">The <see cref="DataTable"/> to fill.</param>
 		/// <param name="path">The path of the file.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the columns are named based on the first line.</param>
 		/// <param name="sheetName">The name of the worksheet to iterate if there are any.
-		/// If this is null then the first sheet will be read.</param>
-		/// <returns>A DataTable with contents from the file.</returns>
+		/// If this is <see langword="null"/> then the first sheet will be read.</param>
+		/// <returns>A <see cref="DataTable"/> with contents from the file.</returns>
 		public static DataTable Read(this DataTable table, string path, bool hasHeaders = true, string sheetName = null)
 		{
 			string ext = Path.GetExtension(path)?.ToLower();
@@ -66,32 +66,32 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Reads a file into a DataTable.
+		/// Reads a file into a <see cref="DataTable"/>.
 		/// </summary>
-		/// <param name="table">The DataTable to fill.</param>
+		/// <param name="table">The <see cref="DataTable"/> to fill.</param>
 		/// <param name="path">The path of the file.</param>
 		/// <param name="sheetName">The name of the worksheet to iterate if there are any.
-		/// If this is null then the first sheet will be read.</param>
+		/// If this is <see langword="null"/> then the first sheet will be read.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the columns are named based on the first line.</param>
-		/// <returns>A DataTable with contents from the file.</returns>
+		/// <returns>A <see cref="DataTable"/> with contents from the file.</returns>
 		public static DataTable Read(this DataTable table, string path, string sheetName, bool hasHeaders = true)
 		{
 			return table.Read(path, hasHeaders, sheetName);
 		}
 
 		/// <summary>
-		/// Reads a file into a List.
+		/// Reads a file into an <see cref="ICollection{T}"/>.
 		/// </summary>
 		/// <typeparam name="T">The Type of object to return.</typeparam>
-		/// <param name="list">The List to fill.</param>
+		/// <param name="list">The <see cref="ICollection{T}"/> to fill.</param>
 		/// <param name="path">The path of the file.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the columns are named based on the first line.</param>
 		/// <param name="sheetName">The name of the worksheet to iterate if there are any.
-		/// If this is null then the first sheet will be read.</param>
-		/// <returns>A list with data from the file.</returns>
-		public static ICollection<T> Read<T>(this ICollection<T> list, string path, bool hasHeaders = true, string sheetName = null) where T : class, new()
+		/// If this is <see langword="null"/> then the first sheet will be read.</param>
+		/// <returns>An <see cref="ICollection{T}"/> with data from the file.</returns>
+		public static ICollection<T> Read<T>(this ICollection<T> list, string path, bool hasHeaders = true, string sheetName = null)
 		{
 			string ext = Path.GetExtension(path)?.ToLower();
 			if (ext == ".xlsx")
@@ -104,32 +104,32 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Reads a file into a List.
+		/// Reads a file into an <see cref="ICollection{T}"/>.
 		/// </summary>
-		/// <typeparam name="T">The Type of object to return.</typeparam>
-		/// <param name="list">The List to fill.</param>
+		/// <typeparam name="T">The <see cref="Type"/> of object to return.</typeparam>
+		/// <param name="list">The <see cref="ICollection{T}"/> to fill.</param>
 		/// <param name="path">The path of the file.</param>
 		/// <param name="sheetName">The name of the worksheet to iterate if there are any.
-		/// If this is null then the first sheet will be read.</param>
+		/// If this is <see langword="null"/> then the first sheet will be read.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the columns are named based on the first line.</param>
-		/// <returns>A list with data from the file.</returns>
-		public static ICollection<T> Read<T>(this ICollection<T> list, string path, string sheetName, bool hasHeaders = true) where T : class, new()
+		/// <returns>An <see cref="ICollection{T}"/> with data from the file.</returns>
+		public static ICollection<T> Read<T>(this ICollection<T> list, string path, string sheetName, bool hasHeaders = true)
 		{
 			return list.Read(path, hasHeaders, sheetName);
 		}
 
 		/// <summary>
-		/// Reads a file into a List.
+		/// Reads a file into a <see cref="List{T}"/>.
 		/// </summary>
 		/// <typeparam name="T">The Type of object to return.</typeparam>
 		/// <param name="path">The path of the file.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the columns are named based on the first line.</param>
 		/// <param name="sheetName">The name of the worksheet to iterate if there are any.
-		/// If this is null then the first sheet will be read.</param>
+		/// If this is <see langword="null"/> then the first sheet will be read.</param>
 		/// <returns>A List with contents from the file.</returns>
-		public static List<T> Read<T>(string path, bool hasHeaders = true, string sheetName = null) where T : class, new()
+		public static List<T> Read<T>(string path, bool hasHeaders = true, string sheetName = null)
 		{
 			List<T> list = new List<T>();
 			list.Read<T>(path, hasHeaders, sheetName);
@@ -137,11 +137,11 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Reads a file into a List of strings.
+		/// Reads a file into a <see cref="DataTable"/>.
 		/// </summary>
 		/// <param name="path">The path of the file.</param>
 		/// <param name="hasHeaders">Determines if the first line of the file should be skipped.</param>
-		/// <returns>A DataTable with contents from the file, or null on error.</returns>
+		/// <returns>A <see cref="DataTable"/> with contents from the file, or <see langword="null"/> on error.</returns>
 		public static DataTable Read(string path, bool hasHeaders = true)
 		{
 			return new DataTable().Read(path, hasHeaders);
@@ -168,14 +168,14 @@ namespace Utilities
 		/// <summary>
 		/// Enumerates each row in a file.
 		/// </summary>
-		/// <typeparam name="T">The Type of object to return.</typeparam>
+		/// <typeparam name="T">The <see cref="Type"/> of object to return.</typeparam>
 		/// <param name="path">The path of the delimited file.</param>
-		/// <param name="constructor">A function that constructs an object from an array of strings.</param>
+		/// <param name="constructor">A function that constructs an object from a <see langword="string"/>[].</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the columns are named based on the first line.</param>
 		/// <param name="sheetName">The name of the worksheet to iterate if there are any.
-		/// If this is null then the first sheet will be read.</param>
-		/// <returns>The eEnumerable rows in the file.</returns>
+		/// If this is <see langword="null"/> then the first sheet will be read.</param>
+		/// <returns>The Enumerable rows in the file.</returns>
 		public static IEnumerable<T> Foreach<T>(string path, Func<string[], T> constructor, bool hasHeaders = true, string sheetName = null)
 		{
 			string ext = Path.GetExtension(path)?.ToLower();
@@ -191,14 +191,14 @@ namespace Utilities
 		/// <summary>
 		/// Enumerates each row in a file.
 		/// </summary>
-		/// <typeparam name="T">The Type of object to return.</typeparam>
+		/// <typeparam name="T">The <see cref="Type"/> of object to return.</typeparam>
 		/// <param name="path">The path of the delimited file.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the columns are named based on the first line.</param>
 		/// <param name="sheetName">The name of the worksheet to iterate if there are any.
-		/// If this is null then the first sheet will be read.</param>
+		/// If this is <see langword="null"/> then the first sheet will be read.</param>
 		/// <returns>The Enumerable rows in the file.</returns>
-		public static IEnumerable<T> Foreach<T>(string path, bool hasHeaders = true, string sheetName = null) where T : class, new()
+		public static IEnumerable<T> Foreach<T>(string path, bool hasHeaders = true, string sheetName = null)
 		{
 			string ext = Path.GetExtension(path)?.ToLower();
 			if (ext == ".xlsx")
@@ -213,14 +213,14 @@ namespace Utilities
 		/// <summary>
 		/// Enumerates each row in a file.
 		/// </summary>
-		/// <typeparam name="T">The Type of object to return.</typeparam>
+		/// <typeparam name="T">The <see cref="Type"/> of object to return.</typeparam>
 		/// <param name="path">The path of the delimited file.</param>
 		/// <param name="sheetName">The name of the worksheet to iterate if there are any.
-		/// If this is null then the first sheet will be read.</param>
+		/// If this is <see langword="null"/> then the first sheet will be read.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the columns are named based on the first line.</param>
 		/// <returns>The Enumerable rows in the file.</returns>
-		public static IEnumerable<T> Foreach<T>(string path, string sheetName, bool hasHeaders = true) where T : class, new()
+		public static IEnumerable<T> Foreach<T>(string path, string sheetName, bool hasHeaders = true)
 		{
 			return Foreach<T>(path, hasHeaders, sheetName);
 		}
@@ -250,7 +250,7 @@ namespace Utilities
 		/// <summary>
 		/// Enumerates each row in delimited text.
 		/// </summary>
-		/// <param name="reader">The TextReader of the delimited file.</param>
+		/// <param name="reader">The <see cref="TextReader"/> of the delimited file.</param>
 		/// <param name="delim">The separator for the columns in the file.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the columns are named based on the first line.</param>
@@ -268,7 +268,7 @@ namespace Utilities
 		/// <summary>
 		/// Enumerates each row in delimited text.
 		/// </summary>
-		/// <typeparam name="T">The Type of object to return.</typeparam>
+		/// <typeparam name="T">The <see cref="Type"/> of object to return.</typeparam>
 		/// <param name="path">The path of the delimited file.</param>
 		/// <param name="constructor">The constructor for the objects returned.</param>
 		/// <param name="delim">The separator for the columns in the file.</param>
@@ -290,13 +290,13 @@ namespace Utilities
 		/// <summary>
 		/// Enumerates each row in delimited text.
 		/// </summary>
-		/// <typeparam name="T">The Type of object to return.</typeparam>
+		/// <typeparam name="T">The <see cref="Type"/> of object to return.</typeparam>
 		/// <param name="path">The path of the delimited file.</param>
 		/// <param name="delim">The separator for the columns in the file.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the columns are named based on the first line.</param>
 		/// <returns>The Enumerable rows in the file.</returns>
-		public static IEnumerable<T> FileForeach<T>(string path, char delim = ',', bool hasHeaders = true) where T : class, new()
+		public static IEnumerable<T> FileForeach<T>(string path, char delim = ',', bool hasHeaders = true)
 		{
 			using (TextReader reader = Util.TextReader(new FileInfo(path))) {
 				Func<IReadOnlyList<string>, T> constructor = hasHeaders
@@ -309,7 +309,7 @@ namespace Utilities
 		/// <summary>
 		/// Enumerates each row in delimited text.
 		/// </summary>
-		/// <typeparam name="T">The Type of object to return.</typeparam>
+		/// <typeparam name="T">The <see cref="Type"/> of object to return.</typeparam>
 		/// <param name="reader">The TextReader of the delimited file.</param>
 		/// <param name="constructor">The constructor for the objects returned.</param>
 		/// <param name="delim">The separator for the columns in the file.</param>
@@ -329,13 +329,13 @@ namespace Utilities
 		/// <summary>
 		/// Enumerates each row in delimited text.
 		/// </summary>
-		/// <typeparam name="T">The Type of object to return.</typeparam>
+		/// <typeparam name="T">The <see cref="Type"/> of object to return.</typeparam>
 		/// <param name="reader">The TextReader of the delimited file.</param>
 		/// <param name="delim">The separator for the columns in the file.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the columns are named based on the first line.</param>
 		/// <returns>The Enumerable rows in the file.</returns>
-		public static IEnumerable<T> FileForeach<T>(TextReader reader, char delim = ',', bool hasHeaders = true) where T : class, new()
+		public static IEnumerable<T> FileForeach<T>(TextReader reader, char delim = ',', bool hasHeaders = true)
 		{
 			Func<IReadOnlyList<string>, T> constructor = hasHeaders
 				? Converters.Converters.ListToObject<string, T>(reader.ReadLine().Split(delim))
@@ -347,14 +347,14 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Reads a delimited file into a Collection of strings.
+		/// Reads a delimited file into an <see cref="ICollection{T}"/> of <see langword="string"/>[].
 		/// </summary>
-		/// <param name="list">The List to modify.</param>
+		/// <param name="list">The <see cref="ICollection{T}"/> to modify.</param>
 		/// <param name="path">The path of the delimited file.</param>
 		/// <param name="delim">The character separating each column of each line.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the columns are named based on the first line.</param>
-		/// <returns>A Collection with data from the file.</returns>
+		/// <returns>An <see cref="ICollection{T}"/> with data from the file.</returns>
 		public static ICollection<string[]> ReadFile(this ICollection<string[]> list, string path, char delim = ',', bool hasHeaders = true)
 		{
 			using (TextReader reader = Util.TextReader(new FileInfo(path))) {
@@ -369,16 +369,16 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Reads a delimited file into a Collection of strings.
+		/// Reads a delimited file into an <see cref="ICollection{T}"/>.
 		/// </summary>
-		/// <typeparam name="T">The Type of object to return.</typeparam>
-		/// <param name="list">The Collection to modify.</param>
+		/// <typeparam name="T">The <see cref="Type"/> of object to return.</typeparam>
+		/// <param name="list">The <see cref="ICollection{T}"/> to modify.</param>
 		/// <param name="path">The path of the delimited file.</param>
 		/// <param name="delim">The character separating each column of each line.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the columns are named based on the first line.</param>
-		/// <returns>A Collection with data from the file.</returns>
-		public static ICollection<T> ReadFile<T>(this ICollection<T> list, string path, char delim = ',', bool hasHeaders = true) where T : class, new()
+		/// <returns>An <see cref="ICollection{T}"/> with data from the file.</returns>
+		public static ICollection<T> ReadFile<T>(this ICollection<T> list, string path, char delim = ',', bool hasHeaders = true)
 		{
 			IEnumerable<T> lines = FileForeach<T>(path, delim, hasHeaders);
 			foreach (T line in lines) {
@@ -388,14 +388,14 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Reads a delimited file into a DataTable.
+		/// Reads a delimited file into a <see cref="DataTable"/>.
 		/// </summary>
-		/// <param name="table">The DataTable to modify.</param>
+		/// <param name="table">The <see cref="DataTable"/> to modify.</param>
 		/// <param name="path">The path of the delimited file.</param>
 		/// <param name="delim">The character separating each column of each line.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the columns are named based on the first line.</param>
-		/// <returns>A DataTable with data from the file.</returns>
+		/// <returns>A <see cref="DataTable"/> with data from the file.</returns>
 		public static DataTable ReadFile(this DataTable table, string path, char delim = ',', bool hasHeaders = true)
 		{
 			using (TextReader reader = Util.TextReader(new FileInfo(path))) {
@@ -425,14 +425,14 @@ namespace Utilities
 
 		#region CSV
 		/// <summary>
-		/// Writes a list to a CSV file.
+		/// Writes an <see cref="IEnumerable{T}"/> to a CSV file.
 		/// </summary>
-		/// <typeparam name="T">The Type of object to return.</typeparam>
-		/// <param name="list">The list to export.</param>
+		/// <typeparam name="T">The <see cref="Type"/> of object to return.</typeparam>
+		/// <param name="list">The <see cref="IEnumerable{T}"/> to export.</param>
 		/// <param name="path">The path of the CSV file.</param>
 		/// <param name="printHeaders">Determines if the property names should be output as headers.</param>
 		/// <param name="delim">The delimiter for the text.</param>
-		public static void WriteCsv<T>(this IEnumerable<T> list, string path, bool printHeaders = true, string delim = ",") where T : class
+		public static void WriteCsv<T>(this IEnumerable<T> list, string path, bool printHeaders = true, string delim = ",")
 		{
 			using (TextWriter writer = new StreamWriter(path, false))
 			using (CsvWriter csv = new CsvWriter(writer)) {
@@ -455,9 +455,9 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Writes a DataTable to a CSV file.
+		/// Writes a <see cref="DataTable"/> to a CSV file.
 		/// </summary>
-		/// <param name="table">The DataTable to export.</param>
+		/// <param name="table">The <see cref="DataTable"/> to export.</param>
 		/// <param name="path">The path of the CSV file.</param>
 		/// <param name="hasHeaders">Determines if the column names should be output.</param>
 		/// <param name="delim">The delimiter for the text.</param>
@@ -483,14 +483,14 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Reads a CSV file into a collections of strings.
+		/// Reads a CSV file into an <see cref="ICollection{T}"/> of <see langword="string"/>[].
 		/// </summary>
-		/// <param name="list">The Collection to modify.</param>
+		/// <param name="list">The <see cref="ICollection{T}"/> to modify.</param>
 		/// <param name="path">The path of the CSV file.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the columns are named based on the first line.</param>
 		/// <param name="delim">The delimiter of the file.</param>
-		/// <returns>A Collection with data from the file.</returns>
+		/// <returns>An <see cref="ICollection{T}"/> with data from the file.</returns>
 		public static ICollection<string[]> ReadCsv(this ICollection<string[]> list, string path, bool hasHeaders = true, string delim = ",")
 		{
 			foreach (string[] line in CsvForeach(path, hasHeaders, true, delim)) {
@@ -500,17 +500,17 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Reads a CSV file into a Collection of strings.
+		/// Reads a CSV file into an <see cref="ICollection{T}"/> of <see langword="string"/>[].
 		/// </summary>
-		/// <typeparam name="T">The Type of objects to return.</typeparam>
-		/// <param name="list">The Collection to modify.</param>
+		/// <typeparam name="T">The <see cref="Type"/> of objects to return.</typeparam>
+		/// <param name="list">The <see cref="ICollection{T}"/> to modify.</param>
 		/// <param name="path">The path of the CSV file.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the columns are named based on the first line.</param>
 		/// <param name="ignoreBlankLines">Determines if blank lines should be skipped.</param>
 		/// <param name="delim">The delimiter of the file.</param>
-		/// <returns>A Collection with data from the file.</returns>
-		public static ICollection<T> ReadCsv<T>(this ICollection<T> list, string path, bool hasHeaders = true, bool ignoreBlankLines = true, string delim = ",") where T : class, new()
+		/// <returns>An <see cref="ICollection{T}"/> with data from the file.</returns>
+		public static ICollection<T> ReadCsv<T>(this ICollection<T> list, string path, bool hasHeaders = true, bool ignoreBlankLines = true, string delim = ",")
 		{
 			using (TextReader reader = Util.TextReader(path)) {
 				return ReadCsv(list, reader, hasHeaders, ignoreBlankLines, delim);
@@ -518,17 +518,17 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Reads a CSV file into a Collection of strings.
+		/// Reads a CSV file into an <see cref="ICollection{T}"/> of <see langword="string"/>[].
 		/// </summary>
-		/// <typeparam name="T">The Type of objects to return.</typeparam>
-		/// <param name="list">The Collection to modify.</param>
-		/// <param name="path">The path of the CSV file.</param>
+		/// <typeparam name="T">The <see cref="Type"/> of objects to return.</typeparam>
+		/// <param name="list">The <see cref="ICollection{T}"/> to modify.</param>
+		/// <param name="reader">The <see cref="TextReader"/> of the CSV file.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the columns are named based on the first line.</param>
 		/// <param name="ignoreBlankLines">Determines if blank lines should be skipped.</param>
 		/// <param name="delim">The delimiter of the file.</param>
-		/// <returns>A Collection with data from the file.</returns>
-		public static ICollection<T> ReadCsv<T>(this ICollection<T> list, TextReader reader, bool hasHeaders = true, bool ignoreBlankLines = true, string delim = ",") where T : class, new()
+		/// <returns>An <see cref="ICollection{T}"/> with data from the file.</returns>
+		public static ICollection<T> ReadCsv<T>(this ICollection<T> list, TextReader reader, bool hasHeaders = true, bool ignoreBlankLines = true, string delim = ",")
 		{
 			using (CsvParser csv = new CsvParser(reader)) {
 				csv.Configuration.TrimOptions = TrimOptions.None;
@@ -547,18 +547,18 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Reads a CSV file into a Collection of strings.
+		/// Reads a CSV file into an <see cref="ICollection{T}"/> of <see langword="string"/>[].
 		/// </summary>
-		/// <typeparam name="T">The Type of objects to return.</typeparam>
-		/// <param name="list">The Collection to modify.</param>
-		/// <param name="reader">The reader of the CSV file.</param>
-		/// <param name="constructor">A function that constructs an object from an array of strings.</param>
+		/// <typeparam name="T">The <see cref="Type"/> of objects to return.</typeparam>
+		/// <param name="list">The <see cref="ICollection{T}"/> to modify.</param>
+		/// <param name="reader">The <see cref="TextReader"/> of the CSV file.</param>
+		/// <param name="constructor">The constructor for the returned objects.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the columns are named based on the first line.</param>
 		/// <param name="ignoreBlankLines">Determines if blank lines should be skipped.</param>
 		/// <param name="delim">The delimiter of the file.</param>
-		/// <returns>A Collection with data from the file.</returns>
-		public static ICollection<T> ReadCsv<T>(this ICollection<T> list, TextReader reader, Func<string[], T> constructor, bool hasHeaders = true, bool ignoreBlankLines = true, string delim = ",") where T : class, new()
+		/// <returns>An <see cref="ICollection{T}"/> with data from the file.</returns>
+		public static ICollection<T> ReadCsv<T>(this ICollection<T> list, TextReader reader, Func<string[], T> constructor, bool hasHeaders = true, bool ignoreBlankLines = true, string delim = ",")
 		{
 			using (CsvParser csv = new CsvParser(reader)) {
 				csv.Configuration.TrimOptions = TrimOptions.None;
@@ -575,15 +575,15 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Reads a CSV file into a DataTable.
+		/// Reads a CSV file into a <see cref="DataTable"/>.
 		/// </summary>
-		/// <param name="table">The DataTable to modify.</param>
+		/// <param name="table">The <see cref="DataTable"/> to modify.</param>
 		/// <param name="path">The path of the CSV file.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the columns are named based on the first line.</param>
 		/// <param name="ignoreBlankLines">Determines if blank lines should be skipped.</param>
 		/// <param name="delim">The delimiter of the file.</param>
-		/// <returns>A DataTable with data from the file.</returns>
+		/// <returns>A <see cref="DataTable"/> with data from the file.</returns>
 		public static DataTable ReadCsv(this DataTable table, string path, bool hasHeaders = true, bool ignoreBlankLines = true, string delim = ",")
 		{
 			IEnumerable<string[]> lines = CsvForeach(path, false, ignoreBlankLines, delim);
@@ -632,7 +632,7 @@ namespace Utilities
 		/// <summary>
 		/// Enumerates each row in a CSV file.
 		/// </summary>
-		/// <param name="reader">The TextReader of the CSV file.</param>
+		/// <param name="reader">The <see cref="TextReader"/> of the CSV file.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the first row will be ignored.</param>
 		/// <param name="ignoreBlankLines">Determines if blank lines should be skipped.</param>
@@ -656,7 +656,7 @@ namespace Utilities
 		/// <summary>
 		/// Enumerates each row in a CSV file.
 		/// </summary>
-		/// <typeparam name="T">The Type of objects to return.</typeparam>
+		/// <typeparam name="T">The <see cref="Type"/> of objects to return.</typeparam>
 		/// <param name="path">The path of the CSV file.</param>
 		/// <param name="constructor">The constructor for the returned objects.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
@@ -676,7 +676,7 @@ namespace Utilities
 		/// <summary>
 		/// Enumerates each row in a CSV file.
 		/// </summary>
-		/// <typeparam name="T">The Type of objects to return.</typeparam>
+		/// <typeparam name="T">The <see cref="Type"/> of objects to return.</typeparam>
 		/// <param name="path">The path of the CSV file.</param>
 		/// <param name="constructor">The constructor for the returned objects.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
@@ -684,7 +684,7 @@ namespace Utilities
 		/// <param name="ignoreBlankLines">Determines if blank lines should be skipped.</param>
 		/// <param name="delim">The delimiter of the file.</param>
 		/// <returns>The Enumerable rows in the file.</returns>
-		public static IEnumerable<T> CsvForeach<T>(string path, bool hasHeaders = true, bool ignoreBlankLines = true, string delim = ",") where T : class, new()
+		public static IEnumerable<T> CsvForeach<T>(string path, bool hasHeaders = true, bool ignoreBlankLines = true, string delim = ",")
 		{
 			using (TextReader reader = Util.TextReader(path)) {
 				foreach (T obj in CsvForeach<T>(reader, hasHeaders, ignoreBlankLines, delim)) {
@@ -696,7 +696,7 @@ namespace Utilities
 		/// <summary>
 		/// Enumerates each row in a CSV file.
 		/// </summary>
-		/// <typeparam name="T">The Type of objects to return.</typeparam>
+		/// <typeparam name="T">The <see cref="Type"/> of objects to return.</typeparam>
 		/// <param name="path">The path of the CSV file.</param>
 		/// <param name="constructor">The constructor for the returned objects.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
@@ -714,14 +714,14 @@ namespace Utilities
 		/// <summary>
 		/// Enumerates each row in a CSV file.
 		/// </summary>
-		/// <typeparam name="T">The Type of objects to return.</typeparam>
-		/// <param name="reader">The TextReader for the CSV file.</param>
+		/// <typeparam name="T">The <see cref="Type"/> of objects to return.</typeparam>
+		/// <param name="reader">The <see cref="TextReader"/> for the CSV file.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the first row will be ignored.</param>
 		/// <param name="ignoreBlankLines">Determines if blank lines should be skipped.</param>
 		/// <param name="delim">The delimiter of the file.</param>
 		/// <returns>The Enumerable rows in the file.</returns>
-		public static IEnumerable<T> CsvForeach<T>(TextReader reader, bool hasHeaders = true, bool ignoreBlankLines = true, string delim = ",") where T : class, new()
+		public static IEnumerable<T> CsvForeach<T>(TextReader reader, bool hasHeaders = true, bool ignoreBlankLines = true, string delim = ",")
 		{
 			using (CsvParser csv = new CsvParser(reader)) {
 				string[] line = csv.Read();
@@ -746,7 +746,7 @@ namespace Utilities
 		/// </summary>
 		/// <param name="path">The path of the XLS file.</param>
 		/// <param name="sheetName">The name of the worksheet to iterate.
-		/// If this is null then the first sheet will be iterated.</param>
+		/// If this is <see langword="null"/> then the first sheet will be iterated.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the first row will be ignored.</param>
 		/// <returns>The Enumerable rows in the file.</returns>
@@ -778,14 +778,14 @@ namespace Utilities
 		/// <summary>
 		/// Enumerates each row in an XLS file.
 		/// </summary>
-		/// <typeparam name="T">The Type of objects to return.</typeparam>
+		/// <typeparam name="T">The <see cref="Type"/> of objects to return.</typeparam>
 		/// <param name="path">The path of the XLS file.</param>
 		/// <param name="sheetName">The name of the worksheet to iterate.
-		/// If this is null then the first sheet will be iterated.</param>
+		/// If this is <see langword="null"/> then the first sheet will be iterated.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the first row will be ignored.</param>
 		/// <returns>The Enumerable rows in the file.</returns>
-		public static IEnumerable<T> XlsForeach<T>(string path, string sheetName = null, bool hasHeaders = true) where T : class, new()
+		public static IEnumerable<T> XlsForeach<T>(string path, string sheetName = null, bool hasHeaders = true)
 		{
 			IEnumerable<string[]> lines = XlsForeach(path, sheetName, false);
 			if (lines.Any()) {
@@ -805,11 +805,11 @@ namespace Utilities
 		/// <summary>
 		/// Enumerates each row in an XLS file.
 		/// </summary>
-		/// <typeparam name="T">The Type of objects to return.</typeparam>
+		/// <typeparam name="T">The <see cref="Type"/> of objects to return.</typeparam>
 		/// <param name="path">The path of the XLS file.</param>
 		/// <param name="constructor">The constructor for the returned objects.</param>
 		/// <param name="sheetName">The name of the worksheet to iterate.
-		/// If this is null then the first sheet will be iterated.</param>
+		/// If this is <see langword="null"/> then the first sheet will be iterated.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the first row will be ignored.</param>
 		/// <returns>The Enumerable rows in the file.</returns>
@@ -821,18 +821,18 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Reads an XLS Excel file into a List.
-		/// This assumes that the type T has public properties with identical names of the columns in the DataTable.
+		/// Reads an XLS Excel file into an <see cref="ICollection{T}"/>.
+		/// This assumes that the type T has public properties with identical names of the columns in the <see cref="DataTable"/>.
 		/// </summary>
-		/// <typeparam name="T">The type of object to convert the DataRows into.</typeparam>
-		/// <param name="list">The Collection to append data to.</param>
+		/// <typeparam name="T">The <see cref="Type"/> of object to convert the <see cref="DataRow"/>s into.</typeparam>
+		/// <param name="list">The <see cref="ICollection{T}"/> to append data to.</param>
 		/// <param name="path">The path of the Excel file.</param>
 		/// <param name="sheetName">The name of the worksheet to iterate.
-		/// If this is null then the first sheet will be iterated.</param>
+		/// If this is <see langword="null"/> then the first sheet will be iterated.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the columns are named based on the first line.</param>
-		/// <returns>A Collection with data from the file.</returns>
-		public static ICollection<T> ReadXls<T>(this ICollection<T> list, string path, string sheetName = null, bool hasHeaders = true) where T : class, new()
+		/// <returns>An <see cref="ICollection{T}"/> with data from the file.</returns>
+		public static ICollection<T> ReadXls<T>(this ICollection<T> list, string path, string sheetName = null, bool hasHeaders = true)
 		{
 			foreach (T obj in XlsForeach<T>(path, sheetName, hasHeaders)) {
 				list.Add(obj);
@@ -841,15 +841,15 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Reads an XLS Excel file into a DataSet where each sheet is a DataTable.
+		/// Reads the first sheet of an XLS Excel file into a <see cref="DataTable"/>.
 		/// </summary>
-		/// <param name="table">The DataTable to append data to.</param>
+		/// <param name="table">The <see cref="DataTable"/> to append data to.</param>
 		/// <param name="path">The path of the Excel file.</param>
 		/// <param name="sheetName">The name of the worksheet to iterate.
-		/// If this is null then the first sheet will be iterated.</param>
+		/// If this is <see langword="null"/> then the first sheet will be iterated.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the columns are named based on the first line.</param>
-		/// <returns>A DataTable with data from the file.</returns>
+		/// <returns>A <see cref="DataTable"/> with data from the file.</returns>
 		public static DataTable ReadXls(this DataTable table, string path, string sheetName = null, bool hasHeaders = true)
 		{
 			using (OleDbDataAdapter oda = new OleDbDataAdapter()) {
@@ -866,13 +866,13 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Reads an XLS Excel file into a DataSet where each sheet is a DataTable.
+		/// Reads an XLS Excel file into a <see cref="DataSet"/> where each sheet is a <see cref="DataTable"/>.
 		/// </summary>
-		/// <param name="dataset">The DataSet to append data to.</param>
+		/// <param name="dataset">The <see cref="DataSet"/> to append data to.</param>
 		/// <param name="path">The path of the XLS Excel file.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the columns are named based on the first line.</param>
-		/// <returns>A DataSet with data from the file.</returns>
+		/// <returns>A <see cref="DataSet"/> with data from the file.</returns>
 		public static DataSet ReadXls(this DataSet dataset, string path, bool hasHeaders = true)
 		{
 			using (OleDbDataAdapter oda = new OleDbDataAdapter()) {
@@ -895,7 +895,7 @@ namespace Utilities
 		/// <summary>
 		/// Opens an XLS file and performs an action on it.
 		/// </summary>
-		/// <typeparam name="T">The Type of object to return.</typeparam>
+		/// <typeparam name="T">The <see cref="Type"/> of object to return.</typeparam>
 		/// <param name="path">The path of the XLS Excel file.</param>
 		/// <param name="sheetName">The name of the worksheet to read.</param>
 		/// <param name="action">The action to perform on the file.
@@ -923,10 +923,10 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Fills a DataTable with data from an XLS file based on the worksheet name.
+		/// Fills a <see cref="DataTable"/> with data from an XLS file based on the worksheet name.
 		/// </summary>
 		/// <param name="table">The DataTable to append data to.</param>
-		/// <param name="oda">The OleDbDataAdapter that reads data from the file.</param>
+		/// <param name="oda">The <see cref="OleDbDataAdapter"/> that reads data from the file.</param>
 		/// <param name="sheetName">The name of the worksheet to read.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the columns are named based on the first line.</param>
@@ -958,7 +958,7 @@ namespace Utilities
 		/// </summary>
 		/// <param name="path">The path of the XLSX file.</param>
 		/// <param name="sheetName">The name of the sheet in the file to iterate.
-		/// If this is null then the first sheet will be iterated.</param>
+		/// If this is <see langword="null"/> then the first sheet will be iterated.</param>
 		/// <param name="includeHeaders">Determines if the file has headers should be included.</param>
 		/// <returns>The Enumerable rows in the file.</returns>
 		public static IEnumerable<string[]> XlsxForeach(string path, string sheetName = null, bool includeHeaders = true)
@@ -979,14 +979,14 @@ namespace Utilities
 		/// <summary>
 		/// Enumerates each row in an XLSX file.
 		/// </summary>
-		/// <typeparam name="T">The Type of object to return.</typeparam>
+		/// <typeparam name="T">The <see cref="Type"/> of object to return.</typeparam>
 		/// <param name="path">The path of the XLSX file.</param>
 		/// <param name="sheetName">The name of the sheet in the file to iterate.
-		/// If this is null then the first sheet will be iterated.</param>
+		/// If this is <see langword="null"/> then the first sheet will be iterated.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the first row will be ignored.</param>
 		/// <returns>The Enumerable rows in the file.</returns>
-		public static IEnumerable<T> XlsxForeach<T>(string path, string sheetName = null, bool hasHeaders = true) where T : class, new()
+		public static IEnumerable<T> XlsxForeach<T>(string path, string sheetName = null, bool hasHeaders = true)
 		{
 			if (!File.Exists(path))
 				throw new IOException("File does not exist: " + path);
@@ -1001,11 +1001,11 @@ namespace Utilities
 		/// <summary>
 		/// Enumerates each row in an XLSX file.
 		/// </summary>
-		/// <typeparam name="T">The Type of object to return.</typeparam>
+		/// <typeparam name="T">The <see cref="Type"/> of object to return.</typeparam>
 		/// <param name="path">The path of the XLSX file.</param>
 		/// <param name="constructor">The constructor for the objects returned.</param>
 		/// <param name="sheetName">The name of the sheet in the file to iterate.
-		/// If this is null then the first sheet will be iterated.</param>
+		/// If this is <see langword="null"/> then the first sheet will be iterated.</param>
 		/// <param name="hasHeaders">Determines if the file has headers.
 		/// If this is true then the first row will be ignored.</param>
 		/// <returns>The Enumerable rows in the file.</returns>
@@ -1025,14 +1025,14 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Reads an Xlsx Excel file into a Collection.
+		/// Reads an Xlsx Excel file into an <see cref="ICollection{T}"/>.
 		/// </summary>
-		/// <param name="list">The Collection to store the data in.</param>
+		/// <param name="list">The <see cref="ICollection{T}"/> to store the data in.</param>
 		/// <param name="path">Name of file to be written.</param>
 		/// <param name="sheetName">The name of the sheet in the file to read.
-		/// If this is null then the first sheet will be iterated.</param>
+		/// If this is <see langword="null"/> then the first sheet will be iterated.</param>
 		/// <param name="includeHeaders">Determines if the columns should be included.</param>
-		/// <returns>A Collection with data from the file.</returns>
+		/// <returns>An <see cref="ICollection{T}"/> with data from the file.</returns>
 		public static ICollection<string[]> ReadXlsx(this ICollection<string[]> list, string path, string sheetName = null, bool includeHeaders = true)
 		{
 			IEnumerable<string[]> lines = XlsxForeach(path, sheetName, includeHeaders);
@@ -1043,15 +1043,15 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Reads an Xlsx Excel file into a Collection.
+		/// Reads an Xlsx Excel file into an <see cref="ICollection{T}"/>.
 		/// </summary>
-		/// <param name="list">The Collection to store the data in.</param>
+		/// <param name="list">The <see cref="ICollection{T}"/> to store the data in.</param>
 		/// <param name="path">Name of file to be written.</param>
 		/// <param name="sheetName">The name of the sheet in the file to read.
-		/// If this is null then the first sheet will be iterated.</param>
+		/// If this is <see langword="null"/> then the first sheet will be iterated.</param>
 		/// <param name="includeHeaders">Determines if the columns should be included.</param>
-		/// <returns>A Collection with data from the file.</returns>
-		public static ICollection<T> ReadXlsx<T>(this ICollection<T> list, string path, string sheetName = null, bool includeHeaders = true) where T : class, new()
+		/// <returns>An <see cref="ICollection{T}"/> with data from the file.</returns>
+		public static ICollection<T> ReadXlsx<T>(this ICollection<T> list, string path, string sheetName = null, bool includeHeaders = true)
 		{
 			if (!File.Exists(path))
 				throw new IOException("File does not exist: " + path);
@@ -1064,12 +1064,12 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Reads an Xlsx Excel file into a DataSet.
+		/// Reads an Xlsx Excel file into a <see cref="DataSet"/>.
 		/// </summary>
-		/// <param name="dataset">The DataSet to store the data in.</param>
+		/// <param name="dataset">The <see cref="DataSet"/> to store the data in.</param>
 		/// <param name="path">Name of file to be written.</param>
 		/// <param name="hasHeaders">Determines if the columns should be written.</param>
-		/// <returns>A DataSet with data from the file.</returns>
+		/// <returns>A <see cref="DataSet"/> with data from the file.</returns>
 		public static DataSet ReadXlsx(this DataSet dataset, string path, bool hasHeaders = true)
 		{
 			if (!File.Exists(path))
@@ -1082,14 +1082,14 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Reads an Xlsx Excel file into a DataSet.
+		/// Reads the first sheet of an Xlsx Excel file into a <see cref="DataTable"/>.
 		/// </summary>
-		/// <param name="table">The DataTable to store the data in.</param>
+		/// <param name="table">The <see cref="DataTable"/> to store the data in.</param>
 		/// <param name="path">Name of file to be written.</param>
 		/// <param name="sheetName">The name of the worksheet to iterate.
-		/// If this is null then the first sheet will be iterated.</param>
+		/// If this is <see langword="null"/> then the first sheet will be iterated.</param>
 		/// <param name="hasHeaders">Determines if the columns should be written.</param>
-		/// <returns>A DataTable with data from the file.</returns>
+		/// <returns>A <see cref="DataTable"/> with data from the file.</returns>
 		public static DataTable ReadXlsx(this DataTable table, string path, string sheetName = null, bool hasHeaders = true)
 		{
 			if (!File.Exists(path))
@@ -1103,10 +1103,10 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Writes a DataSet to a file.
+		/// Writes a <see cref="DataSet"/> to a file.
 		/// </summary>
-		/// <typeparam name="T">The type of object in the list.</typeparam>
-		/// <param name="list">The list of objects to write to the Excel file.</param>
+		/// <typeparam name="T">The <see cref="Type"/> of object in the list.</typeparam>
+		/// <param name="list">The <see cref="IEnumerable{T}"/> to write to the Excel file.</param>
 		/// <param name="path">Name of file to be written.</param>
 		/// <param name="hasHeaders">Determines if the column headers should be written.</param>
 		/// <param name="autoFilter">Determines if auto-filtering will be enabled. Filters allow sorting and filtering by column.</param>
@@ -1118,9 +1118,9 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Writes a DataSet to a file.
+		/// Writes a <see cref="DataTable"/> to a file.
 		/// </summary>
-		/// <param name="table">DataTable containing the data to be written to the Excel file.</param>
+		/// <param name="table">The <see cref="DataTable"/> containing the data to be written to the Excel file.</param>
 		/// <param name="path">Name of file to be written.</param>
 		/// <param name="hasHeaders">Determines if the column headers should be written.</param>
 		/// <param name="autoFilter">Determines if auto-filtering will be enabled. Filters allow sorting and filtering by column.</param>
@@ -1132,9 +1132,9 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Writes a DataSet to a file.
+		/// Writes a <see cref="DataSet"/> to a file.
 		/// </summary>
-		/// <param name="dataset">DataSet containing the data to be written to the Excel.</param>
+		/// <param name="dataset">The <see cref="DataSet"/> containing the data to be written to the Excel.</param>
 		/// <param name="path">Name of file to be written.</param>
 		/// <param name="hasHeaders">Determines if the column headers should be written.</param>
 		/// <param name="autoFilter">Determines if auto-filtering will be enabled. Filters allow sorting and filtering by column.</param>
@@ -1146,9 +1146,9 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Writes a DataSet to a file.
+		/// Performs an action on a <see cref="Spreadsheet"/>.
 		/// </summary>
-		/// <param name="action">A function that loads the data into the spreadsheet.</param>
+		/// <param name="action">An <see cref="Action{Spreadsheet}"/> that loads the data into the spreadsheet.</param>
 		/// <param name="path">Name of file to be written.</param>
 		/// <param name="hasHeaders">Determines if the column headers should be written.</param>
 		/// <param name="autoFilter">Determines if auto-filtering will be enabled. Filters allow sorting and filtering by column.</param>
@@ -1197,8 +1197,8 @@ namespace Utilities
 		/// Determines if a file is available for reading/writing.
 		/// </summary>
 		/// <param name="path">The path of the file to check.</param>
-		/// <param name="access">The file access to test.</param>
-		/// <returns>True if the file is available with the given file access. False otherwise.</returns>
+		/// <param name="access">The <see cref="FileAccess"/> to test.</param>
+		/// <returns>True if the file is available with the given <see cref="FileAccess"/>. False otherwise.</returns>
 		public static bool IsAvailable(string path, FileAccess access = FileAccess.Read)
 		{
 			return IsAvailable(new FileInfo(path), access);
@@ -1208,8 +1208,8 @@ namespace Utilities
 		/// Determines if a file is available for reading/writing.
 		/// </summary>
 		/// <param name="path">The path of the file to check.</param>
-		/// <param name="access">The file access to test.</param>
-		/// <returns>True if the file is available with the given file access. False otherwise.</returns>
+		/// <param name="access">The <see cref="FileAccess"/> to test.</param>
+		/// <returns>True if the file is available with the given <see cref="FileAccess"/>. False otherwise.</returns>
 		public static bool IsAvailable(FileInfo path, FileAccess access = FileAccess.Read)
 		{
 			try {
@@ -1224,13 +1224,13 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Finds all files matching a search pattern.
+		/// Finds all <see cref="FileInfo"/> objects matching a search pattern.
 		/// </summary>
 		/// <param name="path">The path and search pattern for the files.
 		/// This can include wildcards (* ?) and environment variables (%var%).</param>
 		/// <param name="recursive">Determines if subdirectories should be searched.</param>
 		/// <param name="expandEnvVars">Determines if environment variables should be expanded (%var)%.</param>
-		/// <returns>The files that match the search pattern.</returns>
+		/// <returns>The <see cref="FileInfo"/> objects that match the search pattern.</returns>
 		public static FileInfo[] GetFiles(string path, bool recursive = false, bool expandEnvVars = true)
 		{
 			string envExpanded = expandEnvVars ? Environment.ExpandEnvironmentVariables(path) : path;
@@ -1240,12 +1240,12 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Finds all files matching a given search pattern within a given directory.
+		/// Finds all <see cref="FileInfo"/> objects matching a given search pattern within a given directory.
 		/// </summary>
 		/// <param name="directory">The directory to search.</param>
 		/// <param name="pattern">The search pattern for the files. This can include wildcards (* ?).</param>
 		/// <param name="recursive">Determines if subdirectories should be searched with the same search pattern.</param>
-		/// <returns>The files that match the search pattern.</returns>
+		/// <returns>The <see cref="FileInfo"/> objects that match the search pattern.</returns>
 		public static FileInfo[] GetFiles(string directory, string pattern, bool recursive = false)
 		{
 			SearchOption option = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
@@ -1254,13 +1254,13 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Finds all directories matching a search pattern.
+		/// Finds all <see cref="DirectoryInfo"/> objects matching a search pattern.
 		/// </summary>
 		/// <param name="path">The path and search pattern for the directories.
 		/// This can include wildcards (* ?) and environment variables (%var%).</param>
 		/// <param name="recursive">Determines if subdirectories should be searched.</param>
 		/// <param name="expandEnvVars">Determines if environment variables should be expanded (%var)%.</param>
-		/// <returns>The directories that match the search pattern.</returns>
+		/// <returns>The <see cref="DirectoryInfo"/> objects that match the search pattern.</returns>
 		public static DirectoryInfo[] GetDirectories(string path, bool recursive = false, bool expandEnvVars = true)
 		{
 			string envExpanded = expandEnvVars ? Environment.ExpandEnvironmentVariables(path) : path;
@@ -1270,12 +1270,12 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Finds all files matching a given search pattern within a given directory.
+		/// Finds all <see cref="DirectoryInfo"/> objects matching a given search pattern within a given directory.
 		/// </summary>
 		/// <param name="directory">The directory to search.</param>
 		/// <param name="pattern">The search pattern for the files. This can include wildcards (* ?).</param>
 		/// <param name="recursive">Determines if subdirectories should be searched with the same search pattern.</param>
-		/// <returns>The files that match the search pattern.</returns>
+		/// <returns>The <see cref="DirectoryInfo"/> objects that match the search pattern.</returns>
 		public static DirectoryInfo[] GetDirectories(string directory, string pattern, bool recursive = false)
 		{
 			SearchOption option = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;

@@ -19,7 +19,7 @@ namespace Utilities
 		/// This enables reading from the process's standard input and error.</param>
 		/// <param name="maxWaitMillis">The maximum number of milliseconds to wait. Negative numbers mean infinite.</param>
 		/// <param name="showWindow">Determines if the console window is shown.</param>
-		/// <returns>The process that ran the command or null on error.</returns>
+		/// <returns>The <see cref="Process"/> that ran the command or null on error.</returns>
 		public static Process Exec(string path, string args = "", bool redirectOutput = false, int maxWaitMillis = -1, bool showWindow = false)
 		{
 			Process proc = ExecAsync(path, args, redirectOutput, showWindow);
@@ -35,7 +35,7 @@ namespace Utilities
 		/// <param name="redirectOutput">Determines if output should be redirected.
 		/// This enables reading from the process's standard input and error.</param>
 		/// <param name="showWindow">Determines if the console window is shown.</param>
-		/// <returns>The process that ran the command.</returns>
+		/// <returns>The <see cref="Process"/> that ran the command.</returns>
 		public static Process ExecAsync(string path, string args = "", bool redirectOutput = false, bool showWindow = false)
 		{
 			ProcessStartInfo proc = new ProcessStartInfo();
@@ -148,6 +148,7 @@ namespace Utilities
 		}
 
 		private static readonly char[] DirSeparators = new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
+		private static readonly string[] emptySplitPath = new string[] { "" };
 
 		/// <summary>
 		/// Splits a path by directory separators \ and / so that they can be iterated. Network drives starting with \\ are split after these characters.
@@ -157,7 +158,7 @@ namespace Utilities
 		public static string[] SplitPath(string path)
 		{
 			if (path.Length == 0)
-				return new string[] { "" };
+				return emptySplitPath;
 			if (path[0] == Path.DirectorySeparatorChar || path[0] == Path.AltDirectorySeparatorChar) {
 				List<string> pathParts = new List<string>();
 				int indexOfSep;

@@ -22,7 +22,7 @@ namespace Utilities
 		private static readonly SqlBulkCopyColumnMapping[] EmptyColumnMappings = Array.Empty<SqlBulkCopyColumnMapping>();
 
 		/// <summary>
-		/// Creates a connection string based on the server/database.
+		/// Creates a <see cref="SqlConnectionStringBuilder"/> based on the server/database.
 		/// </summary>
 		/// <param name="server">The server to connect to.</param>
 		/// <param name="database">The initial database to connect to.</param>
@@ -30,7 +30,7 @@ namespace Utilities
 		/// <param name="password">The password to log into the server. If null then integrated security is used.</param>
 		/// <param name="testConnection">Determines if the connection should be tested before being returned.</param>
 		/// <param name="timeoutSecs">The maximum timeout in seconds for the connection.</param>
-		/// <returns>The connection string builder or null if the connection failed.</returns>
+		/// <returns>The <see cref="SqlConnectionStringBuilder"/> or <see langword="null"/> if the connection failed.</returns>
 		public static SqlConnectionStringBuilder ConnString(string server, string database, string username, string password, bool testConnection = false, int? commandTimeout = null)
 		{
 			////SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder("Integrated Security=SSPI;");
@@ -56,27 +56,27 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Creates a connection string based on the server/database using integrated security.
+		/// Creates a <see cref="SqlConnectionStringBuilder"/> based on the server/database using integrated security.
 		/// </summary>
 		/// <param name="server">The server to connect to.</param>
 		/// <param name="database">The initial database to connect to.</param>
 		/// <param name="testConnection">Determines if the connection should be tested before being returned.</param>
 		/// <param name="timeoutSecs">The maximum timeout in seconds for the connection.</param>
-		/// <returns>The connection string builder or null if the connection failed.</returns>
+		/// <returns>The <see cref="SqlConnectionStringBuilder"/> or <see langword="null"/> if the connection failed.</returns>
 		public static SqlConnectionStringBuilder ConnString(string server, string database, bool testConnection = false, int? commandTimeout = null)
 		{
 			return ConnString(server, database, null, null, testConnection, commandTimeout);
 		}
 
 		/// <summary>
-		/// Returns an empty table representing the database.
+		/// Returns an empty <see cref="DataTable"/> representing the database.
 		/// </summary>
 		/// <param name="conn">The database connection.</param>
 		/// <param name="tablename">The name of the table.</param>
-		/// <returns>An empty table representing the database, or null on error.</returns>
+		/// <returns>An empty <see cref="DataTable"/> representing the database, or <see langword="null"/> on error.</returns>
 		public static DataTable CreateDataTable(SqlConnection conn, string tablename, SqlTransaction transaction = null, int? commandTimeout = null)
 		{
-			using (SqlCommand cmd = new SqlCommand($"SELECT TOP 0 * FROM {tablename}", conn, transaction))
+			using (SqlCommand cmd = new SqlCommand($"SELECT * FROM {tablename} WHERE 0 = 1", conn, transaction))
 			using (SqlDataAdapter adapter = new SqlDataAdapter(cmd)) {
 				cmd.CommandTimeout = commandTimeout ?? 0;
 				DataTable table = adapter.FillSchema(new DataTable(tablename), SchemaType.Source);
@@ -86,14 +86,13 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Returns a DataTable with schema information of an SQL table returned by a select command.
+		/// Returns a <see cref="SchemaTable"/> with information of an SQL query.
 		/// </summary>
 		/// <param name="conn">The database connection.</param>
 		/// <param name="selectCmd">The select command.</param>
-		/// <returns>A DataTable with the schema information of an SQL table, or null on error.</returns>
+		/// <returns>A <see cref="SchemaTable"/> with the information of an SQL query, or <see langword="null"/> on error.</returns>
 		public static SchemaTable SelectSchema(IDbConnection conn, string selectCmd, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
-
 			using (IDbCommand cmd = conn.CreateCommand()) {
 				cmd.Transaction = transaction;
 				cmd.CommandTimeout = commandTimeout ?? 0;
@@ -105,33 +104,33 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Returns a DataTable with schema information of an SQL table.
+		/// Returns a <see cref="SchemaTable"/> with information of an SQL table.
 		/// </summary>
 		/// <param name="conn">The database connection.</param>
 		/// <param name="tablename">The name of the table.</param>
-		/// <returns>A DataTable with the schema information of an SQL table, or null on error.</returns>
+		/// <returns>A <see cref="SchemaTable"/> with information of an SQL table, or <see langword="null"/> on error.</returns>
 		public static SchemaTable TableSchema(SqlConnection conn, string tablename, SqlTransaction transaction = null, int? commandTimeout = null)
 		{
-			return SelectSchema(conn, $"SELECT TOP 0 * FROM {tablename}", transaction, commandTimeout);
+			return SelectSchema(conn, $"SELECT * FROM {tablename} WHERE 0 = 1", transaction, commandTimeout);
 		}
 
 		/// <summary>
-		/// Gets a list of table names.
+		/// Gets a list of tables in a specified catalog.
 		/// </summary>
 		/// <param name="conn">The database connection.</param>
-		/// <param name="catalog">The catalog to search. Null means the DataSource of the connection is used.</param>
-		/// <returns>A list of table names, or null on error.</returns>
+		/// <param name="catalog">The catalog to search. If this is <see langword="null"/> then the DataSource of the <see cref="SqlConnection"/> is used.</param>
+		/// <returns>A list of tables in a specified catalog, or <see langword="null"/> on error.</returns>
 		public static List<string> GetTableNames(SqlConnection conn, string catalog = null)
 		{
 			return GetObjectNames(conn, catalog, "BASE TABLE");
 		}
 
 		/// <summary>
-		/// Gets a list of view names.
+		/// Gets a list of view names in a specified catalog.
 		/// </summary>
 		/// <param name="conn">The database connection.</param>
-		/// <param name="catalog">The catalog to search. Null means the DataSource of the connection is used.</param>
-		/// <returns>A list of view names, or null on error.</returns>
+		/// <param name="catalog">The catalog to search. If this is <see langword="null"/> then the DataSource of the <see cref="SqlConnection"/> is used.</param>
+		/// <returns>A list of view names in a specified catalog, or <see langword="null"/> on error.</returns>
 		public static List<string> GetViewNames(SqlConnection conn, string catalog = null)
 		{
 			return GetObjectNames(conn, catalog, "VIEW");

@@ -15,16 +15,28 @@ namespace Utilities.Converters
 		/// </summary>
 		private static readonly Encoding DefaultEncoding = Encoding.UTF8;
 
+		/// <summary>
+		/// Returns whether the input type can be converted to the output type.
+		/// </summary>
+		/// <param name="input">The input <see cref="Type"/></param>
+		/// <param name="output">The output <see cref="Type"/></param>
+		/// <returns>True if the input type can be converted to the output type. False otherwise.</returns>
 		public static bool CanConvert(Type input, Type output)
 		{
 			return System.ComponentModel.TypeDescriptor.GetConverter(input).CanConvertTo(output);
 		}
 
+		/// <summary>
+		/// Creates a function that converts an object of Tin to Tout.
+		/// </summary>
+		/// <typeparam name="Tin">The input <see cref="Type"/>.</typeparam>
+		/// <typeparam name="Tout">The output <see cref="Type"/>.</typeparam>
+		/// <param name="inFlags">Filters on the properties to obtain from Tin.</param>
+		/// <param name="outFlags">Filters on the properties to obtain from Tout.</param>
+		/// <returns>A function that converts an object of Tin to Tout.</returns>
 		public static Func<Tin, Tout> ObjectToObject<Tin, Tout>(
 			BindingFlags inFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly,
 			BindingFlags outFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-			where Tin : class
-			where Tout : class, new()
 		{
 			return ObjectToObject<Tin, Tout>(
 				propertyNames: null,
@@ -32,13 +44,21 @@ namespace Utilities.Converters
 				outFlags: outFlags);
 		}
 
+		/// <summary>
+		/// Creates a function that converts an object of Tin to Tout.
+		/// </summary>
+		/// <typeparam name="Tin">The input <see cref="Type"/>.</typeparam>
+		/// <typeparam name="Tout">The output <see cref="Type"/>.</typeparam>
+		/// <param name="propertyNames">The names of the properties.</param>
+		/// <param name="propertyNameCompare">The <see cref="StringComparison"/> to match the property names. By default it is case sensitive.</param>
+		/// <param name="inFlags">Filters on the properties to obtain from Tin.</param>
+		/// <param name="outFlags">Filters on the properties to obtain from Tout.</param>
+		/// <returns>A function that converts an object of Tin to Tout.</returns>
 		public static Func<Tin, Tout> ObjectToObject<Tin, Tout>(
 			IReadOnlyList<string> propertyNames,
 			StringComparison propertyNameCompare = StringComparison.Ordinal,
 			BindingFlags inFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly,
 			BindingFlags outFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-			where Tin : class
-			where Tout : class, new()
 		{
 			IReadOnlyList<PropertyInfo> pi = typeof(Tin).GetProperties(inFlags);
 			IReadOnlyList<PropertyInfo> po = typeof(Tout).GetProperties(outFlags)
@@ -53,9 +73,15 @@ namespace Utilities.Converters
 			return ObjectToObject<Tin, Tout>(piUnion, po);
 		}
 
+		/// <summary>
+		/// Creates a function that converts an object of Tin to Tout.
+		/// </summary>
+		/// <typeparam name="Tin">The input <see cref="Type"/>.</typeparam>
+		/// <typeparam name="Tout">The output <see cref="Type"/>.</typeparam>
+		/// <param name="pinfoIn">The <see cref="PropertyInfo"/>s to match from Tin.</param>
+		/// <param name="pinfoOut">The <see cref="PropertyInfo"/>s to match from Tout.</param>
+		/// <returns>A function that converts an object of Tin to Tout.</returns>
 		public static Func<Tin, Tout> ObjectToObject<Tin, Tout>(IReadOnlyList<PropertyInfo> pinfoIn, IReadOnlyList<PropertyInfo> pinfoOut)
-			where Tin : class
-			where Tout : class, new()
 		{
 			Func<object, object>[] converters = new Func<object, object>[pinfoIn.Count];
 			for (int i = 0; i < pinfoOut.Count; i++) {
@@ -63,7 +89,7 @@ namespace Utilities.Converters
 			}
 			Tout objToObj(Tin input)
 			{
-				Tout tout = FastActivator<Tout>.Create();
+				Tout tout = (Tout) System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(Tout));
 				for (int i = 0; i < pinfoOut.Count; i++) {
 					object value = pinfoIn[i].GetValue(input);
 					if (value != null)
@@ -80,20 +106,27 @@ namespace Utilities.Converters
 		/// </summary>
 		/// <typeparam name="Tin">The input <see cref="Type"/>.</typeparam>
 		/// <typeparam name="Tout">The output <see cref="Type"/>.</typeparam>
-		/// <param name="flags">Filters on the properties to obtain..</param>
+		/// <param name="flags">Filters on the properties to obtain.</param>
 		/// <returns>A function that converts an <see cref="IEnumerable{T}"/> Tin to a Tout.</returns>
 		public static Func<IReadOnlyList<Tin>, Tout> ListToObject<Tin, Tout>(
 			BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-			where Tout : class, new()
 		{
 			return CreateListToObject<Tin, Tout>(typeof(Tout).GetProperties(flags));
 		}
 
+		/// <summary>
+		/// Creates a function that converts an <see cref="IReadOnlyList{T}"/> of Tin to Tout.
+		/// </summary>
+		/// <typeparam name="Tin">The input <see cref="Type"/>.</typeparam>
+		/// <typeparam name="Tout">The output <see cref="Type"/>.</typeparam>
+		/// <param name="propertyNames">The names of the properties.</param>
+		/// <param name="propertyNameCompare">The <see cref="StringComparison"/> to match the property names. By default it is case sensitive.</param>
+		/// <param name="flags">Filters on the properties to obtain..</param>
+		/// <returns>A function that converts an <see cref="IEnumerable{T}"/> Tin to a Tout.</returns>
 		public static Func<IReadOnlyList<Tin>, Tout> ListToObject<Tin, Tout>(
 			IReadOnlyList<string> propertyNames,
 			StringComparison propertyNameCompare = StringComparison.Ordinal,
 			BindingFlags flags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-			where Tout : class, new()
 		{
 			PropertyInfo[] pinfosOut = typeof(Tout).GetProperties(flags);
 			foreach (PropertyInfo pout in pinfosOut) {
@@ -115,7 +148,7 @@ namespace Utilities.Converters
 			return CreateListToObject<Tin, Tout>(tmp);
 		}
 
-		private static Func<IReadOnlyList<Tin>, Tout> CreateListToObject<Tin, Tout>(IReadOnlyList<PropertyInfo> pinfos) where Tout : class, new()
+		private static Func<IReadOnlyList<Tin>, Tout> CreateListToObject<Tin, Tout>(IReadOnlyList<PropertyInfo> pinfos)
 		{
 			Func<object, object>[] converters = new Func<object, object>[pinfos.Count];
 			Type notNullableTin = Nullable.GetUnderlyingType(typeof(Tin)) ?? typeof(Tin);
@@ -125,7 +158,7 @@ namespace Utilities.Converters
 			}
 			Tout listToObj(IReadOnlyList<Tin> list)
 			{
-				Tout obj = FastActivator<Tout>.Create();
+				Tout obj = (Tout) System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(Tout));
 				int count = Math.Min(list.Count, pinfos.Count);
 				for (int i = 0; i < count; i++) {
 					if (pinfos[i] != null) {
@@ -153,7 +186,7 @@ namespace Utilities.Converters
 		}
 
 		/// <summary>
-		/// Creates a converter that accepts null values. This should be used if the either the input
+		/// Creates a converter that accepts <see langword="null"/> values. This should be used if the either the input
 		/// or output types are <see cref="Nullable"/>.
 		/// </summary>
 		/// <param name="input">The input <see cref="Type"/>.</param>
@@ -263,12 +296,12 @@ namespace Utilities.Converters
 				case TypeCode.DBNull:
 					if (value == DBNull.Value)
 						return DBNull.Value;
-					throw new InvalidCastException("Invalid cast: TypeCode.DBNull");
+					throw new InvalidCastException("TypeCode.DBNull");
 				//case TypeCode.Empty:
 				//cannot get here
 				//    throw new InvalidCastException("Invalid Cast: TypeCode.Empty");
 				default:
-					throw new ArgumentException("Argument: unknown TypeCode " + typeCode.ToString());
+					throw new ArgumentException("Unknown TypeCode " + typeCode.ToString());
 			}
 		}
 

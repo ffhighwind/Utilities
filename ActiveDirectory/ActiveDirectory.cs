@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.DirectoryServices;
-using System.DirectoryServices.ActiveDirectory;
 using System.DirectoryServices.AccountManagement;
+using System.DirectoryServices.ActiveDirectory;
 using System.Linq;
 
 namespace Utilities.ActiveDirectory
@@ -15,24 +15,50 @@ namespace Utilities.ActiveDirectory
 	/// OU=Organization Unit
 	/// DC=Domain Component
 	/// </summary>
-	public class ActiveDirectory
+	public class ActiveDirectory : IDisposable
 	{
 		public ActiveDirectory() { }
 
-		public DirectoryEntry Entry { get; private set; }
+		/// <summary>
+		/// The <see cref="DirectoryEntry"/> representing the bound context.
+		/// </summary>
+		public DirectoryEntry Entry { get; private set; } = null;
 
-		public PrincipalContext Context { get; private set; }
+		/// <summary>
+		/// The <see cref="PrincipalContext"/> representing the bound context.
+		/// </summary>
+		public PrincipalContext Context { get; private set; } = null;
 
+		/// <summary>
+		/// Binds to the <see cref="ContextType.Domain"/> from the current user's domain. If no credentials are provided then the user's current credentials will be used.
+		/// </summary>
+		/// <param name="username">The username to bind with, or null to use the current user's credentials.</param>
+		/// <param name="password">The user's password, or null to use the current user's credentials.</param>
+		/// <returns>True on success. False otherwise.</returns>
 		public bool Bind(string username = null, string password = null)
 		{
 			return Bind(username, password, ContextType.Domain, Environment.UserDomainName);
 		}
 
+		/// <summary>
+		/// Binds to the given <see cref="ContextType"/> and path using the default credentials.
+		/// </summary>
+		/// <param name="contextType">The <see cref="ContextType"/> to bind to.</param>
+		/// <param name="path">The path of the context.</param>
+		/// <returns>True on success. False otherwise.</returns>
 		public bool Bind(ContextType contextType, string path)
 		{
 			return Bind(null, null, contextType, path);
 		}
 
+		/// <summary>
+		/// Binds to the given <see cref="ContextType"/> and path using the specified credentials.
+		/// </summary>
+		/// <param name="username">The username to bind with, or null to use the current user's credentials.</param>
+		/// <param name="password">The user's password, or null to use the current user's credentials.</param>
+		/// <param name="contextType">The <see cref="ContextType"/> to bind to.</param>
+		/// <param name="path">The path of the context.</param>
+		/// <returns>True on success. False otherwise.</returns>
 		public bool Bind(string username, string password, ContextType contextType, string path)
 		{
 			try {
@@ -41,20 +67,27 @@ namespace Utilities.ActiveDirectory
 					Context = new PrincipalContext(contextType, path, username, password);
 				}
 				else {
-					Context = new PrincipalContext(contextType, path);
 					Entry = new DirectoryEntry(path)
 					{
 						AuthenticationType = AuthenticationTypes.Secure
 					};
+					Context = new PrincipalContext(contextType, path);
 				}
 				return true;
 			}
 			catch (Exception ex) {
 				Console.Error.WriteLine("ActiveDirectory.Bind(): " + ex.Message);
+				if (Entry != null) {
+					Entry.Dispose();
+					Entry = null;
+				}
 			}
 			return false;
 		}
 
+		/// <summary>
+		/// The current user's <see cref="UserPrincipal"/>.
+		/// </summary>
 		public static UserPrincipal CurrentUser {
 			get {
 				PrincipalContext context = new PrincipalContext(ContextType.Domain, Environment.UserDomainName);
@@ -62,26 +95,40 @@ namespace Utilities.ActiveDirectory
 			}
 		}
 
+		/// <summary>
+		/// The current user's Domain name.
+		/// </summary>
 		public static string CurrentDomain =>
 				////return System.DirectoryServices.ActiveDirectory.Domain.GetCurrentDomain().Name; // can throw an exception
 				Environment.UserDomainName;
 
+		/// <summary>
+		/// The current computer's Domain name.
+		/// </summary>
+		/// <exception cref="ActiveDirectoryObjectNotFoundException"/>
 		public static string ComputerDomain =>
 				////System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().DomainName;
 				System.DirectoryServices.ActiveDirectory.Domain.GetComputerDomain().Name; // can throw an exception
 
+		/// <summary>
+		/// The current user's account name.
+		/// </summary>
 		public static string CurrentUserName => Environment.UserName;
 
+		/// <summary>
+		/// The current user's <see cref="PrincipalContext"/>.
+		/// </summary>
 		public static PrincipalContext CurrentContext => new PrincipalContext(ContextType.Domain, CurrentDomain);
 
 		/// <summary>
-		/// https://docs.microsoft.com/en-us/windows/desktop/adsi/search-filter-syntax
-		/// https://docs.microsoft.com/en-us/windows/desktop/ADSchema/classes-all
-		/// https://docs.microsoft.com/en-us/windows/desktop/ad/object-class-and-object-category
+		/// Searches using the current <see cref="DirectoryEntry"/>.
 		/// </summary>
 		/// <param name="filter">"(&(objectCategory=User)(objectClass=person)(name=" + name + "))"</param>
 		/// <param name="propertiesToLoad">The properties to load.</param>
 		/// <returns>The results of the search.</returns>
+		/// <see cref="https://docs.microsoft.com/en-us/windows/desktop/adsi/search-filter-syntax"/>
+		/// <see cref="https://docs.microsoft.com/en-us/windows/desktop/ADSchema/classes-all"/>
+		/// <see cref="https://docs.microsoft.com/en-us/windows/desktop/ad/object-class-and-object-category"/>
 		public IEnumerable<SearchResult> Search(string filter, params string[] propertiesToLoad)
 		{
 			DirectorySearcher searcher = new DirectorySearcher(Entry);
@@ -154,13 +201,31 @@ namespace Utilities.ActiveDirectory
 			return entry.Properties.Contains(prop) ? entry.Properties[prop].Value : null;
 		}
 
-		public static DirectoryEntry Root {
-			get {
-				return new DirectoryEntry("LDAP://RootDSE");
-				//var tmp = "LDAP://" +
-				//  de.Properties["defaultNamingContext"];
+		public static DirectoryEntry Root => new DirectoryEntry("LDAP://RootDSE");//var tmp = "LDAP://" +//  de.Properties["defaultNamingContext"];
+
+		#region IDisposable Support
+		private bool disposedValue = false; // To detect redundant calls
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!disposedValue) {
+				if (Entry != null) {
+					Entry.Dispose();
+					Entry = null;
+				}
+				if (Context != null) {
+					Context.Dispose();
+					Context = null;
+				}
+				disposedValue = true;
 			}
 		}
+
+		public void Dispose()
+		{
+			Dispose(true);
+		}
+		#endregion
 
 	}
 }

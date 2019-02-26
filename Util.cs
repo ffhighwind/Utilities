@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Text;
 using Newtonsoft.Json;
 
@@ -465,61 +466,6 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// A delegate to be used for constructing an object.
-		/// </summary>
-		/// <param name="args">The arguments for the constructor.</param>
-		/// <returns>An new object.</returns>
-		public delegate object ObjectConstructor(params object[] args);
-
-		/// <summary>
-		/// Creates a delegate equivilent to the constructor passed in.
-		/// </summary>
-		/// <param name="ctor">The constructor to imitate.</param>
-		/// <returns>A delegate that imitates the constructor.</returns>
-		/// <see cref="https://ayende.com/blog/3167/creating-objects-perf-implications">DynamicMethod, native IL code</see>
-		/// <see cref="https://rogerjohansson.blog/2008/02/28/linq-expressions-creating-objects/">Compiled LambdaExpression, usually faster</see>
-		public static ObjectConstructor CreateConstructor(ConstructorInfo ctor)
-		{
-			Type type = ctor.DeclaringType;
-			ParameterInfo[] paramsInfo = ctor.GetParameters();
-
-			//create a single param of type object[]
-			ParameterExpression param =
-				Expression.Parameter(typeof(object[]), "args");
-
-			Expression[] argsExp =
-				new Expression[paramsInfo.Length];
-
-			//pick each arg from the params array
-			//and create a typed expression of them
-			for (int i = 0; i < paramsInfo.Length; i++) {
-				Expression index = Expression.Constant(i);
-				Type paramType = paramsInfo[i].ParameterType;
-
-				Expression paramAccessorExp =
-					Expression.ArrayIndex(param, index);
-
-				Expression paramCastExp =
-					Expression.Convert(paramAccessorExp, paramType);
-
-				argsExp[i] = paramCastExp;
-			}
-
-			//make a NewExpression that calls the
-			//ctor with the args we just created
-			NewExpression newExp = Expression.New(ctor, argsExp);
-
-			//create a lambda with the New
-			//Expression as body and our param object[] as arg
-			LambdaExpression lambda =
-				Expression.Lambda(typeof(ObjectConstructor), newExp, param);
-
-			//compile it
-			ObjectConstructor compiled = (ObjectConstructor)lambda.Compile();
-			return compiled;
-		}
-
-		/// <summary>
 		/// Creates a shallow clone of an object. This will not work when using SilverLight and therefore may require other
 		/// cloning methods such as Json Serialization or IL level cloning.
 		/// </summary>
@@ -539,8 +485,8 @@ namespace Utilities
 			return null;
 		}
 
-		// TODO
 		// Deep Cloning with IL
-		//http://whizzodev.blogspot.com/2008/03/object-cloning-using-il-in-c.html
+		//http://whizzodev.blogspot.com/2008/06/object-deep-cloning-using-il-in-c_20.html
+		/// Use NuGet DeepCloner instead
 	}
 }

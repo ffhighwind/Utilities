@@ -10,17 +10,22 @@ namespace Utilities
 	public static class WorkCalendar
 	{
 		/// <summary>
-		/// Start of the work week
+		/// Start of the work week.
 		/// </summary>
 		private const DayOfWeek Monday = DayOfWeek.Monday;
 
+		/// <summary>
+		/// Returns the quarter (1-4) of a given month.
+		/// </summary>
+		/// <param name="month">The month (1-12).</param>
+		/// <returns>The quarter (1-4) of a given month.</returns>
 		public static int Quarter(int month)
 		{
 			return ((month - 1) / 3) + 1;
 		}
 
 		/// <summary>
-		/// Gets the number of weeks in a given month/year. This is always 4 or 5.
+		/// Returns the number of weeks in a given month/year. This is always 4 or 5.
 		/// </summary>
 		/// <param name="year">The year (1-9999).</param>
 		/// <param name="month">The month (1-12).</param>
@@ -37,12 +42,12 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Gets the first day of the month of with the given DayOfWeek.
+		/// Returns the first day of the month of with the given <see cref="DayOfWeek"/>.
 		/// </summary>
 		/// <param name="year">The year (1-9999).</param>
 		/// <param name="month">The month (1-12).</param>
-		/// <param name="day">The DayOfWeek.</param>
-		/// <returns>The first day of a month with the given DayOfWeek.</returns>
+		/// <param name="day">The <see cref="DayOfWeek"/>.</param>
+		/// <returns>The first day of a month with the given <see cref="DayOfWeek"/>.</returns>
 		public static DateTime FirstDay(int year, int month, DayOfWeek day)
 		{
 			DateTime day1 = new DateTime(year, month, 1);
@@ -51,11 +56,11 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Gets the previous day with the given DayOfWeek.
+		/// Returns the previous day with the given <see cref="DayOfWeek"/>.
 		/// </summary>
-		/// <param name="date">The DateTime to start from.</param>
-		/// <param name="day">The DayOfWeek to get.</param>
-		/// <returns>The previous day with the given DayOfWeek.</returns>
+		/// <param name="date">The <see cref="DateTime"/> to start from.</param>
+		/// <param name="day">The <see cref="DayOfWeek"/> to get.</param>
+		/// <returns>The previous day with the given <see cref="DayOfWeek"/>.</returns>
 		public static DateTime PreviousDay(DateTime date, DayOfWeek day)
 		{
 			int daysAdd = ((int)day - (int)date.DayOfWeek + 7) % 7 - 7;
@@ -63,21 +68,21 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Gets the previous day with the given DayOfWeek.
+		/// Returns the previous day with the given <see cref="DayOfWeek"/>.
 		/// </summary>
-		/// <param name="day">The DayOfWeek to get.</param>
-		/// <returns>The previous day with the given DayOfWeek.</returns>
+		/// <param name="day">The <see cref="DayOfWeek"/> to get.</param>
+		/// <returns>The previous day with the given <see cref="DayOfWeek"/>.</returns>
 		public static DateTime PreviousDay(DayOfWeek day)
 		{
 			return PreviousDay(DateTime.Now, day);
 		}
 
 		/// <summary>
-		/// Gets the next day with the given DayOfWeek.
+		/// Returns the next day with the given <see cref="DayOfWeek"/>.
 		/// </summary>
-		/// <param name="date">The DateTime to start from.</param>
-		/// <param name="day">The DayOfWeek to get.</param>
-		/// <returns>The next day with the given DayOfWeek.</returns>
+		/// <param name="date">The <see cref="DateTime"/> to start from.</param>
+		/// <param name="day">The <see cref="DayOfWeek"/> to get.</param>
+		/// <returns>The next day with the given <see cref="DayOfWeek"/>.</returns>
 		public static DateTime NextDay(DateTime date, DayOfWeek day)
 		{
 			int daysAdd = ((int)day - (int)date.DayOfWeek + 6) % 7 + 1;
@@ -85,17 +90,17 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Gets the next day with the given DayOfWeek.
+		/// Returns the next day with the given <see cref="DayOfWeek"/>.
 		/// </summary>
-		/// <param name="day">The DayOfWeek to get.</param>
-		/// <returns>The next day with the given DayOfWeek.</returns>
+		/// <param name="day">The <see cref="DayOfWeek"/> to get.</param>
+		/// <returns>The next day with the given <see cref="DayOfWeek"/>.</returns>
 		public static DateTime NextDay(DayOfWeek day)
 		{
 			return NextDay(DateTime.Now, day);
 		}
 
 		/// <summary>
-		/// Gets the start of the previous week.
+		/// Returns the start of the previous week.
 		/// </summary>
 		/// <returns>The start of the previous week.</returns>
 		public static DateTime PreviousWeek()
@@ -104,7 +109,7 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Gets the start of the previous week.
+		/// Returns the start of the previous week.
 		/// </summary>
 		/// <param name="week">The week number for the previous week.</param>
 		/// <returns>The start of the previous week.</returns>
@@ -116,9 +121,9 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Gets the week number for the given date. This assumes the date given is the start of the week.
+		/// Returns the week number for the given <see cref="DateTime"/>. This assumes the date given is the start of the week.
 		/// </summary>
-		/// <param name="startOfWeek">The start of the week</param>
+		/// <param name="startOfWeek">The start of the week.</param>
 		/// <returns>The week number for the given date.</returns>
 		public static int WeekNumber(DateTime startOfWeek)
 		{
@@ -126,7 +131,7 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Gets the start of a week with the given year, month, and week number.
+		/// Returns the start of a week with the given year, month, and week number.
 		/// </summary>
 		/// <param name="year">The year (1-9999).</param>
 		/// <param name="month">The month (1-12).</param>
@@ -140,7 +145,7 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Gets the start of the current month.
+		/// Returns the start of the current month.
 		/// </summary>
 		/// <returns>The start of the current month.</returns>
 		public static DateTime MonthStart()
@@ -150,7 +155,7 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Gets the end of the current month.
+		/// Returns the end of the current month.
 		/// </summary>
 		/// <returns>The end of the current month.</returns>
 		public static DateTime MonthEnd()
@@ -160,7 +165,7 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Gets a list of days for between the start and end inclusively.
+		/// Returns a list of days for between the start and end inclusively.
 		/// </summary>
 		/// <param name="start">The start date.</param>
 		/// <param name="end">The end date.</param>
@@ -172,7 +177,7 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Gets a list of all paid holidays between two dates.
+		/// Returns a list of all paid holidays between two dates.
 		/// </summary>
 		/// <param name="start">The start date.</param>
 		/// <param name="end">The end date.</param>
@@ -191,7 +196,7 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Gets the number of work days in a given month.
+		/// Returns the number of work days in a given month.
 		/// </summary>
 		/// <param name="month">The month (1-12).</param>
 		/// <returns>The number of work days in a given month.</returns>
@@ -201,7 +206,7 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Gets the number of work days in a given month.
+		/// Returns the number of work days in a given month.
 		/// </summary>
 		/// <param name="month">The month (1-12).</param>
 		/// <param name="year">The year (1-9999).</param>
@@ -214,7 +219,7 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Gets all work days between two dates inclusively.
+		/// Returns all work days between two dates inclusively.
 		/// </summary>
 		/// <param name="start">The start date.</param>
 		/// <param name="end">The end date.</param>
@@ -237,7 +242,7 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Returns DateTime Collection of all days this year
+		/// Returns a list of days this year.
 		/// </summary>
 		/// <returns>A list of days in this year.</returns>
 		public static IEnumerable<DateTime> DaysThisYear()
@@ -249,7 +254,7 @@ namespace Utilities
 
 		/// <summary>
 		/// Determines if this date is a paid holiday:
-		/// These include: New Years, MLK Jr, Washington's birthday, Memorial Day, Independence Day, Labor Day, Columbus Day, Veterans Day, Thanksgiving, Christmas
+		/// These include: New Years, MLK Jr, Washington's birthday, Memorial Day, Independence Day, Labor Day, Columbus Day, Veterans Day, Thanksgiving, and Christmas.
 		/// </summary>
 		/// <param name="date">The date.</param>
 		/// <returns>True if this date is a paid holiday, or false otherwise.</returns>
@@ -319,7 +324,7 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Gets all holidays within a given year.
+		/// Returns all holidays within a given year.
 		/// </summary>
 		/// <param name="year">The year (1-9999).</param>
 		/// <returns>All holidays within a given year.</returns>
@@ -354,7 +359,7 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Finds the nearest week day from a given date.
+		/// Returns the nearest week day from a given date.
 		/// </summary>
 		/// <param name="date">The date.</param>
 		/// <returns>The nearest week day from a given date.</returns>

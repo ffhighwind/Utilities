@@ -716,7 +716,7 @@ namespace Utilities.Excel
 		/// <typeparam name="T">The <see cref="Type"/> to convert the rows to.</typeparam>
 		/// <param name="hasHeaders">Determines if the first row should be skipped.</param>
 		/// <returns>An <see cref="IEnumerable{T}"/> of objects representing the rows in the <see cref="Worksheet"/>.</returns>
-		public IEnumerable<T> AsEnumerable<T>(bool hasHeaders = true) where T : class, new()
+		public IEnumerable<T> AsEnumerable<T>(bool hasHeaders = true)
 		{
 			Func<string[], T> converter = hasHeaders
 				? Converters.Converters.ListToObject<string, T>(Data.Cells[1, 1, 1, Columns].Select(cell => cell.Value?.ToString()).ToList())
@@ -755,7 +755,7 @@ namespace Utilities.Excel
 		/// <typeparam name="T">The <see cref="Type"/> to convert the rows to.</typeparam>
 		/// <param name="hasHeaders">Determines if the first row should be skipped.</param>
 		/// <returns>The <see cref="List"/>.</returns>
-		public List<T> ToList<T>(bool hasHeaders = true) where T : class, new()
+		public List<T> ToList<T>(bool hasHeaders = true)
 		{
 			return AsEnumerable<T>(hasHeaders).ToList();
 		}
@@ -767,7 +767,7 @@ namespace Utilities.Excel
 		/// <param name="list">The <see cref="ICollection{T}"/> to add data to.</param>
 		/// <param name="hasHeaders">Determines if the first row should be skipped.</param>
 		/// <returns>The <see cref="ICollection{T}"/>.</returns>
-		public ICollection<T> ToList<T>(ICollection<T> list, bool hasHeaders = true) where T : class, new()
+		public ICollection<T> ToList<T>(ICollection<T> list, bool hasHeaders = true)
 		{
 			foreach (T obj in AsEnumerable<T>(hasHeaders)) {
 				list.Add(obj);

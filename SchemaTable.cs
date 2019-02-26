@@ -15,12 +15,12 @@ namespace Utilities
 	public class SchemaTable
 	{
 		/// <summary>
-		/// The start of the string returned by CreateTableScript.
+		/// The start of the string returned by <see cref="CreateTableScript(string)"/>.
 		/// </summary>
 		private string createTable = null;
 
 		/// <summary>
-		/// The primary key constraint to append to createTable when calling CreateTableScript.
+		/// The primary key constraint to append to createTable when calling <see cref="CreateTableScript(string)"/>.
 		/// </summary>
 		private string pkeyConstraint = null;
 

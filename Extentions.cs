@@ -253,7 +253,7 @@ namespace Utilities
 		/// <param name="list">The <see cref="IEnumerable{T}"/> to read from.</param>
 		/// <param name="table">The <see cref="DataTable"/> to modify.</param>
 		/// <returns>The <see cref="DataTable"/>.</returns>
-		public static DataTable ToDataTable<T>(this IEnumerable<T> list, DataTable table) where T : class
+		public static DataTable ToDataTable<T>(this IEnumerable<T> list, DataTable table)
 		{
 			PropertyInfo[] properties = typeof(T).GetProperties();
 			foreach (PropertyInfo info in properties) {
@@ -282,7 +282,7 @@ namespace Utilities
 		/// <typeparam name="T">The <see cref="Type"/> in the <see cref="IEnumerable{T}"/>.</typeparam>
 		/// <param name="list">The <see cref="IEnumerable{T}"/> to convert to a <see cref="DataTable"/>.</param>
 		/// <returns>A <see cref="DataTable"/> with data from the <see cref="IEnumerable{T}"/>.</returns>
-		public static DataTable ToDataTable<T>(this IEnumerable<T> list) where T : class
+		public static DataTable ToDataTable<T>(this IEnumerable<T> list)
 		{
 			return list.ToDataTable(new DataTable());
 		}
@@ -324,7 +324,7 @@ namespace Utilities
 		/// <typeparam name="T">The <see cref="Type"/> in the <see cref="List{T}"/>.</typeparam>
 		/// <param name="table">The <see cref="DataTable"/> to convert to a <see cref="List{T}"/>.</param>
 		/// <returns>A <see cref="List{T}"/> with values from the <see cref="DataTable"/>.</returns>
-		public static List<T> ToList<T>(this DataTable table) where T : class, new()
+		public static List<T> ToList<T>(this DataTable table)
 		{
 			List<T> list = new List<T>();
 			table.ToList<T>(list);
@@ -339,7 +339,7 @@ namespace Utilities
 		/// <param name="table">The <see cref="DataTable"/> to convert to an <see cref="ICollection{T}"/>.</param>
 		/// <param name="list">The <see cref="ICollection{T}"/> to fill with data from the <see cref="DataTable"/>.</param>
 		/// <returns>The <see cref="ICollection{T}"/>.</returns>
-		public static ICollection<T> ToList<T>(this DataTable table, ICollection<T> list) where T : class, new()
+		public static ICollection<T> ToList<T>(this DataTable table, ICollection<T> list)
 		{
 			Converters.DataTableConverter<T> converter = new Converters.DataTableConverter<T>(table);
 			foreach (T obj in converter.Convert(table)) {
@@ -349,6 +349,13 @@ namespace Utilities
 		}
 		#endregion //DataTable/List
 
+		/// <summary>
+		/// Returns an <see cref="IEnumerable{T}"/> of <see cref="List{T}"/> split into partitions of a given size.
+		/// </summary>
+		/// <typeparam name="T">The <see cref="Type"/> of object in the <see cref="IEnumerable{T}"/>.</typeparam>
+		/// <param name="source">The <see cref="IEnumerable{T}"/> to split into partitions.</param>
+		/// <param name="size">The maximum size of the partitions.</param>
+		/// <returns>An <see cref="IEnumerable{T}"/> of <see cref="List{T}"/> split into partitions of a given size.</returns>
 		public static IEnumerable<List<T>> Partition<T>(this IEnumerable<T> source, int size)
 		{
 			if (source == null)
@@ -361,6 +368,13 @@ namespace Utilities
 			}
 		}
 
+		/// <summary>
+		/// Returns an <see cref="IReadOnlyList{T}"/> of <see cref="List{T}"/> split into partitions of a given size.
+		/// </summary>
+		/// <typeparam name="T">The <see cref="Type"/> of object in the <see cref="IReadOnlyList{T}"/>.</typeparam>
+		/// <param name="source">The <see cref="IReadOnlyList{T}"/> to split into partitions.</param>
+		/// <param name="size">The maximum size of the partitions.</param>
+		/// <returns>An <see cref="IReadOnlyList{T}"/> of <see cref="List{T}"/> split into partitions of a given size.</returns>
 		public static IEnumerable<List<T>> Partition<T>(this IReadOnlyList<T> source, int size)
 		{
 			if (source == null)
@@ -381,13 +395,13 @@ namespace Utilities
 		/// <summary>
 		/// Converts a <see cref="Type"/> to its <see cref="Nullable{T}"/> equivalent.
 		/// </summary>
-		/// <param name="t">The <see cref="Type"/> to convert to <see cref="Nullable{T}"/>.</param>
+		/// <param name="type">The <see cref="Type"/> to convert to <see cref="Nullable{T}"/>.</param>
 		/// <returns>The <see cref="Nullable{T}"/> equivalent of the <see cref="Type"/>.</returns>
-		public static Type AsNullable(this Type t)
+		public static Type AsNullable(this Type type)
 		{
-			Type returnType = t;
-			if (t.IsGenericType && t.GetGenericTypeDefinition().Equals(typeof(Nullable<>))) {
-				returnType = Nullable.GetUnderlyingType(t);
+			Type returnType = type;
+			if (type.IsGenericType && type.GetGenericTypeDefinition().Equals(typeof(Nullable<>))) {
+				returnType = Nullable.GetUnderlyingType(type);
 			}
 			return returnType;
 		}
@@ -429,57 +443,35 @@ namespace Utilities
 		/// <summary>
 		/// Determines if a <see cref="Type"/> is an integral numeric type.
 		/// </summary>
-		/// <param name="ty">The <see cref="Type"/> to check.</param>
+		/// <param name="type">The <see cref="Type"/> to check.</param>
 		/// <returns>True if the <see cref="Type"/> is an integral type. False otherwise.</returns>
-		public static bool IsIntegral(this Type ty)
+		public static bool IsIntegral(this Type type)
 		{
-			return IntTypes.Contains(Nullable.GetUnderlyingType(ty) ?? ty);
+			return IntTypes.Contains(Nullable.GetUnderlyingType(type) ?? type);
 		}
 
 		/// <summary>
 		/// Determines if a <see cref="Type"/> is a floating-point numeric type.
 		/// </summary>
-		/// <param name="ty">The <see cref="Type"/> to check.</param>
+		/// <param name="type">The <see cref="Type"/> to check.</param>
 		/// <returns>True if the <see cref="Type"/> is a floating-point type. False otherwise.</returns>
-		public static bool IsFloatingPoint(this Type ty)
+		public static bool IsFloatingPoint(this Type type)
 		{
-			return FloatTypes.Contains(Nullable.GetUnderlyingType(ty) ?? ty);
+			return FloatTypes.Contains(Nullable.GetUnderlyingType(type) ?? type);
 		}
 
 		/// <summary>
 		/// Determines if a <see cref="Type"/> is numeric.
 		/// </summary>
-		/// <param name="ty">The <see cref="Type"/> to check.</param>
+		/// <param name="type">The <see cref="Type"/> to check.</param>
 		/// <returns>True if the <see cref="Type"/> is numeric. False otherwise.</returns>
-		public static bool IsNumeric(this Type ty)
+		public static bool IsNumeric(this Type type)
 		{
-			return NumericTypes.Contains(Nullable.GetUnderlyingType(ty) ?? ty);
+			return NumericTypes.Contains(Nullable.GetUnderlyingType(type) ?? type);
 		}
 		#endregion //Type
 
 		#region String/StringBuilder
-		/// <summary>
-		/// Joins strings together with a separator between each of them.
-		/// </summary>
-		/// <param name="strings">The strings to join.</param>
-		/// <param name="sep">The separator to join the strings with.</param>
-		/// <returns>A combined string with separators between each input string.</returns>
-		public static string Join(this IEnumerable<string> strings, char sep)
-		{
-			return string.Join(sep.ToString(), strings);
-		}
-
-		/// <summary>
-		/// Joins strings together with a separator between each of them.
-		/// </summary>
-		/// <param name="strings">The strings to join.</param>
-		/// <param name="sep">The separator to join the strings with.</param>
-		/// <returns>A combined string with separators between each input string.</returns>
-		public static string Join(this IEnumerable<string> strings, string sep = ",")
-		{
-			return string.Join(sep, strings);
-		}
-
 		/// <summary>
 		/// Removes characters from the end of a <see cref="StringBuilder"/>.
 		/// </summary>
@@ -509,7 +501,7 @@ namespace Utilities
 		/// </summary>
 		/// <param name="table">The <see cref="DataTable"/> to print.</param>
 		/// <param name="printRowNumbers">Determines if row numbers are printed before each row.</param>
-		/// <param name="columnsToPrint">Determines which columns are printed and their order. Empty means all columns are printed.</param>
+		/// <param name="columnsToPrint">Determines which columns are printed and their order. If this is an empty array then all columns are printed.</param>
 		public static void Print(this DataTable table, bool printRowNumbers = false, params int[] columnsToPrint)
 		{
 			Print(table, -1, printRowNumbers, columnsToPrint);
@@ -521,7 +513,7 @@ namespace Utilities
 		/// <param name="table">The <see cref="DataTable"/> to print.</param>
 		/// <param name="maxRows">The maximum number of rows.</param>
 		/// <param name="printRowNumbers">Determines if row numbers are printed before each row.</param>
-		/// <param name="columnsToPrint">Determines which columns are printed and their order. Empty means all columns are printed.</param>
+		/// <param name="columnsToPrint">Determines which columns are printed and their order. If this is an empty array then all columns are printed.</param>
 		public static void Print(this DataTable table, int maxRows, bool printRowNumbers = false, params int[] columnsToPrint)
 		{
 			if (table.Columns.Count == 0)

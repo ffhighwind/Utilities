@@ -5,7 +5,8 @@ using System.Linq;
 namespace Utilities
 {
 	/// <summary>
-	/// An <seealso cref="IEqualityComparer{T}"/> for <see cref="DataRow"/> objects.
+	/// An <seealso cref="IEqualityComparer{T}"/> for <see cref="DataRow"/> objects. 
+	/// This is used for removing duplicate rows from a <see cref="DataTable"/>.
 	/// </summary>
 	public class DataRowEqualityComparer : IEqualityComparer<DataRow>
 	{
@@ -57,7 +58,7 @@ namespace Utilities
 		/// <returns>The hash code.</returns>
 		public static int GetHashCode(DataRow obj)
 		{
-			int hashcode = 0;
+			int hashcode = 749;
 			for (int i = 0; i < obj.ItemArray.Length; i++) {
 				hashcode ^= obj.ItemArray[i].GetHashCode();
 			}

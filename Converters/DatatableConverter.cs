@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace Utilities.Converters
 {
-	public class DataTableConverter<T> where T : new()
+	public class DataTableConverter<T>
 	{
 		private Action<object>[] converters;
 		private const BindingFlags DefaultBindingFlags = BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.DeclaredOnly;
@@ -51,7 +51,7 @@ namespace Utilities.Converters
 
 		public T Convert(DataRow row)
 		{
-			T obj = FastActivator<T>.Create();
+			T obj = (T) System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(T));
 			for (int i = 0; i < converters.Length; i++) {
 				converters[i]?.Invoke(obj);
 			}
