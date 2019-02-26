@@ -217,6 +217,11 @@ namespace Utilities.ActiveDirectory
 			return searcher;
 		}
 
+		public static DirectorySearcher GetUnderlyingSearcher(PrincipalSearcher searcher)
+		{
+			return searcher.GetUnderlyingSearcher() as DirectorySearcher;
+		}
+
 		public static DirectoryEntry GetUnderlyingObject(Principal principal)
 		{
 			return principal.GetUnderlyingObject() as DirectoryEntry;
