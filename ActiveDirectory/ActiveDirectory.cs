@@ -141,9 +141,7 @@ namespace Utilities.ActiveDirectory
 
 		public IEnumerable<UserPrincipal> GetUsers(UserPrincipal filter = null)
 		{
-			PrincipalSearcher searcher = filter == null
-				? new PrincipalSearcher(new UserPrincipal(Context))
-				: new PrincipalSearcher(filter);
+			PrincipalSearcher searcher = GetUserSearcher(filter);
 			PrincipalSearchResult<Principal> result = searcher.FindAll();
 			return result.Cast<UserPrincipal>().Where(user => user != null);
 		}
@@ -158,9 +156,7 @@ namespace Utilities.ActiveDirectory
 
 		public IEnumerable<GroupPrincipal> GetGroups(GroupPrincipal filter = null)
 		{
-			PrincipalSearcher searcher = filter == null
-				? new PrincipalSearcher(new GroupPrincipal(Context))
-				: new PrincipalSearcher(filter);
+			PrincipalSearcher searcher = GetGroupSearcher(filter);
 			PrincipalSearchResult<Principal> result = searcher.FindAll();
 			return result.Cast<GroupPrincipal>().Where(group => group != null);
 		}
@@ -175,9 +171,7 @@ namespace Utilities.ActiveDirectory
 
 		public IEnumerable<ComputerPrincipal> GetComputers(ComputerPrincipal filter = null)
 		{
-			PrincipalSearcher searcher = filter == null
-				? new PrincipalSearcher(new ComputerPrincipal(Context))
-				: new PrincipalSearcher(filter);
+			PrincipalSearcher searcher = GetComputerSearcher(filter);
 			PrincipalSearchResult<Principal> result = searcher.FindAll();
 			return result.Cast<ComputerPrincipal>().Where(computer => computer != null);
 		}
@@ -188,6 +182,36 @@ namespace Utilities.ActiveDirectory
 				? new PrincipalSearcher(new ComputerPrincipal(Context))
 				: new PrincipalSearcher(filter);
 			return searcher.FindOne() as ComputerPrincipal;
+		}
+
+		public PrincipalSearcher GetUserSearcher(UserPrincipal filter = null, int pageSize = 1000)
+		{
+			PrincipalSearcher searcher = filter == null
+				? new PrincipalSearcher(new UserPrincipal(Context))
+				: new PrincipalSearcher(filter);
+			DirectorySearcher dirSearcher = searcher.GetUnderlyingSearcher() as DirectorySearcher;
+			dirSearcher.PageSize = pageSize;
+			return searcher;
+		}
+
+		public PrincipalSearcher GetGroupSearcher(GroupPrincipal filter = null, int pageSize = 1000)
+		{
+			PrincipalSearcher searcher = filter == null
+				? new PrincipalSearcher(new GroupPrincipal(Context))
+				: new PrincipalSearcher(filter);
+			DirectorySearcher dirSearcher = searcher.GetUnderlyingSearcher() as DirectorySearcher;
+			dirSearcher.PageSize = pageSize;
+			return searcher;
+		}
+
+		public PrincipalSearcher GetComputerSearcher(ComputerPrincipal filter = null, int pageSize = 1000)
+		{
+			PrincipalSearcher searcher = filter == null
+				? new PrincipalSearcher(new ComputerPrincipal(Context))
+				: new PrincipalSearcher(filter);
+			DirectorySearcher dirSearcher = searcher.GetUnderlyingSearcher() as DirectorySearcher;
+			dirSearcher.PageSize = pageSize;
+			return searcher;
 		}
 
 		public static DirectoryEntry GetUnderlyingObject(Principal principal)
