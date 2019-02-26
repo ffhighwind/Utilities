@@ -16,7 +16,13 @@ namespace Dapper.Extension
 	{
 		private const string BulkTempStagingTable = "#_DappBulkTable_";
 
-		public static TableDataImpl<T> Default { get; private set; } = new TableDataImpl<T>();
+		static TableDataImpl()
+		{
+			Type ty = typeof(T);
+			Default = new TableDataImpl<T>();
+		}
+
+		public static TableDataImpl<T> Default { get; private set; }
 
 		public TableDataImpl(BindingFlags propertyFlags = BindingFlags.Public | BindingFlags.Instance)
 		{
@@ -51,6 +57,7 @@ namespace Dapper.Extension
 				EqualityProperties = Properties;
 				EqualityColumns = Columns;
 				UpdateEqualityProperties = EqualityProperties;
+				DeleteEqualityProperties = EqualityProperties;
 				UpdateEqualityColumns = Columns;
 				DeleteEqualityColumns = Columns;
 			}

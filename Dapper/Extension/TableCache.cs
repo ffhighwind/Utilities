@@ -155,12 +155,17 @@ namespace Dapper.Extension
 
 		public override bool Update(T obj, int? commandTimeout = null)
 		{
-			return DAO.Update(obj, commandTimeout);
+			if(DAO.Update(obj, commandTimeout)) {
+				UpsertItem(obj);
+				return true;
+			}
+			return false;
 		}
 
 		public override int BulkUpdate(IEnumerable<T> objs, int? commandTimeout = null)
 		{
-			return DAO.BulkUpdate(objs, commandTimeout);
+			IEnumerable<T> list = DAO.BulkUpdateList(objs, true, commandTimeout);
+			return UpsertItems(list).Count;
 		}
 
 		public override Ret Upsert(T obj, int? commandTimeout = null)
@@ -468,12 +473,17 @@ namespace Dapper.Extension
 
 		public override bool Update(T obj, int? commandTimeout = null)
 		{
-			return DAO.Update(obj, commandTimeout);
+			if(DAO.Update(obj, commandTimeout)) {
+				UpsertItem(obj);
+				return true;
+			}
+			return false;
 		}
 
 		public override int BulkUpdate(IEnumerable<T> objs, int? commandTimeout = null)
 		{
-			return DAO.BulkUpdate(objs, commandTimeout);
+			IEnumerable<T> list = DAO.BulkUpdateList(objs, true, commandTimeout);
+			return UpsertItems(list).Count;
 		}
 
 		public override Ret Upsert(T obj, int? commandTimeout = null)
@@ -581,12 +591,17 @@ namespace Dapper.Extension
 
 		public override bool Update(IDbTransaction transaction, T obj, int? commandTimeout = null)
 		{
-			return DAO.Update(transaction, obj, commandTimeout);
+			if(DAO.Update(transaction, obj, commandTimeout)) {
+				UpsertItem(obj);
+				return true;
+			}
+			return false;
 		}
 
 		public override int BulkUpdate(SqlTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
 		{
-			return DAO.BulkUpdate(transaction, objs, commandTimeout);
+			IEnumerable<T> list = DAO.BulkUpdateList(transaction, objs, true, commandTimeout);
+			return UpsertItems(list).Count;
 		}
 
 		public override Ret Upsert(IDbTransaction transaction, T obj, int? commandTimeout = null)
