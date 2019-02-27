@@ -15,8 +15,12 @@ namespace Utilities.ActiveDirectory
 	/// OU=Organization Unit
 	/// DC=Domain Component
 	/// </summary>
+	/// <see cref="https://docs.microsoft.com/en-us/previous-versions/bb384372(v=vs.90)">Customizing Principal classes.</see>
 	public class ActiveDirectory : IDisposable
 	{
+		/// <summary>
+		/// https://docs.microsoft.com/en-us/previous-versions/bb384372(v=vs.90)
+		/// </summary>
 		public ActiveDirectory() { }
 
 		/// <summary>
@@ -139,6 +143,14 @@ namespace Utilities.ActiveDirectory
 			return searcher.FindAll().Cast<SearchResult>();
 		}
 
+		/// <summary>
+		/// Returns all <see cref="UserPrincipal"/> objects that match the filter. 
+		/// By default all <see cref="UserPrincipal"/> objects in the current user's domain are returned.
+		/// </summary>
+		/// <param name="filter">The filter for the results.</param>
+		/// <param name="pageSize">The page size of the searched results.</param>
+		/// <returns>All <see cref="UserPrincipal"/> objects that match the filter. By default all users in the current user's domain are returned.</returns>
+		/// <see cref="https://docs.microsoft.com/en-us/previous-versions/bb384378(v=vs.90)">Filter example</see>
 		public IEnumerable<UserPrincipal> GetUsers(UserPrincipal filter = null, int pageSize = 1000)
 		{
 			PrincipalSearcher searcher = GetUserSearcher(filter, pageSize);
@@ -146,6 +158,13 @@ namespace Utilities.ActiveDirectory
 			return result.Cast<UserPrincipal>().Where(user => user != null);
 		}
 
+		/// <summary>
+		/// Returns the first <see cref="UserPrincipal"/> that matches the filter. 
+		/// By default all <see cref="UserPrincipal"/> objects in the current user's domain are searched.
+		/// </summary>
+		/// <param name="filter">The filter for the result.</param>
+		/// <returns>The first <see cref="UserPrincipal"/> that matches the filter. By default all users in the current user's domain are searched.</returns>
+		/// <see cref="https://docs.microsoft.com/en-us/previous-versions/bb384378(v=vs.90)">example</see>
 		public UserPrincipal GetUser(UserPrincipal filter = null)
 		{
 			using (PrincipalSearcher searcher = filter == null
@@ -155,6 +174,14 @@ namespace Utilities.ActiveDirectory
 			}
 		}
 
+		/// <summary>
+		/// Returns all <see cref="GroupPrincipal"/> objects that match the filter. 
+		/// By default all <see cref="GroupPrincipal"/> objects in the current user's domain are returned.
+		/// </summary>
+		/// <param name="filter">The filter for the results.</param>
+		/// <param name="pageSize">The page size of the searched results.</param>
+		/// <returns>All <see cref="GroupPrincipal"/> objects that match the filter. By default all groups in the current user's domain are returned.</returns>
+		/// <see cref="https://docs.microsoft.com/en-us/previous-versions/bb384378(v=vs.90)">Filter example</see>
 		public IEnumerable<GroupPrincipal> GetGroups(GroupPrincipal filter = null, int pageSize = 1000)
 		{
 			PrincipalSearcher searcher = GetGroupSearcher(filter, pageSize);
@@ -162,6 +189,13 @@ namespace Utilities.ActiveDirectory
 			return result.Cast<GroupPrincipal>().Where(group => group != null);
 		}
 
+		/// <summary>
+		/// Returns the first <see cref="GroupPrincipal"/> that matches the filter. 
+		/// By default all <see cref="GroupPrincipal"/> objects in the current user's domain are searched.
+		/// </summary>
+		/// <param name="filter">The filter for the result.</param>
+		/// <returns>The first <see cref="GroupPrincipal"/> that matches the filter. By default all groups in the current user's domain are searched.</returns>
+		/// <see cref="https://docs.microsoft.com/en-us/previous-versions/bb384378(v=vs.90)">example</see>
 		public GroupPrincipal GetGroup(GroupPrincipal filter = null)
 		{
 			using (PrincipalSearcher searcher = filter == null
@@ -171,6 +205,14 @@ namespace Utilities.ActiveDirectory
 			}
 		}
 
+		/// <summary>
+		/// Returns all <see cref="ComputerPrincipal"/> objects that match the filter. 
+		/// By default all <see cref="ComputerPrincipal"/> objects in the current user's domain are returned.
+		/// </summary>
+		/// <param name="filter">The filter for the results.</param>
+		/// <param name="pageSize">The page size of the searched results.</param>
+		/// <returns>All <see cref="ComputerPrincipal"/> objects that match the filter. By default all computers in the current user's domain are returned.</returns>
+		/// <see cref="https://docs.microsoft.com/en-us/previous-versions/bb384378(v=vs.90)">Filter example</see>
 		public IEnumerable<ComputerPrincipal> GetComputers(ComputerPrincipal filter = null, int pageSize = 1000)
 		{
 			PrincipalSearcher searcher = GetComputerSearcher(filter, pageSize);
@@ -178,6 +220,13 @@ namespace Utilities.ActiveDirectory
 			return result.Cast<ComputerPrincipal>().Where(computer => computer != null);
 		}
 
+		/// <summary>
+		/// Returns the first <see cref="ComputerPrincipal"/> that matches the filter. 
+		/// By default all <see cref="ComputerPrincipal"/> objects in the current user's domain are searched.
+		/// </summary>
+		/// <param name="filter">The filter for the result.</param>
+		/// <returns>The first <see cref="ComputerPrincipal"/> that matches the filter. By default all computers in the current user's domain are searched.</returns>
+		/// <see cref="https://docs.microsoft.com/en-us/previous-versions/bb384378(v=vs.90)">example</see>
 		public ComputerPrincipal GetComputer(ComputerPrincipal filter = null)
 		{
 			using (PrincipalSearcher searcher = filter == null
@@ -187,6 +236,13 @@ namespace Utilities.ActiveDirectory
 			}
 		}
 
+		/// <summary>
+		/// Returns a <see cref="PrincipalSearcher"/> that that searches for <see cref="UserPrincipal"/> objects with the given filter.
+		/// </summary>
+		/// <param name="filter">The filter for the result.</param>
+		/// <param name="pageSize">The page size of the searched results.</param>
+		/// <returns>A <see cref="PrincipalSearcher"/> that that searches for <see cref="UserPrincipal"/> objects with the given filter.</returns>
+		/// <see cref="https://docs.microsoft.com/en-us/previous-versions/bb384378(v=vs.90)">example</see>
 		public PrincipalSearcher GetUserSearcher(UserPrincipal filter = null, int pageSize = 1000)
 		{
 			PrincipalSearcher searcher = filter == null
@@ -197,6 +253,13 @@ namespace Utilities.ActiveDirectory
 			return searcher;
 		}
 
+		/// <summary>
+		/// Returns a <see cref="PrincipalSearcher"/> that that searches for <see cref="GroupPrincipal"/> objects with the given filter.
+		/// </summary>
+		/// <param name="filter">The filter for the result.</param>
+		/// <param name="pageSize">The page size of the searched results.</param>
+		/// <returns>A <see cref="PrincipalSearcher"/> that that searches for <see cref="GroupPrincipal"/> objects with the given filter.</returns>
+		/// <see cref="https://docs.microsoft.com/en-us/previous-versions/bb384378(v=vs.90)">example</see>
 		public PrincipalSearcher GetGroupSearcher(GroupPrincipal filter = null, int pageSize = 1000)
 		{
 			PrincipalSearcher searcher = filter == null
@@ -207,6 +270,13 @@ namespace Utilities.ActiveDirectory
 			return searcher;
 		}
 
+		/// <summary>
+		/// Returns a <see cref="PrincipalSearcher"/> that that searches for <see cref="ComputerPrincipal"/> objects with the given filter.
+		/// </summary>
+		/// <param name="filter">The filter for the result.</param>
+		/// <param name="pageSize">The page size of the searched results.</param>
+		/// <returns>A <see cref="PrincipalSearcher"/> that that searches for <see cref="ComputerPrincipal"/> objects with the given filter.</returns>
+		/// <see cref="https://docs.microsoft.com/en-us/previous-versions/bb384378(v=vs.90)">example</see>
 		public PrincipalSearcher GetComputerSearcher(ComputerPrincipal filter = null, int pageSize = 1000)
 		{
 			PrincipalSearcher searcher = filter == null

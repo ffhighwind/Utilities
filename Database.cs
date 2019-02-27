@@ -320,8 +320,8 @@ namespace Utilities
 		{
 			try {
 				// ANSI SQL way.  Works in PostgreSQL, MSSQL, MySQL.
-				return 1 == conn.ExecuteScalar<int>(
-$@"IF EXISTS (
+				return 1 == conn.ExecuteScalar<int>($@"
+IF EXISTS (
     SELECT 1 FROM INFORMATION_SCHEMA.TABLES
     WHERE TABLE_NAME = {tablename}
 )
