@@ -251,11 +251,11 @@ namespace Dapper.Extension
 		}
 
 		/// <summary>
-		/// Gets a list of PropertyInfos from the base list except the ones in a specific set of ignored items.
+		/// Returns a <see cref="PropertyInfo"/>[] from the base Properties except the ones specific to be ignored.
 		/// </summary>
 		/// <param name="ignoredProperties">PropertyInfos in this list are ignored.</param>
 		/// <param name="ignoredAttributes">PropertyInfos with these any of these Attributes are ignored.</param>
-		/// <returns>A set of PropertyInfos.</returns>
+		/// <returns>A <see cref="PropertyInfo"/>[] from the base Properties except the ones specific to be ignored.</returns>
 		protected PropertyInfo[] GetProperties(PropertyInfo[] ignoredProperties, Func<PropertyInfo, bool> accepted, params Type[] ignoredAttributes)
 		{
 			List<PropertyInfo> properties = new List<PropertyInfo>();

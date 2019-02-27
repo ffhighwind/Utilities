@@ -14,7 +14,7 @@ namespace Utilities.Excel
 		/// <summary>
 		/// The number of rows to check in a <see cref="DateTime"/> column before determining whether to remove the Time component.
 		/// </summary>
-		private const int MaxDateOnlyRows = 15;
+		private const int MaxDateOnlyRows = 25;
 
 		/// <summary>
 		/// The currency symbols to accept when reading a potential decimal value of a cell.
@@ -30,7 +30,7 @@ namespace Utilities.Excel
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Worksheet"/> class.
 		/// </summary>
-		/// <param name="worksheet">The EPPlus ExcelWorksheet to represent.</param>
+		/// <param name="worksheet">The EPPlus <see cref="ExcelWorksheet"/> to represent.</param>
 		public Worksheet(ExcelWorksheet worksheet)
 		{
 			Data = worksheet;
@@ -70,19 +70,40 @@ namespace Utilities.Excel
 			Data.Workbook.Worksheets.MoveToEnd(Data.Name);
 		}
 
+		/// <summary>
+		/// Moves the <see cref="Worksheet"/> after the one with the given name.
+		/// </summary>
+		/// <param name="worksheetName">The name of the other <see cref="Worksheet"/>.</param>
 		public void MoveAfter(string worksheetName)
 		{
 			Data.Workbook.Worksheets.MoveAfter(Data.Name, worksheetName);
 		}
 
+		/// <summary>
+		/// Moves the <see cref="Worksheet"/> after the one with the given index.
+		/// </summary>
+		/// <param name="worksheetIndex">The index of the other <see cref="Worksheet"/>.</param>
+		public void MoveAfter(int worksheetIndex)
+		{
+			Data.Workbook.Worksheets.MoveAfter(Data.Index, worksheetIndex);
+		}
+
+		/// <summary>
+		/// Moves the <see cref="Worksheet"/> before the one with the given name.
+		/// </summary>
+		/// <param name="worksheetName">The name of the other <see cref="Worksheet"/>.</param>
 		public void MoveBefore(string worksheetName)
 		{
 			Data.Workbook.Worksheets.MoveBefore(Data.Name, worksheetName);
 		}
 
-		public void MoveBefore(int worksheet)
+		/// <summary>
+		/// Moves the <see cref="Worksheet"/> before the one with the given index.
+		/// </summary>
+		/// <param name="worksheetIndex">The index of the other <see cref="Worksheet"/>.</param>
+		public void MoveBefore(int worksheetIndex)
 		{
-			Data.Workbook.Worksheets.MoveBefore(Data.Index, worksheet);
+			Data.Workbook.Worksheets.MoveBefore(Data.Index, worksheetIndex);
 		}
 
 		/// <summary>
@@ -110,6 +131,10 @@ namespace Utilities.Excel
 			}
 		}
 
+		/// <summary>
+		/// Fixes the data in <see cref="DateTime"/> and <see cref="TimeSpan"/> columns.
+		/// </summary>
+		/// <param name="types">The <see cref="Type"/> of each column.</param>
 		private void FixColumnTypes(IEnumerable<Type> types)
 		{
 			int col = 1;
@@ -124,6 +149,10 @@ namespace Utilities.Excel
 			}
 		}
 
+		/// <summary>
+		/// Fixes the data in a <see cref="DateTime"/> column.
+		/// </summary>
+		/// <param name="columnIndex">The index of the <see cref="DateTime"/> column.</param>
 		private void FixDateColumn(int columnIndex)
 		{
 			ExcelColumn column = Data.Column(columnIndex);
@@ -141,10 +170,10 @@ namespace Utilities.Excel
 		}
 
 		/// <summary>
-		/// Loads an <see cref="IDataReader"/> into a <see cref="Worksheet"/>.
+		/// Loads an <see cref="IDataReader"/> into the <see cref="Worksheet"/>.
 		/// </summary>
 		/// <param name="reader">The <see cref="IDataReader"/> to load.</param>
-		/// <param name="printHeaders">Determines if the first line contains headers.</param>
+		/// <param name="printHeaders">Determines if the first line should contain headers.</param>
 		public void Load(IDataReader reader, bool printHeaders = true)
 		{
 			Data.Cells.LoadFromDataReader(reader, printHeaders);
@@ -207,7 +236,7 @@ namespace Utilities.Excel
 		public ExcelRange this[int row, int col] => Data.Cells[row, col];
 
 		/// <summary>
-		/// Gets an <see cref="ExcelRange"/> from the <see cref="Worksheet"/>.
+		/// Returns an <see cref="ExcelRange"/> from the <see cref="Worksheet"/>.
 		/// </summary>
 		/// <param name="address">The address (A1) or address range (A1:Z5) of the cells.</param>
 		/// <returns>The <see cref="ExcelRange"/>.</returns>
@@ -224,10 +253,10 @@ namespace Utilities.Excel
 		public ExcelRange this[int rowA, int colA, int rowB, int colB] => Data.Cells[rowA, colA, rowB, colB];
 
 		/// <summary>
-		/// Gets a cell value from the <see cref="Worksheet"/>.
+		/// Returns the value at the given address.
 		/// </summary>
 		/// <typeparam name="T">The <see cref="Type"/> of the cell.</typeparam>
-		/// <param name="address">The address (A1) of the cell.</param>
+		/// <param name="address">The address of the cell (e.g. A1).</param>
 		/// <returns>The value at the given address.</returns>
 		public T Cell<T>(string address)
 		{
@@ -235,9 +264,9 @@ namespace Utilities.Excel
 		}
 
 		/// <summary>
-		/// Gets a cell value from the <see cref="Worksheet"/>.
+		/// Returns the value at the given address.
 		/// </summary>
-		/// <param name="address">The address (A1) of the cell.</param>
+		/// <param name="address">The address of the cell (e.g. A1).</param>
 		/// <returns>The value at the given address.</returns>
 		public object Cell(string address)
 		{
@@ -245,7 +274,7 @@ namespace Utilities.Excel
 		}
 
 		/// <summary>
-		/// Gets a cell value from the <see cref="Worksheet"/>.
+		/// Returns the value at the given row and column.
 		/// </summary>
 		/// <typeparam name="T">The <see cref="Type"/> of the cell.</typeparam>
 		/// <param name="row">The row index of the cell (between 1 to <see cref="Rows"/>).</param>
@@ -257,7 +286,7 @@ namespace Utilities.Excel
 		}
 
 		/// <summary>
-		/// Gets a cell value from the <see cref="Worksheet"/>.
+		/// Returns the value at the given row and column.
 		/// </summary>
 		/// <param name="row">The row index of the cell (between 1 to <see cref="Rows"/>).</param>
 		/// <param name="col">The column index of the cell (between 1 to <see cref="Columns"/>).</param>
@@ -268,7 +297,7 @@ namespace Utilities.Excel
 		}
 
 		/// <summary>
-		/// Gets cell values from the <see cref="Worksheet"/>.
+		/// Returns the values at the given addresse range.
 		/// </summary>
 		/// <typeparam name="T">The <see cref="Type"/> to cast the cell values to.</typeparam>
 		/// <param name="addresses">The address address range (A1:Z5) of the cells.</param>
@@ -279,7 +308,7 @@ namespace Utilities.Excel
 		}
 
 		/// <summary>
-		/// Gets cell values from the <see cref="Worksheet"/>.
+		/// Returns the values at the given addresse range.
 		/// </summary>
 		/// <param name="addresses">The address address range (A1:Z5) of the cells.</param>
 		/// <returns>The values at the given address range.</returns>
@@ -289,7 +318,7 @@ namespace Utilities.Excel
 		}
 
 		/// <summary>
-		/// Gets cell values from the <see cref="Worksheet"/>.
+		/// Returns the values at the given addresse range.
 		/// </summary>
 		/// <typeparam name="T">The <see cref="Type"/> to cast the cell values to.</typeparam>
 		/// <param name="rowA">The starting row index of the cell range (between 1 to <see cref="Rows"/>).</param>
@@ -303,7 +332,7 @@ namespace Utilities.Excel
 		}
 
 		/// <summary>
-		/// Gets cell values from the <see cref="Worksheet"/>.
+		/// Returns the values at the given addresse range.
 		/// </summary>
 		/// <param name="rowA">The starting row index of the cell range (between 1 to <see cref="Rows"/>).</param>
 		/// <param name="colA">The starting column index of the cell range (between 1 to <see cref="Columns"/>).</param>
@@ -316,7 +345,7 @@ namespace Utilities.Excel
 		}
 
 		/// <summary>
-		/// Gets an <see cref="ExcelRow"/> from the <see cref="Worksheet"/>.
+		/// Returns the <see cref="ExcelRow"/> at the given index.
 		/// </summary>
 		/// <param name="index">The index of the <see cref="ExcelRow"/> (between 1 and <see cref="Rows"/>).</param>
 		/// <returns>The <see cref="ExcelRow"/> at the given index.</returns>
@@ -326,7 +355,7 @@ namespace Utilities.Excel
 		}
 
 		/// <summary>
-		/// Gets an <see cref="ExcelColumn"/> from the <see cref="Worksheet"/>.
+		/// Returns the <see cref="ExcelColumn"/> at the given index.
 		/// </summary>
 		/// <param name="index">The index of the <see cref="ExcelColumn"/> (between 1 and <see cref="Columns"/>).</param>
 		/// <returns>The <see cref="ExcelColumn"/> at the given index.</returns>
@@ -336,10 +365,10 @@ namespace Utilities.Excel
 		}
 
 		/// <summary>
-		/// Gets the index of a column from the <see cref="Worksheet"/>.
+		/// Returns the index of the <see cref="ExcelColumn"/> with the given header, or -1 if it doesn't exist.
 		/// </summary>
 		/// <param name="colName">The column header to find.</param>
-		/// <returns>The column index with the given header, or -1 if it doesn't exist.</returns>
+		/// <returns>The index of the <see cref="ExcelColumn"/> the given header, or -1 if it doesn't exist.</returns>
 		public int Column(string colName)
 		{
 			for (int col = 1; col <= Data.Dimension.Columns; col++) {
@@ -414,12 +443,12 @@ namespace Utilities.Excel
 		}
 
 		/// <summary>
-		/// The last cell address in the <see cref="Worksheet"/>.
+		/// The last <see cref="ExcelCellAddress"/> in the <see cref="Worksheet"/>.
 		/// </summary>
 		public ExcelCellAddress End => Data.Dimension.End;
 
 		/// <summary>
-		/// The first cell address in the <see cref="Worksheet"/>. This should always be A1.
+		/// The first <see cref="ExcelCellAddress"/> in the <see cref="Worksheet"/>. This should always be A1.
 		/// </summary>
 		public ExcelCellAddress Start => Data.Dimension.Start;
 
@@ -448,7 +477,7 @@ namespace Utilities.Excel
 		}
 
 		/// <summary>
-		/// Color for the <see cref="Worksheet"/> tab.
+		/// The color of the <see cref="Worksheet"/> tab.
 		/// </summary>
 		public System.Drawing.Color TabColor {
 			get => Data.TabColor;
@@ -456,7 +485,7 @@ namespace Utilities.Excel
 		}
 
 		/// <summary>
-		/// Trims  empty rows from the <see cref="Worksheet"/>.
+		/// Trims empty rows from the <see cref="Worksheet"/>.
 		/// </summary>
 		/// <param name="allEmptyRows">Determines if only empty rows at the bottom of the worksheet should be trimmed.</param>
 		public void Trim(bool allEmptyRows = false)
@@ -478,6 +507,9 @@ namespace Utilities.Excel
 			}
 		}
 
+		/// <summary>
+		/// Returns the index of the last <see cref="ExcelRow"/> with data.
+		/// </summary>
 		private int LastRowWithData {
 			get {
 				int colCount = Data.Dimension.Columns;
@@ -543,7 +575,7 @@ namespace Utilities.Excel
         */
 
 		/// <summary>
-		/// Gets the <see cref="Type"/> of data stored in the <see cref="ExcelColumn"/>.
+		/// Returns the <see cref="Type"/> of data stored in the <see cref="ExcelColumn"/>.
 		/// </summary>
 		/// <param name="columnIndex">The <see cref="ExcelColumn"/> index.</param>
 		/// <returns>The <see cref="Type"/> of data in the <see cref="ExcelColumn"/>.</returns>
@@ -696,7 +728,7 @@ namespace Utilities.Excel
 		/// <summary>
 		/// Enumerates the rows in the <see cref="Worksheet"/>.
 		/// </summary>
-		/// <returns>An <see cref="IEnumerable{T}"/> of strings representing the rows in the <see cref="Worksheet"/>.</returns>
+		/// <returns>An <see cref="IEnumerable{T}"/> of <see langword="string"/>[] representing the rows in the <see cref="Worksheet"/>.</returns>
 		public IEnumerable<string[]> AsEnumerable()
 		{
 			int columns = Columns;
