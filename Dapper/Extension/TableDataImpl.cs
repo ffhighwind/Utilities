@@ -26,7 +26,7 @@ namespace Dapper.Extension
 
 		public TableDataImpl(BindingFlags propertyFlags = BindingFlags.Public | BindingFlags.Instance)
 		{
-			Properties = typeof(T).GetProperties(propertyFlags).Where(prop => prop.CanRead && prop.CanWrite && (!prop.PropertyType.IsClass || prop.PropertyType == typeof(string))).ToArray();
+			Properties = typeof(T).GetProperties(propertyFlags).Where(prop => prop.CanRead && prop.CanWrite && (!prop.PropertyType.IsClass || prop.PropertyType == typeof(string) || prop.PropertyType.IsArray)).ToArray();
 			KeyProperties = Properties.Where(prop => prop.GetCustomAttribute<KeyAttribute>(true) != null).ToArray();
 			AutoKeyProperties = KeyProperties.Where(prop => !prop.GetCustomAttribute<KeyAttribute>(true).Required).ToArray();
 			for (int i = 0; i < KeyProperties.Length; i++) {
@@ -40,6 +40,14 @@ namespace Dapper.Extension
 			SelectProperties = GetProperties(Array.Empty<PropertyInfo>(), (prop) => true, typeof(IgnoreSelectAttribute), typeof(IgnoreAttribute));
 			InsertProperties = GetProperties(AutoKeyProperties, (prop) => { var attr = prop.GetCustomAttribute<IgnoreInsertAttribute>(true); return attr == null || attr.Value != null; }, typeof(IgnoreAttribute));
 			UpdateProperties = GetProperties(KeyProperties, (prop) => { var attr = prop.GetCustomAttribute<IgnoreUpdateAttribute>(true); return attr == null || attr.Value != null; }, typeof(IgnoreAttribute));
+
+			if(InsertProperties.Length == 0) {
+				InsertProperties = Properties;
+			}
+			if(UpdateProperties.Length == 0) {
+				UpdateProperties = Properties;
+			}
+
 			PropertyInfo[] MatchUpdateProperties = UpdateProperties.Where(prop => prop.GetCustomAttribute<MatchUpdateAttribute>(true) != null).ToArray();
 			if (MatchUpdateProperties.Length > 0) {
 				UpdateProperties = UpdateProperties.Where(prop => !MatchUpdateProperties.Contains(prop) || prop.GetCustomAttribute<IgnoreUpdateAttribute>(true)?.Value != null).ToArray();
