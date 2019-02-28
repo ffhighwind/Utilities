@@ -10,7 +10,7 @@ namespace Dapper.Extension.Interfaces
 		IEnumerable<T> GetKeys(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
 
 		bool Delete<KeyType>(IDbConnection connection, KeyType key, IDbTransaction transaction = null, int? commandTimeout = null);
-		bool Delete(IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null);
+		bool Delete(IDbConnection connection, IDictionary<string, object> key, IDbTransaction transaction = null, int? commandTimeout = null);
 		bool Delete(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null);
 		int Delete(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
 		IEnumerable<KeyType> DeleteList<KeyType>(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
@@ -21,7 +21,7 @@ namespace Dapper.Extension.Interfaces
 		T Upsert(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null);
 
 		T Get<KeyType>(IDbConnection connection, KeyType key, IDbTransaction transaction = null, int? commandTimeout = null);
-		T Get(IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null);
+		T Get(IDbConnection connection, IDictionary<string, object> key, IDbTransaction transaction = null, int? commandTimeout = null);
 		T Get(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null);
 		IEnumerable<T> GetList(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
 

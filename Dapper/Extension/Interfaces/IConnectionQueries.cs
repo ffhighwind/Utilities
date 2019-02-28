@@ -14,13 +14,13 @@ namespace Dapper.Extension.Interfaces
 
 		#region IConnectionQueriesSync<T>
 		public abstract bool Delete<KeyType>(IDbConnection connection, KeyType key, IDbTransaction transaction = null, int? commandTimeout = null);
-		public abstract bool Delete(IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null);
+		public abstract bool Delete(IDbConnection connection, IDictionary<string, object> key, IDbTransaction transaction = null, int? commandTimeout = null);
 		public abstract bool Delete(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null);
 		public abstract int Delete(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
 		public abstract IEnumerable<KeyType> DeleteList<KeyType>(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
 		public abstract IEnumerable<T> DeleteList(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
 		public abstract T Get<KeyType>(IDbConnection connection, KeyType key, IDbTransaction transaction = null, int? commandTimeout = null);
-		public abstract T Get(IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null);
+		public abstract T Get(IDbConnection connection, IDictionary<string, object> key, IDbTransaction transaction = null, int? commandTimeout = null);
 		public abstract T Get(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null);
 		public abstract IEnumerable<KeyType> GetKeys<KeyType>(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
 		public abstract IEnumerable<T> GetKeys(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
@@ -54,7 +54,7 @@ namespace Dapper.Extension.Interfaces
 			return await Task.Run(() => BulkDelete(connection, keys, transaction, commandTimeout));
 		}
 
-		public async Task<bool> DeleteAsync(IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null)
+		public async Task<bool> DeleteAsync(IDbConnection connection, IDictionary<string, object> key, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
 			return await Task.Run(() => Delete(connection, key, transaction, commandTimeout));
 		}
@@ -89,7 +89,7 @@ namespace Dapper.Extension.Interfaces
 			return await Task.Run(() => Get(connection, key, transaction, commandTimeout));
 		}
 
-		public async Task<T> GetAsync(IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null)
+		public async Task<T> GetAsync(IDbConnection connection, IDictionary<string, object> key, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
 			return await Task.Run(() => Get(connection, key, transaction, commandTimeout));
 		}

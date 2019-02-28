@@ -13,7 +13,7 @@ namespace Dapper.Extension.Interfaces
 
 	public interface ITransactionQueriesSync<T, Ret> where T : class
 	{
-		bool Delete(IDbTransaction transaction, object key, int? commandTimeout = null);
+		bool Delete(IDbTransaction transaction, IDictionary<string, object> key, int? commandTimeout = null);
 		bool Delete(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		int Delete(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		IEnumerable<T> DeleteList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
@@ -24,7 +24,7 @@ namespace Dapper.Extension.Interfaces
 		Ret Upsert(IDbTransaction transaction, T obj, int? commandTimeout = null);
 
 		IEnumerable<T> GetKeys(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
-		Ret Get(IDbTransaction transaction, object key, int? commandTimeout = null);
+		Ret Get(IDbTransaction transaction, IDictionary<string, object> key, int? commandTimeout = null);
 		Ret Get(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		IEnumerable<Ret> GetList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
@@ -44,7 +44,7 @@ namespace Dapper.Extension.Interfaces
 	public interface ITransactionQueriesSync<T, KeyType, Ret> where T : class
 	{
 		bool Delete(IDbTransaction transaction, KeyType key, int? commandTimeout = null);
-		bool Delete(IDbTransaction transaction, object key, int? commandTimeout = null);
+		bool Delete(IDbTransaction transaction, IDictionary<string, object> key, int? commandTimeout = null);
 		bool Delete(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		int Delete(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		IEnumerable<KeyType> DeleteList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
@@ -56,7 +56,7 @@ namespace Dapper.Extension.Interfaces
 
 		IEnumerable<KeyType> GetKeys(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		Ret Get(IDbTransaction transaction, KeyType key, int? commandTimeout = null);
-		Ret Get(IDbTransaction transaction, object key, int? commandTimeout = null);
+		Ret Get(IDbTransaction transaction, IDictionary<string, object> key, int? commandTimeout = null);
 		Ret Get(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		IEnumerable<Ret> GetList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 

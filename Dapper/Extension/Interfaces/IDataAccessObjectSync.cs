@@ -14,7 +14,7 @@ namespace Dapper.Extension.Interfaces
 	{
 		IEnumerable<T> GetKeys(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
-		bool Delete(object key, int? commandTimeout = null);
+		bool Delete(IDictionary<string, object> key, int? commandTimeout = null);
 		bool Delete(T obj, int? commandTimeout = null);
 		int Delete(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		IEnumerable<T> DeleteList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
@@ -23,7 +23,7 @@ namespace Dapper.Extension.Interfaces
 		bool Update(T obj, int? commandTimeout = null);
 		Ret Upsert(T obj, int? commandTimeout = null);
 
-		Ret Get(object key, int? commandTimeout = null);
+		Ret Get(IDictionary<string, object> key, int? commandTimeout = null);
 		Ret Get(T obj, int? commandTimeout = null);
 		IEnumerable<Ret> GetList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
@@ -46,7 +46,7 @@ namespace Dapper.Extension.Interfaces
 		IEnumerable<KeyType> GetKeys(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
 		bool Delete(KeyType key, int? commandTimeout = null);
-		bool Delete(object key, int? commandTimeout = null);
+		bool Delete(IDictionary<string, object> key, int? commandTimeout = null);
 		bool Delete(T obj, int? commandTimeout = null);
 		int Delete(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		IEnumerable<KeyType> DeleteList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
@@ -56,7 +56,7 @@ namespace Dapper.Extension.Interfaces
 		Ret Upsert(T obj, int? commandTimeout = null);
 
 		Ret Get(KeyType key, int? commandTimeout = null);
-		Ret Get(object key, int? commandTimeout = null);
+		Ret Get(IDictionary<string, object> key, int? commandTimeout = null);
 		Ret Get(T obj, int? commandTimeout = null);
 		IEnumerable<Ret> GetList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 

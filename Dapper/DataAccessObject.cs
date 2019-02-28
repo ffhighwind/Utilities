@@ -32,7 +32,7 @@ namespace Dapper
 
 
 		#region IDataAccessObjectSync<T>
-		public override bool Delete(object key, int? commandTimeout = null)
+		public override bool Delete(IDictionary<string, object> key, int? commandTimeout = null)
 		{
 			using (SqlConnection conn = new SqlConnection(ConnectionString)) {
 				return Queries.Delete(conn, key, null, commandTimeout);
@@ -71,7 +71,7 @@ namespace Dapper
 			return new ConnectedEnumerable<T>(list, conn);
 		}
 
-		public override T Get(object key, int? commandTimeout = null)
+		public override T Get(IDictionary<string, object> key, int? commandTimeout = null)
 		{
 			using (SqlConnection conn = new SqlConnection(ConnectionString)) {
 				return Queries.Get(conn, key, null, commandTimeout);
@@ -195,7 +195,7 @@ namespace Dapper
 
 
 		#region ITransactionQueriesSync<T>
-		public override bool Delete(IDbTransaction transaction, object key, int? commandTimeout = null)
+		public override bool Delete(IDbTransaction transaction, IDictionary<string, object> key, int? commandTimeout = null)
 		{
 			return Queries.Delete(transaction.Connection, key, transaction, commandTimeout);
 		}
@@ -220,7 +220,7 @@ namespace Dapper
 			return Queries.DeleteList(transaction.Connection, whereCondition, param, transaction, buffered, commandTimeout);
 		}
 
-		public override T Get(IDbTransaction transaction, object key, int? commandTimeout = null)
+		public override T Get(IDbTransaction transaction, IDictionary<string, object> key, int? commandTimeout = null)
 		{
 			return Queries.Get(transaction.Connection, key, transaction, commandTimeout);
 		}
@@ -320,7 +320,7 @@ namespace Dapper
 		#region IDataAccessObjectSync<T, KeyType, Ret>
 		public override bool Delete(KeyType key, int? commandTimeout = null)
 		{
-			return Delete(TableData<T>.CreateKey<KeyType>(key), commandTimeout);
+			return Delete(key, commandTimeout);
 		}
 
 		public override int BulkDelete(IEnumerable<KeyType> keys, int? commandTimeout = null)
@@ -330,7 +330,7 @@ namespace Dapper
 			}
 		}
 
-		public override bool Delete(object key, int? commandTimeout = null)
+		public override bool Delete(IDictionary<string, object> key, int? commandTimeout = null)
 		{
 			using (SqlConnection conn = new SqlConnection(ConnectionString)) {
 				return Queries.Delete(conn, key, null, commandTimeout);
@@ -376,7 +376,7 @@ namespace Dapper
 			}
 		}
 
-		public override T Get(object key, int? commandTimeout = null)
+		public override T Get(IDictionary<string, object> key, int? commandTimeout = null)
 		{
 			using (SqlConnection conn = new SqlConnection(ConnectionString)) {
 				return Queries.Get(conn, key, null, commandTimeout);
@@ -527,7 +527,7 @@ namespace Dapper
 			return Queries.DeleteList<KeyType>(transaction.Connection, whereCondition, param, transaction, buffered, commandTimeout);
 		}
 
-		public override bool Delete(IDbTransaction transaction, object key, int? commandTimeout = null)
+		public override bool Delete(IDbTransaction transaction, IDictionary<string, object> key, int? commandTimeout = null)
 		{
 			return Queries.Delete(transaction.Connection, key, transaction, commandTimeout);
 		}
@@ -577,7 +577,7 @@ namespace Dapper
 			return Queries.BulkUpsert(transaction.Connection, objs, transaction, buffered, commandTimeout);
 		}
 
-		public override T Get(IDbTransaction transaction, object key, int? commandTimeout = null)
+		public override T Get(IDbTransaction transaction, IDictionary<string, object> key, int? commandTimeout = null)
 		{
 			return Queries.Get(transaction.Connection, key, transaction, commandTimeout);
 		}

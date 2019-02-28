@@ -14,7 +14,7 @@ namespace Dapper.Extension.Interfaces
 	{
 		Task<IEnumerable<T>> GetKeysAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
-		Task<bool> DeleteAsync(object key, int? commandTimeout = null);
+		Task<bool> DeleteAsync(IDictionary<string, object> key, int? commandTimeout = null);
 		Task<bool> DeleteAsync(T obj, int? commandTimeout = null);
 		Task<int> DeleteAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		Task<IEnumerable<T>> DeleteListAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
@@ -23,7 +23,7 @@ namespace Dapper.Extension.Interfaces
 		Task<bool> UpdateAsync(T obj, int? commandTimeout = null);
 		Task<Ret> UpsertAsync(T obj, int? commandTimeout = null);
 
-		Task<Ret> GetAsync(object key, int? commandTimeout = null);
+		Task<Ret> GetAsync(IDictionary<string, object> key, int? commandTimeout = null);
 		Task<Ret> GetAsync(T obj, int? commandTimeout = null);
 		Task<IEnumerable<Ret>> GetListAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
@@ -45,7 +45,7 @@ namespace Dapper.Extension.Interfaces
 		Task<IEnumerable<KeyType>> GetKeysAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
 		Task<bool> DeleteAsync(KeyType key, int? commandTimeout = null);
-		Task<bool> DeleteAsync(object key, int? commandTimeout = null);
+		Task<bool> DeleteAsync(IDictionary<string, object> key, int? commandTimeout = null);
 		Task<bool> DeleteAsync(T obj, int? commandTimeout = null);
 		Task<int> DeleteAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		Task<IEnumerable<KeyType>> DeleteListAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
@@ -55,7 +55,7 @@ namespace Dapper.Extension.Interfaces
 		Task<Ret> UpsertAsync(T obj, int? commandTimeout = null);
 
 		Task<Ret> GetAsync(KeyType key, int? commandTimeout = null);
-		Task<Ret> GetAsync(object key, int? commandTimeout = null);
+		Task<Ret> GetAsync(IDictionary<string, object> key, int? commandTimeout = null);
 		Task<Ret> GetAsync(T obj, int? commandTimeout = null);
 		Task<IEnumerable<Ret>> GetListAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 

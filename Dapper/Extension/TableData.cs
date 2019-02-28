@@ -62,7 +62,7 @@ namespace Dapper.Extension
 		/// <summary>
 		/// Creates an ExpandoObject (key) from a single value.
 		/// </summary>
-		public static object CreateKey<KeyType>(KeyType value)
+		public static IDictionary<string, object> CreateKey<KeyType>(KeyType value)
 		{
 			IDictionary<string, object> newKey = new ExpandoObject();
 			newKey[Queries.KeyProperties[0].Name] = value;
@@ -114,7 +114,7 @@ namespace Dapper.Extension
 		/// </summary>
 		/// <param name="obj">The input object to pull keys from.</param>
 		/// <returns>An ExpandoObject with keys from the input.</returns>
-		public static object GetKey(T obj)
+		public static IDictionary<string, object> GetKey(T obj)
 		{
 			dynamic key = new ExpandoObject();
 			for (int i = 0; i < KeyProperties.Length; i++) {

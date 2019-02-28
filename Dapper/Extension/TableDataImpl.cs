@@ -335,7 +335,7 @@ namespace Dapper.Extension
 			return connection.Query<T>(SelectListKeysQuery + whereCondition, param, transaction, buffered, commandTimeout);
 		}
 
-		public override bool Delete(IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null)
+		public override bool Delete(IDbConnection connection, IDictionary<string, object> key, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
 			return 0 < connection.Execute(DeleteSingleQuery, key, transaction, commandTimeout);
 		}
@@ -379,7 +379,7 @@ namespace Dapper.Extension
 			return obj;
 		}
 
-		public override T Get(IDbConnection connection, object key, IDbTransaction transaction = null, int? commandTimeout = null)
+		public override T Get(IDbConnection connection, IDictionary<string, object> key, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
 			return connection.Query<T>(SelectSingleQuery, key, transaction, true, commandTimeout).SingleOrDefault();
 		}
@@ -406,16 +406,12 @@ namespace Dapper.Extension
 
 		public override bool Delete<KeyType>(IDbConnection connection, KeyType key, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
-			dynamic newKey = new ExpandoObject();
-			newKey[KeyColumns[0]] = key;
-			return Delete(connection, newKey, transaction, commandTimeout);
+			return Delete(connection, TableData<T>.CreateKey<KeyType>(key), transaction, commandTimeout);
 		}
 
 		public override T Get<KeyType>(IDbConnection connection, KeyType key, IDbTransaction transaction = null, int? commandTimeout = null)
 		{
-			dynamic newKey = new ExpandoObject();
-			((IDictionary<string, object>) newKey)[KeyColumns[0]] = key;
-			return Get(connection, (object) newKey, transaction, commandTimeout);
+			return Get(connection, TableData<T>.CreateKey(key), transaction, commandTimeout);
 		}
 
 		public override IEnumerable<KeyType> DeleteList<KeyType>(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)

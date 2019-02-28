@@ -18,11 +18,11 @@ namespace Dapper.Extension.Interfaces
 		public abstract SqlConnection Connection();
 
 		#region IDataAccessObjectSync<T>
-		public abstract bool Delete(object key, int? commandTimeout = null);
+		public abstract bool Delete(IDictionary<string, object> key, int? commandTimeout = null);
 		public abstract bool Delete(T obj, int? commandTimeout = null);
 		public abstract int Delete(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		public abstract IEnumerable<T> DeleteList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
-		public abstract Ret Get(object key, int? commandTimeout = null);
+		public abstract Ret Get(IDictionary<string, object> key, int? commandTimeout = null);
 		public abstract Ret Get(T obj, int? commandTimeout = null);
 		public abstract IEnumerable<T> GetKeys(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		public abstract IEnumerable<Ret> GetList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
@@ -43,7 +43,7 @@ namespace Dapper.Extension.Interfaces
 
 
 		#region IDataAccessObjectAsync<T>
-		public async Task<bool> DeleteAsync(object key, int? commandTimeout = null)
+		public async Task<bool> DeleteAsync(IDictionary<string, object> key, int? commandTimeout = null)
 		{
 			return await Task.Run(() => Delete(key, commandTimeout));
 		}
@@ -68,7 +68,7 @@ namespace Dapper.Extension.Interfaces
 			return await Task.Run(() => DeleteList(whereCondition, param, buffered, commandTimeout));
 		}
 
-		public async Task<Ret> GetAsync(object key, int? commandTimeout = null)
+		public async Task<Ret> GetAsync(IDictionary<string, object> key, int? commandTimeout = null)
 		{
 			return await Task.Run(() => Get(key, commandTimeout));
 		}
@@ -156,12 +156,12 @@ namespace Dapper.Extension.Interfaces
 
 		#region IDataAccessObjectSync<T, KeyType, Ret>
 		public abstract bool Delete(KeyType key, int? commandTimeout = null);
-		public abstract bool Delete(object key, int? commandTimeout = null);
+		public abstract bool Delete(IDictionary<string, object> key, int? commandTimeout = null);
 		public abstract bool Delete(T obj, int? commandTimeout = null);
 		public abstract int Delete(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		public abstract IEnumerable<KeyType> DeleteList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		public abstract Ret Get(KeyType key, int? commandTimeout = null);
-		public abstract Ret Get(object key, int? commandTimeout = null);
+		public abstract Ret Get(IDictionary<string, object> key, int? commandTimeout = null);
 		public abstract Ret Get(T obj, int? commandTimeout = null);
 		public abstract IEnumerable<KeyType> GetKeys(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		public abstract IEnumerable<Ret> GetList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
@@ -193,7 +193,7 @@ namespace Dapper.Extension.Interfaces
 			return await Task.Run(() => BulkDelete(keys, commandTimeout));
 		}
 
-		public async Task<bool> DeleteAsync(object key, int? commandTimeout = null)
+		public async Task<bool> DeleteAsync(IDictionary<string, object> key, int? commandTimeout = null)
 		{
 			return await Task.Run(() => Delete(key, commandTimeout));
 		}
@@ -223,7 +223,7 @@ namespace Dapper.Extension.Interfaces
 			return await Task.Run(() => Get(key, commandTimeout));
 		}
 
-		public async Task<Ret> GetAsync(object key, int? commandTimeout = null)
+		public async Task<Ret> GetAsync(IDictionary<string, object> key, int? commandTimeout = null)
 		{
 			return await Task.Run(() => Get(key, commandTimeout));
 		}
