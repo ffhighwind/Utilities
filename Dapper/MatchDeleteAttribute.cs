@@ -9,5 +9,6 @@ namespace Dapper
 	[AttributeUsage(AttributeTargets.Property)]
 	public class MatchDeleteAttribute : Attribute
 	{
+
 	}
 }

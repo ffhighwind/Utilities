@@ -9,7 +9,7 @@ namespace Dapper
 	[AttributeUsage(AttributeTargets.Property)]
 	public class KeyAttribute : Attribute
 	{
-		/// <param name="required">Determines if the key is auto-generated. 
+		/// <param name="required">Determines if the key is auto-generated.
 		/// False is equivilent to [Key][IgnoreInsert][IgnoreUpdate] while true is just [Key].</param>
 		public KeyAttribute(bool required = false)
 		{
@@ -17,7 +17,7 @@ namespace Dapper
 		}
 
 		/// <summary>
-		/// Determines if the key is auto-generated. 
+		/// Determines if the key is auto-generated.
 		/// False is equivilent to [Key][IgnoreInsert][IgnoreUpdate] while true is just [Key].</param>
 		/// </summary>
 		public bool Required { get; private set; }

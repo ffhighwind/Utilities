@@ -10,12 +10,29 @@ namespace Dapper
 	[AttributeUsage(AttributeTargets.Property)]
 	public class IgnoreUpdateAttribute : Attribute
 	{
-		public IgnoreUpdateAttribute(string value = null)
+		public IgnoreUpdateAttribute(Func<string> function)
 		{
-			DapperExtensions.ValidateSqlValue(value);
-			Value = string.IsNullOrWhiteSpace(value) ? null : ("(" + value.Trim() + ")");
+			ValueGenerator = () =>
+			{
+				string value = function();
+				DapperExtensions.ValidateSqlValue(value);
+				return "(" + value + ")";
+			};
 		}
 
-		public string Value { get; private set; }
+		public IgnoreUpdateAttribute(string value = null)
+		{
+			value = value?.Trim();
+			if(value == null || value.Length == 0) {
+				ValueGenerator = () => null;
+				return;
+			}
+			DapperExtensions.ValidateSqlValue(value);
+			value = "(" + value + ")";
+			ValueGenerator = () => value;
+		}
+
+		private readonly Func<string> ValueGenerator;
+		public string Value => ValueGenerator();
 	}
 }
