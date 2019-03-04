@@ -437,8 +437,17 @@ namespace Utilities.Excel
 		/// Resizes the columns to fit the data. Cells with wrapped text and formulas are not counted for this.
 		/// </summary>
 		/// <param name="minimumWidth">The minimum width of all columns.</param>
-		public void AutoFit(double minimumWidth = 0)
+		public void AutoFit(double minimumWidth = 0, double? maximumWidth = null)
 		{
+			int cols = Data.Dimension?.Columns ?? 0;
+			for(int col = 1; col <= cols; col++) {
+				if (maximumWidth == null) {
+					Data.Column(col).AutoFit(minimumWidth);
+				}
+				else {
+					Data.Column(col).AutoFit(minimumWidth, (double) maximumWidth);
+				}
+			}
 			Data.Cells.AutoFitColumns(minimumWidth);
 		}
 
@@ -925,12 +934,47 @@ namespace Utilities.Excel
 			Data.SetValue(address, value);
 		}
 
-		public void AddRow(params object[] values)
+		public int AddRow(params object[] values)
 		{
 			int row = Data.Dimension?.Rows + 1 ?? 1;
 			for (int col = 0; col < values.Length; col++) {
 				Data.SetValue(row, col + 1, values[col]);
 			}
+			return row;
+		}
+
+		public void InsertRow(int index, int count = 1)
+		{
+			Data.InsertRow(index, count);
+		}
+
+		public int AddColumn()
+		{
+			int col = Data.Dimension?.Columns + 1 ?? 1;
+			Data.InsertColumn(col, 1);
+			return col;
+		}
+
+		public void InsertColumn(int index, int count = 1)
+		{
+			Data.InsertColumn(index, count);
+		}
+
+		public void SetFormula(int row, int col, string formula, bool allowCircularReferences = false)
+		{
+			Data.Cells[row, col].Formula = formula;
+			ExcelRange x = Data.Cells[row, col];
+			OfficeOpenXml.FormulaParsing.ExcelCalculationOption option = new OfficeOpenXml.FormulaParsing.ExcelCalculationOption
+			{
+				AllowCirculareReferences = allowCircularReferences
+			};
+			x.Calculate(option);
+		}
+
+		public void Calculate()
+		{
+			Data.Cells[0, 1].Calculate();
+			Data.Calculate();
 		}
 
 		/// <summary>
