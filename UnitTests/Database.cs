@@ -34,7 +34,7 @@ namespace Utilities.UnitTests
 						conn.Insert(test2, trans);
 					}
 
-					TableData<Test2>.Queries.RemoveDuplicates(conn, trans);
+					//TableData<Test2>.Queries.RemoveDuplicates(conn, trans);
 
 					int k = 0;
 				//}

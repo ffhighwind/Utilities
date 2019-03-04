@@ -49,24 +49,21 @@
       <ExcludeFromStyleCop>True</ExcludeFromStyleCop>
     </Compile>
     <Compile Include="Comparers\DataRowEqualityComparer.cs" />
-    <Compile Include="Dapper\ConnectedEnumerable.cs" />
+    <Compile Include="Dapper\Extension\ConnectedEnumerable.cs" />
     <Compile Include="Dapper\ColumnAttribute.cs" />
     <Compile Include="Dapper\DapperExtensions.cs" />
     <Compile Include="Dapper\DataAccessObject.cs" />
-    <Compile Include="Dapper\Extension\Interfaces\IConnectionQueries.cs" />
+    <Compile Include="Dapper\Extension\Interfaces\IHasDefaultAttribute.cs" />
     <Compile Include="Dapper\Extension\Interfaces\IDataAccessObject.cs" />
     <Compile Include="Dapper\Extension\Interfaces\IDataAccessObjectSync.cs" />
     <Compile Include="Dapper\Extension\Interfaces\IDataAccessObjectAsync.cs" />
-    <Compile Include="Dapper\Extension\Interfaces\ITableData.cs" />
-    <Compile Include="Dapper\Extension\Interfaces\IConnectionQueriesSync.cs" />
-    <Compile Include="Dapper\Extension\Interfaces\IConnectionQueriesAsync.cs" />
-    <Compile Include="Dapper\Extension\Interfaces\ITransactionQueries.cs" />
-    <Compile Include="Dapper\Extension\Interfaces\ITransactionQueriesSync.cs" />
-    <Compile Include="Dapper\Extension\Interfaces\ITransactionQueriesAsync.cs" />
+    <Compile Include="Dapper\Extension\TableQueriesData.cs" />
+    <Compile Include="Dapper\Extension\TableQueries.cs" />
+    <Compile Include="Dapper\Extension\TableDelegates.cs" />
     <Compile Include="Dapper\MatchDeleteAttribute.cs" />
     <Compile Include="Dapper\Extension\TableCache.cs" />
     <Compile Include="Dapper\Extension\TableData.cs" />
-    <Compile Include="Dapper\Extension\TableDataImpl.cs" />
+    <Compile Include="Dapper\Extension\TableDataFactory.cs" />
     <Compile Include="Dapper\Extension\TableEqualityComparer.cs" />
     <Compile Include="Dapper\IgnoreAttribute.cs" />
     <Compile Include="Dapper\IgnoreInsertAttribute.cs" />

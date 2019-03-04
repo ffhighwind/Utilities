@@ -46,10 +46,10 @@ namespace Utilities.Converters
 			types = new Type[pinfos.Length];
 			allowNull = new BitArray(pinfos.Length);
 			for (int i = 0; i < pinfos.Length; i++) {
-				PropertyInfo pi = pinfos[i];
-				Type ty = Nullable.GetUnderlyingType(pi.PropertyType);
-				allowNull[i] = ty != null;
-				types[i] = ty ?? pi.PropertyType;
+				Type propertyType = pinfos[i].PropertyType;
+				Type ty = Nullable.GetUnderlyingType(propertyType);
+				allowNull[i] = ty != null || propertyType.IsClass;
+				types[i] = ty ?? propertyType;
 			}
 		}
 

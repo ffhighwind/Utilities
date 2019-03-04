@@ -18,5 +18,7 @@ namespace Utilities.UnitTests
 		[IgnoreInsert("getdate()")]
 		[IgnoreUpdate("getdate()")]
 		public DateTime? CreatedDt { get; set; }
+
+		public TestDTO Test { get; set; }
 	}
 }

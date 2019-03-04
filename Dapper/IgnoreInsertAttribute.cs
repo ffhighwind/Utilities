@@ -3,18 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Dapper.Extension.Interfaces;
 
 namespace Dapper
 {
 	[AttributeUsage(AttributeTargets.Property)]
-	public class IgnoreInsertAttribute : Attribute
+	public class IgnoreInsertAttribute : IHasDefaultAttribute
 	{
-		public IgnoreInsertAttribute(string value = null)
-		{
-			DapperExtensions.ValidateSqlValue(value);
-			Value = string.IsNullOrWhiteSpace(value) ? null : ("(" + value.Trim() + ")");
-		}
+		public IgnoreInsertAttribute(Func<string> function) 
+			: base(function) { }
 
-		public string Value { get; private set; }
+		public IgnoreInsertAttribute(string value = null) 
+			: base(value) { }
 	}
 }

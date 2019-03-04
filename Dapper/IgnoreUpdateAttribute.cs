@@ -4,35 +4,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Dapper.Extension;
+using Dapper.Extension.Interfaces;
 
 namespace Dapper
 {
 	[AttributeUsage(AttributeTargets.Property)]
-	public class IgnoreUpdateAttribute : Attribute
+	public class IgnoreUpdateAttribute : IHasDefaultAttribute
 	{
-		public IgnoreUpdateAttribute(Func<string> function)
-		{
-			ValueGenerator = () =>
-			{
-				string value = function();
-				DapperExtensions.ValidateSqlValue(value);
-				return "(" + value + ")";
-			};
-		}
+		public IgnoreUpdateAttribute(Func<string> function) 
+			: base(function) { }
 
-		public IgnoreUpdateAttribute(string value = null)
-		{
-			value = value?.Trim();
-			if(value == null || value.Length == 0) {
-				ValueGenerator = () => null;
-				return;
-			}
-			DapperExtensions.ValidateSqlValue(value);
-			value = "(" + value + ")";
-			ValueGenerator = () => value;
-		}
-
-		private readonly Func<string> ValueGenerator;
-		public string Value => ValueGenerator();
+		public IgnoreUpdateAttribute(string value = null) 
+			: base(value) { }
 	}
 }

@@ -19,9 +19,6 @@ namespace Dapper.Extension
 	{
 		public TableCache(DataAccessObject<T, KeyType> dao, Func<T, Ret> constructor, Func<T, Ret, Ret> update)
 		{
-			if (TableData<T>.KeyProperties.Length != 1) {
-				throw new InvalidOperationException("Cache can only be used on objects with exactly one KeyAttribute.");
-			}
 			Dictionary<KeyType, Ret> map = new Dictionary<KeyType, Ret>();
 			Map = map;
 			DAO = dao;
@@ -30,13 +27,12 @@ namespace Dapper.Extension
 			Constructor = constructor;
 		}
 
-		protected IDictionary<KeyType, Ret> Map { get; set; }
-		public IReadOnlyDictionary<KeyType, Ret> Items { get; private set; }
+		protected readonly IDictionary<KeyType, Ret> Map;
+		protected readonly Func<T, Ret, Ret> UpdateRet;
+		protected readonly Func<T, Ret> Constructor;
 
-		public DataAccessObject<T, KeyType> DAO { get; private set; }
-
-		private Func<T, Ret, Ret> UpdateRet { get; set; }
-		private Func<T, Ret> Constructor { get; set; }
+		public readonly IReadOnlyDictionary<KeyType, Ret> Items;
+		public readonly DataAccessObject<T, KeyType> DAO;
 
 		public IEnumerator<Ret> GetEnumerator()
 		{
@@ -48,14 +44,9 @@ namespace Dapper.Extension
 			return Map.Values.GetEnumerator();
 		}
 
-		public override SqlConnection Connection()
-		{
-			return DAO.Connection();
-		}
-
 		protected Ret UpsertItem(T obj)
 		{
-			KeyType key = TableData<T>.GetKey<KeyType>(obj);
+			KeyType key = TableData<T, KeyType>.GetKey(obj);
 			Ret output = Map.TryGetValue(key, out Ret value) ? UpdateRet(obj, value) : Constructor(obj);
 			Map[key] = output;
 			return output;
@@ -78,7 +69,7 @@ namespace Dapper.Extension
 
 		public Ret Find(T obj, int? commandTimeout = null)
 		{
-			KeyType key = TableData<T>.GetKey<KeyType>(obj);
+			KeyType key = TableData<T, KeyType>.GetKey(obj);
 			return Find(key, commandTimeout);
 		}
 
@@ -121,19 +112,19 @@ namespace Dapper.Extension
 
 		public override bool Delete(IDictionary<string, object> key, int? commandTimeout = null)
 		{
-			KeyType keyVal = TableData<T>.GetKey<KeyType>(key);
+			KeyType keyVal = TableData<T, KeyType>.GetKey(key);
 			return Delete(keyVal, commandTimeout);
 		}
 
 		public override bool Delete(T obj, int? commandTimeout = null)
 		{
-			KeyType keyVal = TableData<T>.GetKey<KeyType>(obj);
+			KeyType keyVal = TableData<T, KeyType>.GetKey(obj);
 			return Delete(keyVal, commandTimeout);
 		}
 
 		public override int BulkDelete(IEnumerable<T> objs, int? commandTimeout = null)
 		{
-			return BulkDelete(objs.Select(obj => TableData<T>.GetKey<KeyType>(obj)), commandTimeout);
+			return BulkDelete(objs.Select(obj => TableData<T, KeyType>.GetKey(obj)), commandTimeout);
 		}
 
 		public override int Delete(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
@@ -182,13 +173,13 @@ namespace Dapper.Extension
 
 		public override Ret Get(IDictionary<string, object> key, int? commandTimeout = null)
 		{
-			KeyType keyVal = TableData<T>.GetKey<KeyType>(key);
+			KeyType keyVal = TableData<T, KeyType>.GetKey(key);
 			return Get(keyVal, commandTimeout);
 		}
 
 		public override Ret Get(T obj, int? commandTimeout = null)
 		{
-			KeyType keyVal = TableData<T>.GetKey<KeyType>(obj);
+			KeyType keyVal = TableData<T, KeyType>.GetKey(obj);
 			return Get(keyVal, commandTimeout);
 		}
 
@@ -255,17 +246,19 @@ namespace Dapper.Extension
 
 		public override bool Delete(IDbTransaction transaction, IDictionary<string, object> key, int? commandTimeout = null)
 		{
-			return Delete(transaction, TableData<T>.GetKey<KeyType>(key), commandTimeout);
+			KeyType keyVal = TableData<T, KeyType>.GetKey(key);
+			return Delete(transaction, keyVal, commandTimeout);
 		}
 
 		public override bool Delete(IDbTransaction transaction, T obj, int? commandTimeout = null)
 		{
-			return Delete(transaction, TableData<T>.GetKey<KeyType>(obj), commandTimeout);
+			KeyType key = TableData<T, KeyType>.GetKey(obj);
+			return Delete(transaction, key, commandTimeout);
 		}
 
 		public override int BulkDelete(SqlTransaction transaction, IEnumerable<T> objs, int? commandTimeout = null)
 		{
-			return BulkDelete(transaction, objs.Select(obj => TableData<T>.GetKey<KeyType>(obj)), commandTimeout);
+			return BulkDelete(transaction, objs.Select(obj => TableData<T, KeyType>.GetKey(obj)), commandTimeout);
 		}
 
 		public override int Delete(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
@@ -367,23 +360,6 @@ namespace Dapper.Extension
 		where T : class
 		where Ret : class
 	{
-		protected IDictionary<T, Ret> Map = null;
-
-		public IReadOnlyDictionary<T, Ret> Items;
-
-		private Func<T, Ret, Ret> UpdateRet { get; set; }
-		private Func<T, Ret> Constructor { get; set; }
-
-		public IEnumerator<Ret> GetEnumerator()
-		{
-			return Map.Values.GetEnumerator();
-		}
-
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return Map.Values.GetEnumerator();
-		}
-
 		public TableCache(DataAccessObject<T> dao, Func<T, Ret> constructor, Func<T, Ret, Ret> update)
 		{
 			if (TableData<T>.KeyProperties.Length == 0) {
@@ -397,9 +373,24 @@ namespace Dapper.Extension
 			Constructor = constructor;
 		}
 
-		public DataAccessObject<T> DAO { get; private set; }
+		protected readonly IDictionary<T, Ret> Map;
+		protected readonly Func<T, Ret, Ret> UpdateRet;
+		protected readonly Func<T, Ret> Constructor;
 
-		public override SqlConnection Connection()
+		public readonly DataAccessObject<T> DAO;
+		public readonly IReadOnlyDictionary<T, Ret> Items;
+
+		public IEnumerator<Ret> GetEnumerator()
+		{
+			return Map.Values.GetEnumerator();
+		}
+
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return Map.Values.GetEnumerator();
+		}
+
+		public SqlConnection Connection()
 		{
 			return DAO.Connection();
 		}
@@ -420,7 +411,6 @@ namespace Dapper.Extension
 			}
 			return list;
 		}
-
 
 		#region IDataAccessObjectSync<T, T, Ret>
 		public override IEnumerable<T> GetKeys(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)

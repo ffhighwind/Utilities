@@ -3,35 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Dapper.Extension.Interfaces;
 
 namespace Dapper
 {
 	[AttributeUsage(AttributeTargets.Property)]
-	public class MatchUpdateAttribute : Attribute
+	public class MatchUpdateAttribute : IHasDefaultAttribute
 	{
 		public MatchUpdateAttribute(Func<string> function)
-		{
-			ValueGenerator = () =>
-			{
-				string value = function();
-				DapperExtensions.ValidateSqlValue(value);
-				return "(" + value + ")";
-			};
-		}
+			: base(function) { }
 
 		public MatchUpdateAttribute(string value = null)
-		{
-			value = value?.Trim();
-			if (value == null || value.Length == 0) {
-				ValueGenerator = () => null;
-				return;
-			}
-			DapperExtensions.ValidateSqlValue(value);
-			value = "(" + value + ")";
-			ValueGenerator = () => value;
-		}
-
-		private readonly Func<string> ValueGenerator;
-		public string Value => ValueGenerator();
+			: base(value) { }
 	}
 }

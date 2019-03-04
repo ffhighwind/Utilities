@@ -39,10 +39,15 @@ namespace Utilities.UnitTests
 
 			TestDTO dto = new TestDTO() { CreatedDt = new DateTime(2019, 1, 15), Name = "Test" };
 
+			DataAccessObject<TestDTO> dao = new DataAccessObject<TestDTO>(ConnString);
+			DataAccessObject<TestDTO4> dao2 = new DataAccessObject<TestDTO4>(ConnString);
+
+
 			using (SqlConnection conn = new SqlConnection(ConnString)) {
 				conn.Open();
 				using (SqlTransaction trans = conn.BeginTransaction()) {
-
+					int deleted1 = conn.Delete<TestDTO>("", null, trans);
+					int deleted4 = conn.Delete<TestDTO4>("", null, trans);
 					// Bulk Insert
 					list = conn.BulkInsert(list, trans).OrderBy(x => x.ID).ToList();
 					for (int i = 0; i < list.Count; i++) {
@@ -57,7 +62,9 @@ namespace Utilities.UnitTests
 					// Update
 					for (int i = 0; i < list.Count; i++) {
 						list[i].Name = "Update " + list[i].Name;
-						conn.Update(list[i], trans);
+						if(!conn.Update(list[i], trans)) {
+							throw new InvalidOperationException();
+						}
 					}
 					// Get
 					for (int i = 0; i < list.Count; i++) {
