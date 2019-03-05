@@ -13,8 +13,9 @@ namespace Dapper
 {
 	public class DataAccessObject<T> : IDataAccessObject<T> where T : class
 	{
-		public DataAccessObject(string connectionString) 
+		public DataAccessObject(string connectionString)
 		{
+			ConnectionString = connectionString;
 			Properties = Queries.Properties;
 			KeyProperties = Queries.KeyProperties;
 			Columns = Queries.Columns;
@@ -300,6 +301,7 @@ namespace Dapper
 	{
 		public DataAccessObject(string connectionString)
 		{
+			ConnectionString = connectionString;
 			Properties = Queries.Properties;
 			KeyProperties = Queries.KeyProperties;
 			Columns = Queries.Columns;

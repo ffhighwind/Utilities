@@ -89,8 +89,8 @@ namespace Dapper.Extension
 			KeyProperties = Properties.Where(prop => prop.GetCustomAttribute<KeyAttribute>(true) != null).ToArray();
 			AutoKeyProperties = KeyProperties.Where(prop => !prop.GetCustomAttribute<KeyAttribute>(true).Required).ToArray();
 			SelectProperties = GetProperties(Array.Empty<PropertyInfo>(), (prop) => true, typeof(IgnoreSelectAttribute), typeof(IgnoreAttribute));
-			InsertProperties = GetProperties(AutoKeyProperties, (prop) => { var attr = prop.GetCustomAttribute<IgnoreInsertAttribute>(true); return attr == null || attr.Value != null; }, typeof(IgnoreAttribute));
-			UpdateProperties = GetProperties(KeyProperties, (prop) => { var attr = prop.GetCustomAttribute<IgnoreUpdateAttribute>(true); return attr == null || attr.Value != null; }, typeof(IgnoreAttribute));
+			InsertProperties = GetProperties(AutoKeyProperties, (prop) => { var attr = prop.GetCustomAttribute<IgnoreInsertAttribute>(true); return attr == null || attr.HasValue; }, typeof(IgnoreAttribute));
+			UpdateProperties = GetProperties(KeyProperties, (prop) => { var attr = prop.GetCustomAttribute<IgnoreUpdateAttribute>(true); return attr == null || attr.HasValue; }, typeof(IgnoreAttribute));
 
 			if (InsertProperties.Length == 0) {
 				InsertProperties = Properties;
@@ -136,11 +136,17 @@ namespace Dapper.Extension
 			InsertDefaults = new IHasDefaultAttribute[InsertProperties.Length];
 			for (int i = 0; i < InsertProperties.Length; i++) {
 				InsertDefaults[i] = InsertProperties[i].GetCustomAttribute<IgnoreInsertAttribute>(true);
+				if (InsertDefaults[i] == null || !InsertDefaults[i].HasValue) {
+					InsertDefaults[i] = null;
+				}
 			}
 			UpdateDefaults = new IHasDefaultAttribute[UpdateProperties.Length];
 			for (int i = 0; i < UpdateProperties.Length; i++) {
 				UpdateDefaults[i] = (IHasDefaultAttribute) UpdateProperties[i].GetCustomAttribute<IgnoreUpdateAttribute>(true)
 					?? UpdateProperties[i].GetCustomAttribute<MatchUpdateAttribute>(true);
+				if (UpdateDefaults[i] == null || !UpdateDefaults[i].HasValue) {
+					UpdateDefaults[i] = null;
+				}
 			}
 
 			whereEquals = "WHERE " + GetEqualsParams(" AND ", EqualityProperties, EqualityColumns);

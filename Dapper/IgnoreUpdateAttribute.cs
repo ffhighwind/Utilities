@@ -11,10 +11,10 @@ namespace Dapper
 	[AttributeUsage(AttributeTargets.Property)]
 	public class IgnoreUpdateAttribute : IHasDefaultAttribute
 	{
-		public IgnoreUpdateAttribute(Func<string> function) 
+		public IgnoreUpdateAttribute(Func<string> function)
 			: base(function) { }
 
-		public IgnoreUpdateAttribute(string value = null) 
+		public IgnoreUpdateAttribute(string value = null)
 			: base(value) { }
 	}
 }
