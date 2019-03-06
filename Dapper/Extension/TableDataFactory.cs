@@ -80,7 +80,7 @@ namespace Dapper.Extension
 		internal TableQueriesFactory()
 		{
 			TableAttribute = typeof(T).GetCustomAttribute<TableAttribute>(true);
-			TableName = TableAttribute?.Name.Replace("'", "") ?? typeof(T).Name;
+			TableName = TableAttribute?.Name ?? typeof(T).Name;
 
 			IEnumerable<PropertyInfo> properties = typeof(T).GetProperties(TableAttribute?.BindingFlags ?? (BindingFlags.Public | BindingFlags.Instance));
 			Properties = properties.Where(Predicate).ToArray();
@@ -723,9 +723,8 @@ namespace Dapper.Extension
 		public string[] DeleteEqualityColumns { get; private set; }
 
 		public IHasDefaultAttribute[] InsertDefaults { get; private set; }
-		public List<Tuple<string, Func<string>>> InsertDefaultValues { get; private set; }
 		public IHasDefaultAttribute[] UpdateDefaults { get; private set; }
-		public List<Tuple<string, Func<string>>> UpdateDefaultValues { get; private set; }
+
 
 		private string whereEquals { get; set; }
 		private string whereUpdateEquals { get; set; }
@@ -831,7 +830,7 @@ namespace Dapper.Extension
 				return "";
 			StringBuilder sb = new StringBuilder();
 			for (int i = 0; i < columns.Length; i++) {
-				sb.AppendFormat("\t AND [{1}].[{0}] = [{2}].[{0}]\n", columns[i], TableName, BulkTempStagingTable);
+				sb.AppendFormat("\t AND {1}.[{0}] = [{2}].[{0}]\n", columns[i], TableName, BulkTempStagingTable);
 			}
 			return "\t" + sb.Remove(0, 6).ToString();
 		}
@@ -882,7 +881,7 @@ namespace Dapper.Extension
 				return new List<object>() { "" };
 			List<object> result = new List<object>();
 			for (int i = 0; i < columnNames.Length; i++) {
-				result.Add("\t[" + TableName + "].[" + columnNames[i] + "] = ");
+				result.Add("\t" + TableName + ".[" + columnNames[i] + "] = ");
 				if (defaultValues[i] == null) {
 					result.Add("[");
 					result.Add(BulkTempStagingTable);

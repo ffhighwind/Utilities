@@ -18,7 +18,6 @@ namespace Dapper.Extension.Interfaces
 				Value = () =>
 				{
 					string value = function();
-					DapperExtensions.ValidateSqlValue(value);
 					return "(" + value + ")";
 				};
 			}
@@ -28,7 +27,6 @@ namespace Dapper.Extension.Interfaces
 		{
 			value = value?.Trim();
 			if (value != null && value.Length != 0) {
-				DapperExtensions.ValidateSqlValue(value);
 				value = "(" + value + ")";
 				Value = () => value;
 				IsConstant = true;

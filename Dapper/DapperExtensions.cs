@@ -217,10 +217,10 @@ namespace Dapper
 		}
 		#endregion // ITableQueriesAsync<T>
 
-		public static void ValidateSqlValue(string sql)
+		public static bool IsValidSqlValue(string sql)
 		{
 			if (sql == null)
-				return;
+				return false;
 			int leftParens = 0;
 			for (int i = 0; i < sql.Length; i++) {
 				if (sql[i] == '\'') {
@@ -229,17 +229,18 @@ namespace Dapper
 					i--; // prevent i++
 				}
 				else if (sql[i] == ';' || sql[i] == ',' || (sql[i] == '-' && i <= sql.Length && sql[i + 1] == '-') || (sql[i] == '/' && i <= sql.Length && sql[i + 1] == '*')) //prevent comments and statement terminators
-					throw new ArgumentException(sql);
+					return false;
 				else if (sql[i] == '(')
 					leftParens++;
 				else if (sql[i] == ')') {
 					leftParens--;
 					if (leftParens < 0)
-						throw new ArgumentException(sql);
+						return false;
 				}
 			}
 			if (leftParens != 0)
-				throw new ArgumentException(sql);
+				return false;
+			return true;
 		}
 	}
 }
