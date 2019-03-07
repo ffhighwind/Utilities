@@ -10,9 +10,9 @@ namespace Dapper.Extension.Interfaces
 	/// Base Attribute for MatchUpdate, IgnoreInsert, and IgnoreUpdate
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Property)]
-	public class IHasDefaultAttribute : Attribute
+	public class IDefaultAttribute : Attribute
 	{
-		public IHasDefaultAttribute(Func<string> function)
+		public IDefaultAttribute(Func<string> function)
 		{
 			if (function != null) {
 				Value = () =>
@@ -23,7 +23,7 @@ namespace Dapper.Extension.Interfaces
 			}
 		}
 
-		public IHasDefaultAttribute(string value = null)
+		public IDefaultAttribute(string value = null)
 		{
 			value = value?.Trim();
 			if (value != null && value.Length != 0) {

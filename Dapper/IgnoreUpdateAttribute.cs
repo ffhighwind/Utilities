@@ -9,7 +9,7 @@ using Dapper.Extension.Interfaces;
 namespace Dapper
 {
 	[AttributeUsage(AttributeTargets.Property)]
-	public class IgnoreUpdateAttribute : IHasDefaultAttribute
+	public class IgnoreUpdateAttribute : IDefaultAttribute
 	{
 		public IgnoreUpdateAttribute(Func<string> function)
 			: base(function) { }

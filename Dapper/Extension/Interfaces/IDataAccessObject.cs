@@ -18,7 +18,7 @@ namespace Dapper.Extension.Interfaces
 		{
 			Queries = TableData<T>.Queries;
 			if (Queries == null) {
-				TableQueriesData<T> queryData = new TableQueriesFactory<T>().Create();
+				TableQueries<T>.Data queryData = new TableQueries<T>.Factory().Create();
 				throw new InvalidOperationException("Uncreachable");
 			}
 			TableName = TableData<T>.TableName;
@@ -290,7 +290,7 @@ namespace Dapper.Extension.Interfaces
 			}
 			Queries = TableData<T>.Queries;
 			if(Queries == null) {
-				TableQueriesData<T> queryData = new TableQueriesFactory<T>().Create();
+				TableQueries<T>.Data queryData = new TableQueries<T>.Factory().Create();
 				throw new InvalidOperationException("Uncreachable");
 			}
 			QueriesKey = TableData<T, KeyType>.Queries;

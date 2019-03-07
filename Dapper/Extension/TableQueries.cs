@@ -10,9 +10,9 @@ using Dapper.Extension.Interfaces;
 
 namespace Dapper.Extension
 {
-	public class TableQueries<T, KeyType> where T : class
+	public partial class TableQueries<T, KeyType> where T : class
 	{
-		public TableQueries(TableQueriesData<T, KeyType> impl)
+		public TableQueries(TableQueries<T, KeyType>.Data impl)
 		{
 			BulkDeleteFunc = impl.BulkDeleteFunc;
 			DeleteFunc = impl.DeleteKeyFunc;
@@ -22,18 +22,18 @@ namespace Dapper.Extension
 			BulkDeleteListFunc = impl.BulkDeleteListFunc;
 		}
 
-		public TableDelegates<T, KeyType>.SqlKeysKeys BulkDeleteListFunc { get; private set; }
-		public TableDelegates<T, KeyType>.SqlKeysInt BulkDeleteFunc { get; private set; }
-		public TableDelegates<T, KeyType>.SqlKeyBool DeleteFunc { get; private set; }
-		public TableDelegates<T, KeyType>.DbWhereKeys DeleteListFunc { get; private set; }
-		public TableDelegates<T, KeyType>.SqlKeyObj GetFunc { get; private set; }
-		public TableDelegates<T, KeyType>.DbWhereKeys GetKeysFunc { get; private set; }
+		public TableQueries<T, KeyType>.Delegates.SqlKeysKeys BulkDeleteListFunc { get; private set; }
+		public TableQueries<T, KeyType>.Delegates.SqlKeysInt BulkDeleteFunc { get; private set; }
+		public TableQueries<T, KeyType>.Delegates.SqlKeyBool DeleteFunc { get; private set; }
+		public TableQueries<T, KeyType>.Delegates.DbWhereKeys DeleteListFunc { get; private set; }
+		public TableQueries<T, KeyType>.Delegates.SqlKeyObj GetFunc { get; private set; }
+		public TableQueries<T, KeyType>.Delegates.DbWhereKeys GetKeysFunc { get; private set; }
 	}
 
 
-	public class TableQueries<T> where T : class
+	public partial class TableQueries<T> where T : class
 	{
-		public TableQueries(TableQueriesData<T> impl)
+		public TableQueries(TableQueries<T>.Data impl)
 		{
 			Properties = impl.Properties;
 			KeyProperties = impl.KeyProperties;
@@ -71,24 +71,24 @@ namespace Dapper.Extension
 		public string[] Columns { get; private set; }
 		public string[] KeyColumns { get; private set; }
 
-		public TableDelegates<T>.SqlListInt BulkDeleteFunc { get; private set; }
-		public TableDelegates<T>.SqlListList BulkDeleteListFunc { get; private set; }
-		public TableDelegates<T>.SqlListList BulkInsertFunc { get; private set; }
-		public TableDelegates<T>.SqlListInt BulkUpdateFunc { get; private set; }
-		public TableDelegates<T>.SqlListList BulkUpdateListFunc { get; private set; }
-		public TableDelegates<T>.SqlListInt BulkUpsertFunc { get; private set; }
-		public TableDelegates<T>.SqlListList BulkUpsertListFunc { get; private set; }
-		public TableDelegates<T>.DbDictBool DeleteDictFunc { get; private set; }
-		public TableDelegates<T>.DbObjBool DeleteFunc { get; private set; }
-		public TableDelegates<T>.DbWhereInt DeleteWhereFunc { get; private set; }
-		public TableDelegates<T>.DbWhereList DeleteListFunc { get; private set; }
-		public TableDelegates<T>.DbDictObj GetDictFunc { get; private set; }
-		public TableDelegates<T>.DbObjObj GetFunc { get; private set; }
-		public TableDelegates<T>.DbWhereList GetKeysFunc { get; private set; }
-		public TableDelegates<T>.DbWhereList GetListFunc { get; private set; }
-		public TableDelegates<T>.DbObjObj InsertFunc { get; private set; }
-		public TableDelegates<T>.DbWhereInt RecordCountFunc { get; private set; }
-		public TableDelegates<T>.DbObjBool UpdateFunc { get; private set; }
-		public TableDelegates<T>.DbObjObj UpsertFunc { get; private set; }
+		public TableQueries<T>.Delegates.SqlListInt BulkDeleteFunc { get; private set; }
+		public TableQueries<T>.Delegates.SqlListList BulkDeleteListFunc { get; private set; }
+		public TableQueries<T>.Delegates.SqlListList BulkInsertFunc { get; private set; }
+		public TableQueries<T>.Delegates.SqlListInt BulkUpdateFunc { get; private set; }
+		public TableQueries<T>.Delegates.SqlListList BulkUpdateListFunc { get; private set; }
+		public TableQueries<T>.Delegates.SqlListInt BulkUpsertFunc { get; private set; }
+		public TableQueries<T>.Delegates.SqlListList BulkUpsertListFunc { get; private set; }
+		public TableQueries<T>.Delegates.DbDictBool DeleteDictFunc { get; private set; }
+		public TableQueries<T>.Delegates.DbObjBool DeleteFunc { get; private set; }
+		public TableQueries<T>.Delegates.DbWhereInt DeleteWhereFunc { get; private set; }
+		public TableQueries<T>.Delegates.DbWhereList DeleteListFunc { get; private set; }
+		public TableQueries<T>.Delegates.DbDictObj GetDictFunc { get; private set; }
+		public TableQueries<T>.Delegates.DbObjObj GetFunc { get; private set; }
+		public TableQueries<T>.Delegates.DbWhereList GetKeysFunc { get; private set; }
+		public TableQueries<T>.Delegates.DbWhereList GetListFunc { get; private set; }
+		public TableQueries<T>.Delegates.DbObjObj InsertFunc { get; private set; }
+		public TableQueries<T>.Delegates.DbWhereInt RecordCountFunc { get; private set; }
+		public TableQueries<T>.Delegates.DbObjBool UpdateFunc { get; private set; }
+		public TableQueries<T>.Delegates.DbObjObj UpsertFunc { get; private set; }
 	}
 }

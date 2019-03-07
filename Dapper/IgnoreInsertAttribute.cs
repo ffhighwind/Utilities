@@ -8,7 +8,7 @@ using Dapper.Extension.Interfaces;
 namespace Dapper
 {
 	[AttributeUsage(AttributeTargets.Property)]
-	public class IgnoreInsertAttribute : IHasDefaultAttribute
+	public class IgnoreInsertAttribute : IDefaultAttribute
 	{
 		public IgnoreInsertAttribute(Func<string> function) 
 			: base(function) { }

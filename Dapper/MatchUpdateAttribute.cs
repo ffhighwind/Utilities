@@ -8,7 +8,7 @@ using Dapper.Extension.Interfaces;
 namespace Dapper
 {
 	[AttributeUsage(AttributeTargets.Property)]
-	public class MatchUpdateAttribute : IHasDefaultAttribute
+	public class MatchUpdateAttribute : IDefaultAttribute
 	{
 		public MatchUpdateAttribute(Func<string> function)
 			: base(function) { }

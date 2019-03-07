@@ -80,10 +80,10 @@ namespace Dapper.Extension
 		static TableData()
 		{
 			try {
-				TableQueriesFactory<T> factory = new TableQueriesFactory<T>();
+				TableQueries<T>.Factory factory = new TableQueries<T>.Factory();
 				TableName = factory.TableName;
 				TableAttribute = factory.TableAttribute;
-				TableQueriesData<T> queries = factory.Create();
+				TableQueries<T>.Data queries = factory.Create();
 				Queries = new TableQueries<T>(queries);
 				Columns = Queries.Columns;
 				KeyColumns = Queries.KeyColumns;
@@ -167,7 +167,7 @@ namespace Dapper.Extension
 			catch { }
 		}
 
-		private static void CreateKeyQueries<KeyType>(TableQueriesFactory<T> factory)
+		private static void CreateKeyQueries<KeyType>(TableQueries<T>.Factory factory)
 		{
 			TableData<T, KeyType>.Queries = new TableQueries<T, KeyType>(factory.Create<KeyType>());
 		}
