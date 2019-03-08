@@ -81,7 +81,6 @@
     <Compile Include="Excel\Sorting.cs" />
     <Compile Include="Extentions.cs" />
     <Compile Include="Converters\GenericDataReader.cs" />
-    <Compile Include="FastActivator.cs" />
     <Compile Include="IO.cs" />
     <Compile Include="Comparers\ListViewItemComparer.cs" />
     <Compile Include="Logging\Logger.cs" />
@@ -89,6 +88,8 @@
     <Compile Include="Converters\OptionalAttribute.cs" />
     <Compile Include="Processes.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Reflection\Reflect.cs" />
+    <Compile Include="Reflection\ReflectCache.cs" />
     <Compile Include="SchemaTableColumn.cs" />
     <Compile Include="Security.cs" />
     <Compile Include="Excel\Spreadsheet.cs" />
