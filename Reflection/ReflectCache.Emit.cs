@@ -12,11 +12,16 @@ namespace Utilities.Reflection
 	{
 		public class Emit
 		{
-			private ILGenerator emit;
-
-			public Emit(ILGenerator emit)
+			/// <summary>
+			/// Generates a assembly called 'name' that's useful for debugging purposes and inspecting the resulting C# code in ILSpy
+			/// If 'field' is not null, it generates a setter and getter for that field
+			/// If 'property' is not null, it generates a setter and getter for that property
+			/// If 'method' is not null, it generates a call for that method
+			/// if 'targetType' and 'ctorParamTypes' are not null, it generates a constructor for the target type that takes the specified arguments
+			/// </summary>
+			public void GenDebugAssembly(ILGenerator emit, string name, FieldInfo field, PropertyInfo property, MethodInfo method, Type targetType, Type[] ctorParamTypes)
 			{
-				this.emit = emit;
+				GenDebugAssembly<object>(emit, name, field, property, method, targetType, ctorParamTypes);
 			}
 
 			/// <summary>
@@ -26,19 +31,7 @@ namespace Utilities.Reflection
 			/// If 'method' is not null, it generates a call for that method
 			/// if 'targetType' and 'ctorParamTypes' are not null, it generates a constructor for the target type that takes the specified arguments
 			/// </summary>
-			public void GenDebugAssembly(string name, FieldInfo field, PropertyInfo property, MethodInfo method, Type targetType, Type[] ctorParamTypes)
-			{
-				GenDebugAssembly<object>(name, field, property, method, targetType, ctorParamTypes);
-			}
-
-			/// <summary>
-			/// Generates a assembly called 'name' that's useful for debugging purposes and inspecting the resulting C# code in ILSpy
-			/// If 'field' is not null, it generates a setter and getter for that field
-			/// If 'property' is not null, it generates a setter and getter for that property
-			/// If 'method' is not null, it generates a call for that method
-			/// if 'targetType' and 'ctorParamTypes' are not null, it generates a constructor for the target type that takes the specified arguments
-			/// </summary>
-			public void GenDebugAssembly<TTarget>(string name, FieldInfo field, PropertyInfo property, MethodInfo method, Type targetType, Type[] ctorParamTypes)
+			public void GenDebugAssembly<TTarget>(ILGenerator emit, string name, FieldInfo field, PropertyInfo property, MethodInfo method, Type targetType, Type[] ctorParamTypes)
 			{
 				AssemblyName asmName = new AssemblyName("Asm");
 				AssemblyBuilder asmBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(asmName, AssemblyBuilderAccess.RunAndSave);
@@ -59,49 +52,35 @@ namespace Utilities.Reflection
 				if (field != null) {
 					Type fieldType = weakTyping ? typeof(object) : field.FieldType;
 					emit = buildMethod("FieldSetter", typeof(void), new Type[] { typeof(TTarget).MakeByRefType(), fieldType });
-					GenFieldSetter<TTarget>(field);
+					GenFieldSetter<TTarget>(emit, field);
 					emit = buildMethod("FieldGetter", fieldType, new Type[] { typeof(TTarget) });
-					GenFieldGetter<TTarget>(field);
+					GenFieldGetter<TTarget>(emit, field);
 				}
 
 				if (property != null) {
 					Type propType = weakTyping ? typeof(object) : property.PropertyType;
 					emit = buildMethod("PropertySetter", typeof(void), new Type[] { typeof(TTarget).MakeByRefType(), propType });
-					GenPropertySetter<TTarget>(property);
+					GenPropertySetter<TTarget>(emit, property);
 					emit = buildMethod("PropertyGetter", propType, new Type[] { typeof(TTarget) });
-					GenPropertyGetter<TTarget>(property);
+					GenPropertyGetter<TTarget>(emit, property);
 				}
 
 				if (method != null) {
 					Type returnType = (weakTyping || method.ReturnType == typeof(void)) ? typeof(object) : method.ReturnType;
 					emit = buildMethod("MethodCaller", returnType, new Type[] { typeof(TTarget), typeof(object[]) });
-					GenMethodInvocation<TTarget>(method);
+					GenMethodInvocation<TTarget>(emit, method);
 				}
 
 				if (targetType != null) {
 					emit = buildMethod("Ctor", typeof(TTarget), new Type[] { typeof(object[]) });
-					GenCtor<TTarget>(targetType, ctorParamTypes);
+					GenCtor<TTarget>(emit, targetType, ctorParamTypes);
 				}
 
 				typeBuilder.CreateType();
 				asmBuilder.Save(name);
 			}
 
-			public TDelegate GenDelegateForMember<TDelegate, TMember>(TMember member, int key, string dynMethodName,
-				Action<TMember> generator, Type returnType, params Type[] paramTypes)
-				where TMember : MemberInfo
-				where TDelegate : class
-			{
-				DynamicMethod dynMethod = new DynamicMethod(dynMethodName, returnType, paramTypes, true);
-
-				emit = dynMethod.GetILGenerator();
-				generator(member);
-
-				Delegate result = dynMethod.CreateDelegate(typeof(TDelegate));
-				return (TDelegate) (object) result;
-			}
-
-			public void GenCtor<T>(Type type, Type[] paramTypes)
+			public static void GenCtor<T>(ILGenerator emit, Type type, Type[] paramTypes)
 			{
 				// arg0: object[] arguments
 				// goal: return new T(arguments)
@@ -138,7 +117,7 @@ namespace Utilities.Reflection
 				emit.Emit(OpCodes.Ret);
 			}
 
-			public void GenMethodInvocation<TTarget>(MethodInfo method)
+			public static void GenMethodInvocation<TTarget>(ILGenerator emit, MethodInfo method)
 			{
 				bool weaklyTyped = typeof(TTarget) == typeof(object);
 
@@ -215,9 +194,9 @@ namespace Utilities.Reflection
 				emit.Emit(OpCodes.Ret);
 			}
 
-			public void GenFieldGetter<TTarget>(FieldInfo field)
+			public static void GenFieldGetter<TTarget>(ILGenerator emit, FieldInfo field)
 			{
-				GenMemberGetter<TTarget>(field, field.FieldType, field.IsStatic,
+				GenMemberGetter<TTarget>(emit, field, field.FieldType, field.IsStatic,
 					(e, f) =>
 					{
 						if (field.IsLiteral) {
@@ -252,9 +231,9 @@ namespace Utilities.Reflection
 				);
 			}
 
-			public void GenPropertyGetter<TTarget>(PropertyInfo property)
+			public static void GenPropertyGetter<TTarget>(ILGenerator emit, PropertyInfo property)
 			{
-				GenMemberGetter<TTarget>(property, property.PropertyType,
+				GenMemberGetter<TTarget>(emit, property, property.PropertyType,
 					property.GetGetMethod(true).IsStatic,
 					(e, p) =>
 					{
@@ -267,7 +246,7 @@ namespace Utilities.Reflection
 				);
 			}
 
-			public void GenMemberGetter<TTarget>(MemberInfo member, Type memberType, bool isStatic, Action<ILGenerator, MemberInfo> get)
+			private static void GenMemberGetter<TTarget>(ILGenerator emit, MemberInfo member, Type memberType, bool isStatic, Action<ILGenerator, MemberInfo> get)
 			{
 				if (typeof(TTarget) == typeof(object)) // weakly-typed?
 				{
@@ -306,9 +285,9 @@ namespace Utilities.Reflection
 				emit.Emit(OpCodes.Ret);
 			}
 
-			public void GenFieldSetter<TTarget>(FieldInfo field)
+			public static void GenFieldSetter<TTarget>(ILGenerator emit, FieldInfo field)
 			{
-				GenMemberSetter<TTarget>(field, field.FieldType, field.IsStatic,
+				GenMemberSetter<TTarget>(emit, field, field.FieldType, field.IsStatic,
 					(e, f) =>
 					{
 						if (field.IsStatic) {
@@ -321,9 +300,9 @@ namespace Utilities.Reflection
 				);
 			}
 
-			public void GenPropertySetter<TTarget>(PropertyInfo property)
+			public static void GenPropertySetter<TTarget>(ILGenerator emit, PropertyInfo property)
 			{
-				GenMemberSetter<TTarget>(property, property.PropertyType,
+				GenMemberSetter<TTarget>(emit, property, property.PropertyType,
 					property.GetSetMethod(true).IsStatic, (e, p) =>
 					{
 						MethodInfo m = ((PropertyInfo) p).GetSetMethod(true);
@@ -335,7 +314,7 @@ namespace Utilities.Reflection
 				);
 			}
 
-			public void GenMemberSetter<TTarget>(MemberInfo member, Type memberType, bool isStatic, Action<ILGenerator, MemberInfo> set)
+			private static void GenMemberSetter<TTarget>(ILGenerator emit, MemberInfo member, Type memberType, bool isStatic, Action<ILGenerator, MemberInfo> set)
 			{
 				Type targetType = typeof(TTarget);
 				bool stronglyTyped = targetType != typeof(object);

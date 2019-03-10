@@ -12,10 +12,10 @@ using System.Reflection.Emit;
 /// </summary>
 namespace Utilities.Reflection
 {
-	public delegate void MemberSetter<TTarget, TValue>(ref TTarget target, TValue value);
-	public delegate TReturn MemberGetter<TTarget, TReturn>(TTarget target);
-	public delegate TReturn MethodCaller<TTarget, TReturn>(TTarget target, object[] args);
-	public delegate T CtorInvoker<T>(object[] parameters);
+	//public delegate void MemberSetter<TTarget, TValue>(ref TTarget target, TValue value);
+	//public delegate TReturn MemberGetter<TTarget, TReturn>(TTarget target);
+	//public delegate TReturn MethodCaller<TTarget, TReturn>(TTarget target, object[] args);
+	//public delegate T CtorInvoker<T>(object[] parameters);
 
 	/// <summary>
 	/// A dynamic reflection extensions library that emits IL to set/get fields/properties, call methods and invoke constructors
@@ -32,7 +32,7 @@ namespace Utilities.Reflection
 		private IDictionary<FieldInfo, Delegate> Setters;
 
 		private const string kCtorInvokerName = "ctor.";
-		private const string kMethodCallerName = "methd.";
+		private const string kMethodCallerName = "method.";
 		private const string kFieldSetterName = "fset.";
 		private const string kFieldGetterName = "fget.";
 		private const string kPropertySetterName = "pset.";
@@ -93,10 +93,22 @@ namespace Utilities.Reflection
 			}
 		}
 
+		private Delegate GenDelegateForMember<TMember>(Type delegateType, TMember member, string dynMethodName,
+			Action<ILGenerator, TMember> generator, Type returnType, params Type[] paramTypes)
+			where TMember : MemberInfo
+		{
+			DynamicMethod dynMethod = new DynamicMethod(dynMethodName, returnType, paramTypes, true);
+			ILGenerator emit = dynMethod.GetILGenerator();
+			generator(emit, member);
+
+			Delegate result = dynMethod.CreateDelegate(delegateType);
+			return result;
+		}
+
 		/// <summary>
 		/// Generates or gets a strongly-typed open-instance delegate to the specified type constructor that takes the specified type params
 		/// </summary>
-		public CtorInvoker<T> DelegateForCtor<T>(Type type, params Type[] paramTypes)
+		public Func<T> DelegateForCtor<T>(Type type, params Type[] paramTypes)
 		{
 			ConstructorKey key = new ConstructorKey()
 			{
@@ -104,20 +116,20 @@ namespace Utilities.Reflection
 				paramTypes = paramTypes,
 			};
 			if (Constructors.TryGetValue(key, out Delegate result)) {
-				return (CtorInvoker<T>) result;
+				return (Func<T>) result;
 			}
-			DynamicMethod dynMethod = new DynamicMethod(kCtorInvokerName, typeof(T), new Type[] { typeof(object[]) });
-			Emit emit = new Emit(dynMethod.GetILGenerator());
-			emit.GenCtor<T>(type, paramTypes);
-			result = dynMethod.CreateDelegate(typeof(CtorInvoker<T>));
+			DynamicMethod dynMethod = new DynamicMethod(kCtorInvokerName + paramTypes.Length, type, new Type[] { typeof(object[]) }, true);
+			ILGenerator emit = dynMethod.GetILGenerator();
+			Emit.GenCtor<T>(emit, type, paramTypes);
+			result = dynMethod.CreateDelegate(typeof(Func<T>));
 			Constructors[key] = result;
-			return (CtorInvoker<T>) result;
+			return (Func<T>) result;
 		}
 
 		/// <summary>
 		/// Generates or gets a weakly-typed open-instance delegate to the specified type constructor that takes the specified type params
 		/// </summary>
-		public CtorInvoker<object> DelegateForCtor(Type type, params Type[] ctorParamTypes)
+		public Func<object> DelegateForCtor(Type type, params Type[] ctorParamTypes)
 		{
 			return DelegateForCtor<object>(type, ctorParamTypes);
 		}
@@ -125,24 +137,30 @@ namespace Utilities.Reflection
 		/// <summary>
 		/// Generates or gets a strongly-typed open-instance delegate to get the value of the specified property from a given target
 		/// </summary>
-		public MemberGetter<TTarget, TReturn> DelegateForGet<TTarget, TReturn>(PropertyInfo property)
+		public Func<TTarget, TReturn> DelegateForGet<TTarget, TReturn>(PropertyInfo property)
 		{
 			if (!property.CanRead) {
 				throw new InvalidOperationException("Property is not readable: " + property.Name);
 			}
-			if (Methods.TryGetValue(property.GetGetMethod(), out Delegate result)) {
-				return (MemberGetter<TTarget, TReturn>) result;
+			Delegate result;
+			if (!Methods.TryGetValue(property.GetGetMethod(), out result)) {
+				result = GenDelegateForMember<PropertyInfo>(
+					typeof(Func<TTarget, TReturn>),
+					property,
+					kPropertyGetterName,
+					Emit.GenPropertyGetter<TTarget>,
+					typeof(TReturn),
+					typeof(TTarget));
+				MethodInfo method = property.GetGetMethod();
+				Methods[method] = result;
 			}
-
-			return GenDelegateForMember<MemberGetter<TTarget, TReturn>, PropertyInfo>(
-				property, key, kPropertyGetterName, GenPropertyGetter<TTarget>,
-				typeof(TReturn), typeof(TTarget));
+			return (Func<TTarget, TReturn>) result;
 		}
 
 		/// <summary>
 		/// Generates or gets a weakly-typed open-instance delegate to get the value of the specified property from a given target
 		/// </summary>
-		public MemberGetter<object, object> DelegateForGet(PropertyInfo property)
+		public Func<object, object> DelegateForGet(PropertyInfo property)
 		{
 			return DelegateForGet<object, object>(property);
 		}
@@ -150,24 +168,31 @@ namespace Utilities.Reflection
 		/// <summary>
 		/// Generates or gets a strongly-typed open-instance delegate to set the value of the specified property on a given target
 		/// </summary>
-		public MemberSetter<TTarget, TValue> DelegateForSet<TTarget, TValue>(PropertyInfo property)
+		public Func<TTarget, TValue> DelegateForSet<TTarget, TValue>(PropertyInfo property)
 		{
 			if (!property.CanWrite) {
 				throw new InvalidOperationException("Property is not writable " + property.Name);
 			}
-			if (Methods.TryGetValue(property.GetSetMethod(), out Delegate result)) {
-				return (MemberSetter<TTarget, TValue>) result;
+			Delegate result;
+			if (!Methods.TryGetValue(property.GetSetMethod(), out result)) {
+				result = GenDelegateForMember<PropertyInfo>(
+					typeof(Func<TTarget, TValue>),
+					property,
+					kPropertySetterName,
+					Emit.GenPropertySetter<TTarget>,
+					typeof(void),
+					typeof(TTarget).MakeByRefType(),
+					typeof(TValue));
+				MethodInfo setter = property.GetSetMethod();
+				Methods[setter] = result;
 			}
-
-			return GenDelegateForMember<MemberSetter<TTarget, TValue>, PropertyInfo>(
-				property, key, kPropertySetterName, GenPropertySetter<TTarget>,
-				typeof(void), typeof(TTarget).MakeByRefType(), typeof(TValue));
+			return (Func<TTarget, TValue>) result;
 		}
 
 		/// <summary>
 		/// Generates or gets a weakly-typed open-instance delegate to set the value of the specified property on a given target
 		/// </summary>
-		public MemberSetter<object, object> DelegateForSet(PropertyInfo property)
+		public Func<object, object> DelegateForSet(PropertyInfo property)
 		{
 			return DelegateForSet<object, object>(property);
 		}
@@ -175,21 +200,26 @@ namespace Utilities.Reflection
 		/// <summary>
 		/// Generates an open-instance delegate to get the value of the property from a given target
 		/// </summary>
-		public MemberGetter<TTarget, TReturn> DelegateForGet<TTarget, TReturn>(FieldInfo field)
+		public Func<TTarget, TReturn> DelegateForGet<TTarget, TReturn>(FieldInfo field)
 		{
-			if (Getters.TryGetValue(field, out Delegate result)) {
-				return (MemberGetter<TTarget, TReturn>) result;
+			Delegate result;
+			if (!Getters.TryGetValue(field, out result)) {
+				result = GenDelegateForMember<FieldInfo>(
+					typeof(Func<TTarget, TReturn>),
+					field,
+					kFieldGetterName,
+					Emit.GenFieldGetter<TTarget>,
+					typeof(TReturn),
+					typeof(TTarget));
+				Getters[field] = result;
 			}
-
-			return GenDelegateForMember<MemberGetter<TTarget, TReturn>, FieldInfo>(
-				field, key, kFieldGetterName, GenFieldGetter<TTarget>,
-				typeof(TReturn), typeof(TTarget));
+			return (Func<TTarget, TReturn>) result;
 		}
 
 		/// <summary>
 		/// Generates a weakly-typed open-instance delegate to set the value of the field in a given target
 		/// </summary>
-		public MemberGetter<object, object> DelegateForGet(FieldInfo field)
+		public Func<object, object> DelegateForGet(FieldInfo field)
 		{
 			return DelegateForGet<object, object>(field);
 		}
@@ -197,21 +227,25 @@ namespace Utilities.Reflection
 		/// <summary>
 		/// Generates a strongly-typed open-instance delegate to set the value of the field in a given target
 		/// </summary>
-		public MemberSetter<TTarget, TValue> DelegateForSet<TTarget, TValue>(FieldInfo field)
+		public Func<TTarget, TValue> DelegateForSet<TTarget, TValue>(FieldInfo field)
 		{
-			if (Setters.TryGetValue(field, out Delegate result)) {
-				return (MemberSetter<TTarget, TValue>) result;
+			if (!Setters.TryGetValue(field, out Delegate result)) {
+				result = GenDelegateForMember<FieldInfo>(
+					typeof(Func<TTarget, TValue>),
+					field, kFieldSetterName,
+					Emit.GenFieldSetter<TTarget>,
+					typeof(void),
+					typeof(TTarget).MakeByRefType(),
+					typeof(TValue));
+				Setters[field] = result;
 			}
-
-			return GenDelegateForMember<MemberSetter<TTarget, TValue>, FieldInfo>(
-				field, key, kFieldSetterName, GenFieldSetter<TTarget>,
-				typeof(void), typeof(TTarget).MakeByRefType(), typeof(TValue));
+			return (Func<TTarget, TValue>) result;
 		}
 
 		/// <summary>
 		/// Generates a weakly-typed open-instance delegate to set the value of the field in a given target
 		/// </summary>
-		public MemberSetter<object, object> DelegateForSet(FieldInfo field)
+		public Func<object, object> DelegateForSet(FieldInfo field)
 		{
 			return DelegateForSet<object, object>(field);
 		}
@@ -219,20 +253,47 @@ namespace Utilities.Reflection
 		/// <summary>
 		/// Generates a strongly-typed open-instance delegate to invoke the specified method
 		/// </summary>
-		public MethodCaller<TTarget, TReturn> DelegateForCall<TTarget, TReturn>(MethodInfo method)
+		public Delegate DelegateForCall<TTarget>(MethodInfo method)
 		{
-			if (Methods.TryGetValue(method, out Delegate result)) {
-				return (MethodCaller<TTarget, TReturn>) result;
+			Delegate result;
+			if (!Methods.TryGetValue(method, out result)) {
+				result = GenDelegateForMember<MethodInfo>(
+					typeof(Action<TTarget, object[]>),
+					method,
+					kMethodCallerName,
+					Emit.GenMethodInvocation<TTarget>,
+					typeof(void),
+					typeof(TTarget),
+					typeof(object[]));
+				Methods[method] = result;
 			}
-			return GenDelegateForMember<MethodCaller<TTarget, TReturn>, MethodInfo>(
-				method, key, kMethodCallerName, GenMethodInvocation<TTarget>,
-				typeof(TReturn), typeof(TTarget), typeof(object[]));
+			return result;
+		}
+
+		/// <summary>
+		/// Generates a strongly-typed open-instance delegate to invoke the specified method
+		/// </summary>
+		public Delegate DelegateForCall<TTarget, TReturn>(MethodInfo method)
+		{
+			Delegate result;
+			if (!Methods.TryGetValue(method, out result)) {
+				result = GenDelegateForMember<MethodInfo>(
+					typeof(Func<TTarget, object[], TReturn>),
+					method,
+					kMethodCallerName,
+					Emit.GenMethodInvocation<TTarget>,
+					typeof(TReturn),
+					typeof(TTarget),
+					typeof(object[]));
+				Methods[method] = result;
+			}
+			return result;
 		}
 
 		/// <summary>
 		/// Generates a weakly-typed open-instance delegate to invoke the specified method
 		/// </summary>
-		public MethodCaller<object, object> DelegateForCall(MethodInfo method)
+		public Delegate DelegateForCall(MethodInfo method)
 		{
 			return DelegateForCall<object, object>(method);
 		}
