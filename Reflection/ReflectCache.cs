@@ -26,7 +26,7 @@ namespace Utilities.Reflection
 	/// </summary>
 	public partial class ReflectCache<TTarget>
 	{
-		private IDictionary<ConstructorKey, Delegate> Constructors;
+		private IDictionary<ConstructorKey, Func<TTarget>> Constructors;
 		private IDictionary<MethodInfo, Delegate> Methods;
 		private IDictionary<FieldInfo, Delegate> Getters;
 		private IDictionary<FieldInfo, Delegate> Setters;
@@ -85,7 +85,7 @@ namespace Utilities.Reflection
 		public void SetConcurrent()
 		{
 			if (!(Constructors is ConcurrentDictionary<ConstructorKey, Delegate>)) {
-				Constructors = new ConcurrentDictionary<ConstructorKey, Delegate>(Constructors);
+				Constructors = new ConcurrentDictionary<ConstructorKey, Func<TTarget>>(Constructors);
 				Methods = new ConcurrentDictionary<MethodInfo, Delegate>(Methods, MethodInfoEqualityComparer.Default);
 				Getters = new ConcurrentDictionary<FieldInfo, Delegate>(Getters);
 				Setters = new ConcurrentDictionary<FieldInfo, Delegate>(Setters);
@@ -110,13 +110,13 @@ namespace Utilities.Reflection
 			}
 			else {
 				if (Concurrent) {
-					Constructors = new ConcurrentDictionary<ConstructorKey, Delegate>();
+					Constructors = new ConcurrentDictionary<ConstructorKey, Func<TTarget>>();
 					Methods = new ConcurrentDictionary<MethodInfo, Delegate>(MethodInfoEqualityComparer.Default);
 					Getters = new ConcurrentDictionary<FieldInfo, Delegate>();
 					Setters = new ConcurrentDictionary<FieldInfo, Delegate>();
 				}
 				else {
-					Constructors = new Dictionary<ConstructorKey, Delegate>();
+					Constructors = new Dictionary<ConstructorKey, Func<TTarget>>();
 					Methods = new Dictionary<MethodInfo, Delegate>(MethodInfoEqualityComparer.Default);
 					Getters = new Dictionary<FieldInfo, Delegate>();
 					Setters = new Dictionary<FieldInfo, Delegate>();
@@ -146,15 +146,15 @@ namespace Utilities.Reflection
 				type = type,
 				paramTypes = paramTypes,
 			};
-			if (Constructors.TryGetValue(key, out Delegate result)) {
-				return (Func<TTarget>) result;
+			if (Constructors.TryGetValue(key, out Func<TTarget> result)) {
+				return result;
 			}
 			DynamicMethod dynMethod = new DynamicMethod(kCtorInvokerName + type.Name + "_" + paramTypes.Length, type, new Type[] { typeof(object[]) }, true);
 			ILGenerator emit = dynMethod.GetILGenerator();
 			Emit.GenCtor(emit, type, paramTypes);
-			result = dynMethod.CreateDelegate(typeof(Func<TTarget>));
+			result = (Func<TTarget>) dynMethod.CreateDelegate(typeof(Func<TTarget>));
 			Constructors[key] = result;
-			return (Func<TTarget>) result;
+			return result;
 		}
 
 		/// <summary>
