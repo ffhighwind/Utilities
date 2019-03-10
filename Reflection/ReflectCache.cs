@@ -69,27 +69,40 @@ namespace Utilities.Reflection
 
 		internal ReflectCache()
 		{
-			if (!(Constructors is ConcurrentDictionary<ConstructorKey, Delegate>)) {
-				Constructors = new Dictionary<ConstructorKey, Delegate>();
-				Methods = new Dictionary<MethodInfo, Delegate>(MethodInfoEqualityComparer.Default);
-				Getters = new Dictionary<FieldInfo, Delegate>();
-				Setters = new Dictionary<FieldInfo, Delegate>();
-			}
-			else {
-				Constructors = new ConcurrentDictionary<ConstructorKey, Delegate>();
-				Methods = new ConcurrentDictionary<MethodInfo, Delegate>(MethodInfoEqualityComparer.Default);
-				Getters = new ConcurrentDictionary<FieldInfo, Delegate>();
-				Setters = new ConcurrentDictionary<FieldInfo, Delegate>();
-			}
+			Clear();
 		}
 
-		public void MakeConcurrent()
+		public void SetConcurrent()
 		{
 			if (!(Constructors is ConcurrentDictionary<ConstructorKey, Delegate>)) {
 				Constructors = new ConcurrentDictionary<ConstructorKey, Delegate>(Constructors);
 				Methods = new ConcurrentDictionary<MethodInfo, Delegate>(Methods, MethodInfoEqualityComparer.Default);
 				Getters = new ConcurrentDictionary<FieldInfo, Delegate>(Getters);
 				Setters = new ConcurrentDictionary<FieldInfo, Delegate>(Setters);
+			}
+		}
+
+		public void Clear(bool resize = false)
+		{
+			if (!resize) {
+				Constructors.Clear();
+				Methods.Clear();
+				Getters.Clear();
+				Setters.Clear();
+			}
+			else {
+				if (Concurrent) {
+					Constructors = new ConcurrentDictionary<ConstructorKey, Delegate>();
+					Methods = new ConcurrentDictionary<MethodInfo, Delegate>(MethodInfoEqualityComparer.Default);
+					Getters = new ConcurrentDictionary<FieldInfo, Delegate>();
+					Setters = new ConcurrentDictionary<FieldInfo, Delegate>();
+				}
+				else {
+					Constructors = new Dictionary<ConstructorKey, Delegate>();
+					Methods = new Dictionary<MethodInfo, Delegate>(MethodInfoEqualityComparer.Default);
+					Getters = new Dictionary<FieldInfo, Delegate>();
+					Setters = new Dictionary<FieldInfo, Delegate>();
+				}
 			}
 		}
 
@@ -118,7 +131,7 @@ namespace Utilities.Reflection
 			if (Constructors.TryGetValue(key, out Delegate result)) {
 				return (Func<T>) result;
 			}
-			DynamicMethod dynMethod = new DynamicMethod(kCtorInvokerName + paramTypes.Length, type, new Type[] { typeof(object[]) }, true);
+			DynamicMethod dynMethod = new DynamicMethod(kCtorInvokerName + type.Name + "_" + paramTypes.Length, type, new Type[] { typeof(object[]) }, true);
 			ILGenerator emit = dynMethod.GetILGenerator();
 			Emit.GenCtor<T>(emit, type, paramTypes);
 			result = dynMethod.CreateDelegate(typeof(Func<T>));
@@ -147,7 +160,7 @@ namespace Utilities.Reflection
 				result = GenDelegateForMember<PropertyInfo>(
 					typeof(Func<TTarget, TReturn>),
 					property,
-					kPropertyGetterName,
+					kPropertyGetterName + property.DeclaringType.Name + "." + property.Name,
 					Emit.GenPropertyGetter<TTarget>,
 					typeof(TReturn),
 					typeof(TTarget));
@@ -178,7 +191,7 @@ namespace Utilities.Reflection
 				result = GenDelegateForMember<PropertyInfo>(
 					typeof(Func<TTarget, TValue>),
 					property,
-					kPropertySetterName,
+					kPropertySetterName + property.DeclaringType.Name + "." + property.Name,
 					Emit.GenPropertySetter<TTarget>,
 					typeof(void),
 					typeof(TTarget).MakeByRefType(),
@@ -207,7 +220,7 @@ namespace Utilities.Reflection
 				result = GenDelegateForMember<FieldInfo>(
 					typeof(Func<TTarget, TReturn>),
 					field,
-					kFieldGetterName,
+					kFieldGetterName + field.DeclaringType.Name + "." + field.Name,
 					Emit.GenFieldGetter<TTarget>,
 					typeof(TReturn),
 					typeof(TTarget));
@@ -232,7 +245,8 @@ namespace Utilities.Reflection
 			if (!Setters.TryGetValue(field, out Delegate result)) {
 				result = GenDelegateForMember<FieldInfo>(
 					typeof(Func<TTarget, TValue>),
-					field, kFieldSetterName,
+					field,
+					kFieldSetterName + field.DeclaringType.Name + "." + field.Name,
 					Emit.GenFieldSetter<TTarget>,
 					typeof(void),
 					typeof(TTarget).MakeByRefType(),
@@ -260,7 +274,7 @@ namespace Utilities.Reflection
 				result = GenDelegateForMember<MethodInfo>(
 					typeof(Action<TTarget, object[]>),
 					method,
-					kMethodCallerName,
+					kMethodCallerName + method.DeclaringType.Name + "." + method.Name,
 					Emit.GenMethodInvocation<TTarget>,
 					typeof(void),
 					typeof(TTarget),
@@ -280,7 +294,7 @@ namespace Utilities.Reflection
 				result = GenDelegateForMember<MethodInfo>(
 					typeof(Func<TTarget, object[], TReturn>),
 					method,
-					kMethodCallerName,
+					kMethodCallerName + method.DeclaringType.Name + "." + method.Name,
 					Emit.GenMethodInvocation<TTarget>,
 					typeof(TReturn),
 					typeof(TTarget),
