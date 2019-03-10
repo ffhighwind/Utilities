@@ -103,6 +103,7 @@ namespace Utilities.Reflection
 					ConstructorKey key = new ConstructorKey()
 					{
 						type = typeof(TTarget),
+						paramTypes = Array.Empty<Type>()
 					};
 					Constructors.Add(key, New);
 				}
