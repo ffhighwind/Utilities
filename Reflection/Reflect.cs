@@ -280,23 +280,19 @@ namespace Utilities.Reflection
 
 		private static MethodInfo _Method(Type type, string name)
 		{
-			MethodInfo mi = null;
 			MethodInfo[] mis = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-			for(int i = 0; i < mis.Length; i++) {
-				if(mis[i].Name == name) {
-					mi = mis[i];
-					for(i++; i < mis.Length; i++) {
-						if(mis[i].Name == name) {
+			for (int i = 0; i < mis.Length; i++) {
+				if (mis[i].Name == name) {
+					MethodInfo mi = mis[i];
+					for (i++; i < mis.Length; i++) {
+						if (mis[i].Name == name) {
 							throw new InvalidOperationException("Ambiguous method name: " + name);
 						}
 					}
-					break;
+					return mi;
 				}
 			}
-			if(mi == null) {
-				mi = type.GetMethod(name);
-			}
-			return mi;
+			return type.GetMethod(name);
 		}
 
 		public static Invoker<TTarget> Method(MethodInfo method)
