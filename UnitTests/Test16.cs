@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Utilities.UnitTests
 {
-	public class Test16
+	public class Test16 : IEquatable<Test16>
 	{
 		public int Year { get; set; }
 		public string Segment { get; set; }
@@ -20,5 +21,53 @@ namespace Utilities.UnitTests
 		public DateTime Date { get; set; }
 		public int MonthNumber { get; set; }
 		public string MonthName { get; set; }
+
+		public override bool Equals(object obj)
+		{
+			return Equals(obj as Test16);
+		}
+
+		public bool Equals(Test16 other)
+		{
+			return other != null &&
+				   Year == other.Year &&
+				   Segment == other.Segment &&
+				   Country == other.Country &&
+				   Product == other.Product &&
+				   DiscountBand == other.DiscountBand &&
+				   UnitsSold == other.UnitsSold &&
+				   ManufacturingPrice == other.ManufacturingPrice &&
+				   SalePrice == other.SalePrice &&
+				   GrossSales == other.GrossSales &&
+				   Discounts == other.Discounts &&
+				   Sales == other.Sales &&
+				   COGS == other.COGS &&
+				   Profit == other.Profit &&
+				   Date == other.Date &&
+				   MonthNumber == other.MonthNumber &&
+				   MonthName == other.MonthName;
+		}
+
+		public override int GetHashCode()
+		{
+			int hashCode = 378801229;
+			hashCode = hashCode * -1521134295 + Year.GetHashCode();
+			hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Segment);
+			hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Country);
+			hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Product);
+			hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(DiscountBand);
+			hashCode = hashCode * -1521134295 + UnitsSold.GetHashCode();
+			hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(ManufacturingPrice);
+			hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(SalePrice);
+			hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(GrossSales);
+			hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Discounts);
+			hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Sales);
+			hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(COGS);
+			hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Profit);
+			hashCode = hashCode * -1521134295 + Date.GetHashCode();
+			hashCode = hashCode * -1521134295 + MonthNumber.GetHashCode();
+			hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(MonthName);
+			return hashCode;
+		}
 	}
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -9,6 +10,9 @@ namespace Utilities.Reflection
 {
 	public static class Reflect
 	{
+		internal static Type[] objectArrayParam = new Type[1] { typeof(object) };
+		public static bool Concurrent = false;
+
 		public static void ClearCache(bool resize = false)
 		{
 			Reflect<object>.ClearCache(resize);
@@ -19,7 +23,7 @@ namespace Utilities.Reflection
 			Reflect<object>.SetConcurrent();
 		}
 
-		public static Func<object> Constructor(Type type, params Type[] paramTypes)
+		public static Ctor<object> Constructor(Type type, params Type[] paramTypes)
 		{
 			return Reflect<object>.Constructor(type, paramTypes);
 		}
@@ -82,23 +86,59 @@ namespace Utilities.Reflection
 
 	public static class Reflect<TTarget>
 	{
-		private static readonly ReflectCache<TTarget> Cache = new ReflectCache<TTarget>();
+		private static readonly ReflectCache<TTarget> Cache;
+		private static IDictionary<string, Delegate> Getters;
+		private static IDictionary<string, Delegate> Setters;
+		private static IDictionary<string, Delegate> Methods;
 
-		public static readonly Func<TTarget> New = ReflectCache<TTarget>.New;
+		public static readonly Func<TTarget> New;
+
+		static Reflect()
+		{
+			Cache = new ReflectCache<TTarget>();
+			New = ReflectCache<TTarget>.New;
+			ClearCache(true);
+		}
 
 		public static void ClearCache(bool resize = false)
 		{
 			Cache.Clear(resize);
+			if (!resize) {
+				Getters.Clear();
+				Setters.Clear();
+			}
+			else {
+				if (Getters is ConcurrentDictionary<string, Delegate>) {
+					Getters = new ConcurrentDictionary<string, Delegate>(StringComparer.Ordinal);
+					Setters = new ConcurrentDictionary<string, Delegate>(StringComparer.Ordinal);
+					Methods = new ConcurrentDictionary<string, Delegate>(StringComparer.Ordinal);
+				}
+				else {
+					Getters = new Dictionary<string, Delegate>(StringComparer.Ordinal);
+					Setters = new Dictionary<string, Delegate>(StringComparer.Ordinal);
+					Methods = new Dictionary<string, Delegate>(StringComparer.Ordinal);
+				}
+			}
 		}
 
 		public static void SetConcurrent()
 		{
-			Cache.SetConcurrent();
+			if (!(Getters is ConcurrentDictionary<string, Delegate>)) {
+				Getters = new ConcurrentDictionary<string, Delegate>(StringComparer.Ordinal);
+				Setters = new ConcurrentDictionary<string, Delegate>(StringComparer.Ordinal);
+				Methods = new ConcurrentDictionary<string, Delegate>(StringComparer.Ordinal);
+				Cache.SetConcurrent();
+			}
 		}
 
-		public static Func<TTarget> Constructor(Type type, params Type[] paramTypes)
+		public static Ctor<TTarget> Constructor(params Type[] paramTypes)
 		{
-			return Cache.DelegateForCtor(type, paramTypes);
+			return (Ctor<TTarget>) Cache.DelegateForCtor(typeof(Ctor<TTarget>), typeof(TTarget), Reflect.objectArrayParam, paramTypes);
+		}
+
+		public static Ctor<TTarget> Constructor(Type type, params Type[] paramTypes)
+		{
+			return (Ctor<TTarget>) Cache.DelegateForCtor(typeof(Ctor<TTarget>), type, Reflect.objectArrayParam, paramTypes);
 		}
 
 		public static Func<TTarget, TReturn> Getter<TReturn>(PropertyInfo property)
@@ -121,9 +161,43 @@ namespace Utilities.Reflection
 			return Cache.DelegateForSet<object>(property);
 		}
 
+		public static Func<TTarget, TReturn> Getter<TReturn>(string name)
+		{
+			if (Getters.TryGetValue(name, out Delegate result) && result is Func<TTarget, TReturn> getter) {
+				return getter;
+			}
+			Func<TTarget, TReturn> method = _Getter<TReturn>(name, BindingFlags.Instance | BindingFlags.DeclaredOnly);
+			if (method == null) {
+				method = _Getter<TReturn>(name, BindingFlags.FlattenHierarchy);
+				if (method == null) {
+					throw new InvalidOperationException("No field or property with the name " + name);
+				}
+			}
+			Getters[name] = method;
+			return method;
+		}
+
+		private static Func<TTarget, TReturn> _Getter<TReturn>(string name, BindingFlags flags)
+		{
+			FieldInfo field = typeof(TTarget).GetFields(flags).FirstOrDefault(f => f.Name == name);
+			if (field != null) {
+				return Cache.DelegateForGet<TReturn>(field);
+			}
+			PropertyInfo property = typeof(TTarget).GetProperties(flags).FirstOrDefault(p => p.Name == name);
+			if (property != null) {
+				return Cache.DelegateForGet<TReturn>(property);
+			}
+			return null;
+		}
+
 		public static Func<TTarget, TReturn> Getter<TReturn>(FieldInfo field)
 		{
 			return Cache.DelegateForGet<TReturn>(field);
+		}
+
+		public static Func<TTarget, object> Getter(string name)
+		{
+			return Getter<object>(name);
 		}
 
 		public static Func<TTarget, object> Getter(FieldInfo field)
@@ -131,9 +205,43 @@ namespace Utilities.Reflection
 			return Cache.DelegateForGet<object>(field);
 		}
 
+		public static Func<TTarget, TReturn> Setter<TReturn>(string name)
+		{
+			if (Getters.TryGetValue(name, out Delegate result) && result is Func<TTarget, TReturn> setter) {
+				return setter;
+			}
+			Func<TTarget, TReturn> method = _Getter<TReturn>(name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+			if (method == null) {
+				method = _Getter<TReturn>(name, BindingFlags.FlattenHierarchy);
+				if (method == null) {
+					throw new InvalidOperationException("No field or property with the name " + name);
+				}
+			}
+			Setters[name] = method;
+			return method;
+		}
+
+		private static Func<TTarget, TReturn> _Setter<TReturn>(string name, BindingFlags flags)
+		{
+			FieldInfo field = typeof(TTarget).GetFields(flags).FirstOrDefault(f => f.Name == name);
+			if (field != null) {
+				return Cache.DelegateForSet<TReturn>(field);
+			}
+			PropertyInfo property = typeof(TTarget).GetProperties(flags).FirstOrDefault(p => p.Name == name);
+			if (property != null) {
+				return Cache.DelegateForSet<TReturn>(property);
+			}
+			return null;
+		}
+
 		public static Func<TTarget, TReturn> Setter<TReturn>(FieldInfo field)
 		{
 			return Cache.DelegateForSet<TReturn>(field);
+		}
+
+		public static Func<TTarget, object> Setter(string name)
+		{
+			return Setter<object>(name);
 		}
 
 		public static Func<TTarget, object> Setter(FieldInfo field)
@@ -141,19 +249,55 @@ namespace Utilities.Reflection
 			return Cache.DelegateForSet<object>(field);
 		}
 
-		public static Func<TTarget, TReturn> Func<TReturn>(MethodInfo method)
+		public static Invoker<TTarget, TReturn> Method<TReturn>(string name)
 		{
-			return (Func<TTarget, TReturn>) Cache.DelegateForCall<TReturn>(method);
+			if (Methods.TryGetValue(name, out Delegate result) && result is Invoker<TTarget, TReturn> method) {
+				return method;
+			}
+			Type type = typeof(TTarget);
+			MethodInfo mi = _Method(type, name);
+			Delegate invoker = Cache.DelegateForCall<TReturn>(mi);
+			Methods[name] = invoker;
+			return (Invoker<TTarget, TReturn>) invoker;
 		}
 
-		public static Func<TTarget, object> Func(MethodInfo method)
+		public static Invoker<TTarget, TReturn> Method<TReturn>(MethodInfo method)
 		{
-			return (Func<TTarget, object>) Cache.DelegateForCall<object>(method);
+			return Cache.DelegateForCall<TReturn>(method);
 		}
 
-		public static Action<TTarget> Action(MethodInfo method)
+		public static Invoker<TTarget> Method(string name)
 		{
-			return (Action<TTarget>) Cache.DelegateForCall<object>(method);
+			if (Methods.TryGetValue(name, out Delegate result) && result is Invoker<TTarget> method) {
+				return method;
+			}
+			Type type = typeof(TTarget);
+			MethodInfo mi = _Method(type, name);
+			Delegate invoker = Cache.DelegateForCall(mi);
+			Methods[name] = invoker;
+			return (Invoker<TTarget>) invoker;
+		}
+
+		private static MethodInfo _Method(Type type, string name)
+		{
+			MethodInfo[] mis = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+			for (int i = 0; i < mis.Length; i++) {
+				if (mis[i].Name == name) {
+					MethodInfo mi = mis[i];
+					for (i++; i < mis.Length; i++) {
+						if (mis[i].Name == name) {
+							throw new InvalidOperationException("Ambiguous method name: " + name);
+						}
+					}
+					return mi;
+				}
+			}
+			return type.GetMethod(name);
+		}
+
+		public static Invoker<TTarget> Method(MethodInfo method)
+		{
+			return Cache.DelegateForCall(method);
 		}
 	}
 }

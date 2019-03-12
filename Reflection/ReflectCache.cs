@@ -12,10 +12,9 @@ using System.Reflection.Emit;
 /// </summary>
 namespace Utilities.Reflection
 {
-	//public delegate void MemberSetter<TTarget, TValue>(ref TTarget target, TValue value);
-	//public delegate TReturn MemberGetter<TTarget, TReturn>(TTarget target);
-	//public delegate TReturn MethodCaller<TTarget, TReturn>(TTarget target, object[] args);
-	//public delegate T CtorInvoker<T>(object[] parameters);
+	public delegate TTarget Ctor<TTarget>(params object[] param);
+	public delegate TReturn Invoker<TTarget, TReturn>(TTarget target, params object[] param);
+	public delegate void Invoker<TTarget>(TTarget target, params object[] param);
 
 	/// <summary>
 	/// A dynamic reflection extensions library that emits IL to set/get fields/properties, call methods and invoke constructors
@@ -26,10 +25,10 @@ namespace Utilities.Reflection
 	/// </summary>
 	public partial class ReflectCache<TTarget>
 	{
-		private IDictionary<ConstructorKey, Func<TTarget>> Constructors;
-		private IDictionary<MethodInfo, Delegate> Methods;
-		private IDictionary<FieldInfo, Delegate> Getters;
-		private IDictionary<FieldInfo, Delegate> Setters;
+		private IDictionary<ConstructorKey, Delegate> Constructors;
+		private IDictionary<MethodKey, Delegate> Methods;
+		private IDictionary<FieldKey, Delegate> Getters;
+		private IDictionary<FieldKey, Delegate> Setters;
 
 		private const string kCtorInvokerName = "ctor.";
 		private const string kMethodCallerName = "method.";
@@ -38,7 +37,6 @@ namespace Utilities.Reflection
 		private const string kPropertySetterName = "pset.";
 		private const string kPropertyGetterName = "pget.";
 
-		public static bool Concurrent = false;
 		public static readonly Func<TTarget> New;
 
 		static ReflectCache()
@@ -46,34 +44,7 @@ namespace Utilities.Reflection
 			Type targetType = typeof(TTarget);
 			TypeCode typeCode = Type.GetTypeCode(targetType);
 			if (targetType != typeof(object) && typeCode == TypeCode.Object) {
-				New = new ReflectCache<TTarget>().DelegateForCtor(targetType);
-			}
-		}
-
-		private struct ConstructorKey : IEqualityComparer<ConstructorKey>
-		{
-			public Type type;
-			public Type[] paramTypes;
-
-			public bool Equals(ConstructorKey x, ConstructorKey y)
-			{
-				if (x.type.Equals(y.type)) {
-					for (int i = 0; i < paramTypes.Length; i++) {
-						if (!x.paramTypes[i].Equals(y.paramTypes[i])) {
-							return false;
-						}
-					}
-				}
-				return true;
-			}
-
-			public int GetHashCode(ConstructorKey obj)
-			{
-				int hashCode = 23 * obj.type.GetHashCode();
-				for (int i = 0; i < obj.paramTypes.Length; i++) {
-					hashCode ^= obj.paramTypes[i].GetHashCode();
-				}
-				return hashCode;
+				New = (Func<TTarget>) new ReflectCache<TTarget>().DelegateForCtor(typeof(Func<TTarget>), targetType, Array.Empty<Type>(), Array.Empty<Type>());
 			}
 		}
 
@@ -85,10 +56,10 @@ namespace Utilities.Reflection
 		public void SetConcurrent()
 		{
 			if (!(Constructors is ConcurrentDictionary<ConstructorKey, Delegate>)) {
-				Constructors = new ConcurrentDictionary<ConstructorKey, Func<TTarget>>(Constructors);
-				Methods = new ConcurrentDictionary<MethodInfo, Delegate>(Methods, MethodInfoEqualityComparer.Default);
-				Getters = new ConcurrentDictionary<FieldInfo, Delegate>(Getters);
-				Setters = new ConcurrentDictionary<FieldInfo, Delegate>(Setters);
+				Constructors = new ConcurrentDictionary<ConstructorKey, Delegate>(Constructors, ConstructorKey.Comparer);
+				Methods = new ConcurrentDictionary<MethodKey, Delegate>(Methods, MethodKey.Comparer);
+				Getters = new ConcurrentDictionary<FieldKey, Delegate>(Getters, FieldKey.Comparer);
+				Setters = new ConcurrentDictionary<FieldKey, Delegate>(Setters, FieldKey.Comparer);
 			}
 		}
 
@@ -99,27 +70,19 @@ namespace Utilities.Reflection
 				Methods.Clear();
 				Getters.Clear();
 				Setters.Clear();
-				if (New != null) {
-					ConstructorKey key = new ConstructorKey()
-					{
-						type = typeof(TTarget),
-						paramTypes = Array.Empty<Type>()
-					};
-					Constructors.Add(key, New);
-				}
 			}
 			else {
-				if (Concurrent) {
-					Constructors = new ConcurrentDictionary<ConstructorKey, Func<TTarget>>();
-					Methods = new ConcurrentDictionary<MethodInfo, Delegate>(MethodInfoEqualityComparer.Default);
-					Getters = new ConcurrentDictionary<FieldInfo, Delegate>();
-					Setters = new ConcurrentDictionary<FieldInfo, Delegate>();
+				if (Constructors is ConcurrentDictionary<ConstructorKey, Delegate>) {
+					Constructors = new ConcurrentDictionary<ConstructorKey, Delegate>(ConstructorKey.Comparer);
+					Methods = new ConcurrentDictionary<MethodKey, Delegate>(MethodKey.Comparer);
+					Getters = new ConcurrentDictionary<FieldKey, Delegate>(FieldKey.Comparer);
+					Setters = new ConcurrentDictionary<FieldKey, Delegate>(FieldKey.Comparer);
 				}
 				else {
-					Constructors = new Dictionary<ConstructorKey, Func<TTarget>>();
-					Methods = new Dictionary<MethodInfo, Delegate>(MethodInfoEqualityComparer.Default);
-					Getters = new Dictionary<FieldInfo, Delegate>();
-					Setters = new Dictionary<FieldInfo, Delegate>();
+					Constructors = new Dictionary<ConstructorKey, Delegate>(ConstructorKey.Comparer);
+					Methods = new Dictionary<MethodKey, Delegate>(MethodKey.Comparer);
+					Getters = new Dictionary<FieldKey, Delegate>(FieldKey.Comparer);
+					Setters = new Dictionary<FieldKey, Delegate>(FieldKey.Comparer);
 				}
 			}
 		}
@@ -131,7 +94,6 @@ namespace Utilities.Reflection
 			DynamicMethod dynMethod = new DynamicMethod(dynMethodName, returnType, paramTypes, true);
 			ILGenerator emit = dynMethod.GetILGenerator();
 			generator(emit, member);
-
 			Delegate result = dynMethod.CreateDelegate(delegateType);
 			return result;
 		}
@@ -139,21 +101,21 @@ namespace Utilities.Reflection
 		/// <summary>
 		/// Generates or gets a strongly-typed open-instance delegate to the specified type constructor that takes the specified type params
 		/// </summary>
-		public Func<TTarget> DelegateForCtor(Type type, params Type[] paramTypes)
+		public Delegate DelegateForCtor(Type delegateType, Type type, Type[] inputParamTypes, params Type[] paramTypes)
 		{
 			ConstructorKey key = new ConstructorKey()
 			{
-				type = type,
-				paramTypes = paramTypes,
+				Output = typeof(TTarget),
+				Type = type,
+				ParamTypes = paramTypes,
 			};
-			if (Constructors.TryGetValue(key, out Func<TTarget> result)) {
-				return result;
+			if (!Constructors.TryGetValue(key, out Delegate result)) {
+				DynamicMethod dynMethod = new DynamicMethod(kCtorInvokerName + type.Name + "_" + paramTypes.Length, type, inputParamTypes, true);
+				ILGenerator emit = dynMethod.GetILGenerator();
+				Emit.GenCtor(emit, type, paramTypes);
+				result = dynMethod.CreateDelegate(delegateType);
+				Constructors[key] = result;
 			}
-			DynamicMethod dynMethod = new DynamicMethod(kCtorInvokerName + type.Name + "_" + paramTypes.Length, type, new Type[] { typeof(object[]) }, true);
-			ILGenerator emit = dynMethod.GetILGenerator();
-			Emit.GenCtor(emit, type, paramTypes);
-			result = (Func<TTarget>) dynMethod.CreateDelegate(typeof(Func<TTarget>));
-			Constructors[key] = result;
 			return result;
 		}
 
@@ -166,7 +128,8 @@ namespace Utilities.Reflection
 				throw new InvalidOperationException("Property is not readable: " + property.Name);
 			}
 			Delegate result;
-			if (!Methods.TryGetValue(property.GetGetMethod(), out result)) {
+			MethodKey key = new MethodKey(typeof(TReturn), property.GetGetMethod());
+			if (!Methods.TryGetValue(key, out result)) {
 				result = GenDelegateForMember<PropertyInfo>(
 					typeof(Func<TTarget, TReturn>),
 					property,
@@ -175,7 +138,7 @@ namespace Utilities.Reflection
 					typeof(TReturn),
 					property.DeclaringType);
 				MethodInfo method = property.GetGetMethod();
-				Methods[method] = result;
+				Methods[key] = result;
 			}
 			return (Func<TTarget, TReturn>) result;
 		}
@@ -189,7 +152,8 @@ namespace Utilities.Reflection
 				throw new InvalidOperationException("Property is not writable " + property.Name);
 			}
 			Delegate result;
-			if (!Methods.TryGetValue(property.GetSetMethod(), out result)) {
+			MethodKey key = new MethodKey(typeof(TValue), property.GetSetMethod());
+			if (!Methods.TryGetValue(key, out result)) {
 				result = GenDelegateForMember<PropertyInfo>(
 					typeof(Func<TTarget, TValue>),
 					property,
@@ -199,7 +163,7 @@ namespace Utilities.Reflection
 					property.DeclaringType.MakeByRefType(),
 					typeof(TValue));
 				MethodInfo setter = property.GetSetMethod();
-				Methods[setter] = result;
+				Methods[key] = result;
 			}
 			return (Func<TTarget, TValue>) result;
 		}
@@ -210,7 +174,8 @@ namespace Utilities.Reflection
 		public Func<TTarget, TReturn> DelegateForGet<TReturn>(FieldInfo field)
 		{
 			Delegate result;
-			if (!Getters.TryGetValue(field, out result)) {
+			FieldKey key = new FieldKey(typeof(TReturn), field);
+			if (!Getters.TryGetValue(key, out result)) {
 				result = GenDelegateForMember<FieldInfo>(
 					typeof(Func<TTarget, TReturn>),
 					field,
@@ -218,7 +183,7 @@ namespace Utilities.Reflection
 					Emit.GenFieldGetter,
 					typeof(TReturn),
 					field.DeclaringType);
-				Getters[field] = result;
+				Getters[key] = result;
 			}
 			return (Func<TTarget, TReturn>) result;
 		}
@@ -228,7 +193,8 @@ namespace Utilities.Reflection
 		/// </summary>
 		public Func<TTarget, TValue> DelegateForSet<TValue>(FieldInfo field)
 		{
-			if (!Setters.TryGetValue(field, out Delegate result)) {
+			FieldKey key = new FieldKey(typeof(TValue), field);
+			if (!Setters.TryGetValue(key, out Delegate result)) {
 				result = GenDelegateForMember<FieldInfo>(
 					typeof(Func<TTarget, TValue>),
 					field,
@@ -237,7 +203,7 @@ namespace Utilities.Reflection
 					typeof(void),
 					field.DeclaringType.MakeByRefType(),
 					typeof(TValue));
-				Setters[field] = result;
+				Setters[key] = result;
 			}
 			return (Func<TTarget, TValue>) result;
 		}
@@ -245,41 +211,43 @@ namespace Utilities.Reflection
 		/// <summary>
 		/// Generates a strongly-typed open-instance delegate to invoke the specified method
 		/// </summary>
-		public Delegate DelegateForCall(MethodInfo method)
+		public Invoker<TTarget> DelegateForCall(MethodInfo method)
 		{
 			Delegate result;
-			if (!Methods.TryGetValue(method, out result)) {
+			MethodKey key = new MethodKey(typeof(TTarget), method);
+			if (!Methods.TryGetValue(key, out result)) {
 				result = GenDelegateForMember<MethodInfo>(
-					typeof(Action<TTarget, object[]>),
+					typeof(Invoker<TTarget>),
 					method,
 					kMethodCallerName + method.DeclaringType.Name + "." + method.Name,
 					Emit.GenMethodInvocation,
 					typeof(void),
 					method.DeclaringType,
 					typeof(object[]));
-				Methods[method] = result;
+				Methods[key] = result;
 			}
-			return result;
+			return (Invoker<TTarget>) result;
 		}
 
 		/// <summary>
 		/// Generates a strongly-typed open-instance delegate to invoke the specified method
 		/// </summary>
-		public Delegate DelegateForCall<TReturn>(MethodInfo method)
+		public Invoker<TTarget, TReturn> DelegateForCall<TReturn>(MethodInfo method)
 		{
 			Delegate result;
-			if (!Methods.TryGetValue(method, out result)) {
+			MethodKey key = new MethodKey(typeof(TTarget), method);
+			if (!Methods.TryGetValue(key, out result)) {
 				result = GenDelegateForMember<MethodInfo>(
-					typeof(Func<TTarget, object[], TReturn>),
+					typeof(Invoker<TTarget, TReturn>),
 					method,
 					kMethodCallerName + method.DeclaringType.Name + "." + method.Name,
 					Emit.GenMethodInvocation,
 					typeof(TReturn),
 					method.DeclaringType,
 					typeof(object[]));
-				Methods[method] = result;
+				Methods[key] = result;
 			}
-			return result;
+			return (Invoker<TTarget, TReturn>) result;
 		}
 	}
 }
