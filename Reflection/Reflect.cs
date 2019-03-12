@@ -255,10 +255,7 @@ namespace Utilities.Reflection
 				return method;
 			}
 			Type type = typeof(TTarget);
-			MethodInfo mi = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).FirstOrDefault(m => m.Name == name);
-			if (mi == null) {
-				mi = type.GetMethod(name);
-			}
+			MethodInfo mi = _Method(type, name);
 			Delegate invoker = Cache.DelegateForCall<TReturn>(mi);
 			Methods[name] = invoker;
 			return (Invoker<TTarget, TReturn>) invoker;
@@ -275,13 +272,31 @@ namespace Utilities.Reflection
 				return method;
 			}
 			Type type = typeof(TTarget);
-			MethodInfo mi = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).FirstOrDefault(m => m.Name == name);
-			if(mi == null) {
-				mi = type.GetMethod(name);
-			}
+			MethodInfo mi = _Method(type, name);
 			Delegate invoker = Cache.DelegateForCall(mi);
 			Methods[name] = invoker;
 			return (Invoker<TTarget>) invoker;
+		}
+
+		private static MethodInfo _Method(Type type, string name)
+		{
+			MethodInfo mi = null;
+			MethodInfo[] mis = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+			for(int i = 0; i < mis.Length; i++) {
+				if(mis[i].Name == name) {
+					mi = mis[i];
+					for(i++; i < mis.Length; i++) {
+						if(mis[i].Name == name) {
+							throw new InvalidOperationException("Ambiguous method name: " + name);
+						}
+					}
+					break;
+				}
+			}
+			if(mi == null) {
+				mi = type.GetMethod(name);
+			}
+			return mi;
 		}
 
 		public static Invoker<TTarget> Method(MethodInfo method)
