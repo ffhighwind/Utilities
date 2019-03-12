@@ -27,7 +27,7 @@ namespace Utilities.Reflection
 
 		public int GetHashCode(FieldKey obj)
 		{
-			return 23 * Type.GetHashCode() ^ Field.GetHashCode();
+			return 23 * obj.GetHashCode() ^ obj.GetHashCode();
 		}
 	}
 }

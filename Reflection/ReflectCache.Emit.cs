@@ -8,6 +8,11 @@ using System.Threading.Tasks;
 
 namespace Utilities.Reflection
 {
+	/// <summary>
+	/// A modified implementation of Vexe's FastReflection.
+	/// Original authors: Vexe and GeorgeR
+	/// <see cref="https://github.com/vexe/Fast.Reflection/blob/master/FastReflection.cs"/>
+	/// </summary>
 	public partial class ReflectCache<TTarget>
 	{
 		public class Emit
