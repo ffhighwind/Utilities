@@ -907,19 +907,37 @@ namespace Utilities
 			// parses as the correct type
 			////string connStr = @"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + path + "; Jet OLEDB:Engine Type = 5; Extended Properties =\"Excel 8.0;\"";
 			// handles column data of multiple types better
-			string connStr = "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + path
-				+ @";Extended Properties=""Excel 8.0;IMEX=1;HDR=NO;TypeGuessRows=0;ImportMixedTypes=Text""";
-			using (OleDbConnection conn = new OleDbConnection(connStr))
-			using (OleDbCommand cmd = new OleDbCommand()) {
-				cmd.Connection = conn;
-				conn.Open();
-				DataTable schema = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
-				if (schema.Rows.Count == 0)
-					throw new InvalidDataException(path);
-				foreach (T obj in action(cmd, schema)) {
-					yield return obj;
+			string[] connStrs = new string[]
+			{
+				"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + path
+					+ @";Extended Properties=""Excel 8.0;IMEX=1;HDR=NO;TypeGuessRows=0;ImportMixedTypes=Text""",
+				"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + path
+					+ @";Extended Properties='Excel 12.0;IMEX=0;HDR=YES;';"
+			};
+			for (int i = 0; i < connStrs.Length; i++) {
+				string connStr = connStrs[i];
+				try {
+					using (OleDbConnection conn = new OleDbConnection(connStr))
+					using (OleDbCommand cmd = new OleDbCommand()) {
+						cmd.Connection = conn;
+						conn.Open();
+						DataTable schema = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
+						if (schema.Rows.Count == 0)
+							throw new InvalidDataException(path);
+						List<T> results = new List<T>();
+						foreach (T obj in action(cmd, schema)) {
+							results.Add(obj);
+						}
+						return results;
+					}
+				}
+				catch {
+					if (i == connStrs.Length - 1) {
+						throw;
+					}
 				}
 			}
+			throw new InvalidOperationException("Unreachable");
 		}
 
 		/// <summary>
