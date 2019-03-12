@@ -284,12 +284,6 @@ namespace Utilities.Reflection
 			return (Invoker<TTarget>) invoker;
 		}
 
-		private static Delegate _Method(string name, BindingFlags flags)
-		{
-			MethodInfo method = typeof(TTarget).GetMethods(flags).FirstOrDefault(m => m.Name == name);
-			return method == null ? null : Cache.DelegateForCall(method);
-		}
-
 		public static Invoker<TTarget> Method(MethodInfo method)
 		{
 			return Cache.DelegateForCall(method);

@@ -43,7 +43,6 @@ namespace Utilities.UnitTests
 			if(test16.Equals(test16_2)) {
 				throw new InvalidOperationException();
 			}
-
 		}
 	}
 }

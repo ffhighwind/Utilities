@@ -95,7 +95,6 @@
     <Compile Include="Reflection\ReflectCache.Emit.cs" />
     <Compile Include="Reflection\FieldKey.cs" />
     <Compile Include="Reflection\MethodKey.cs" />
-    <Compile Include="Reflection\StringKey.cs" />
     <Compile Include="SchemaTableColumn.cs" />
     <Compile Include="Security.cs" />
     <Compile Include="Excel\Spreadsheet.cs" />
