@@ -912,7 +912,7 @@ namespace Utilities
 				"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + path
 					+ @";Extended Properties=""Excel 8.0;IMEX=1;HDR=NO;TypeGuessRows=0;ImportMixedTypes=Text""",
 				"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + path
-					+ @";Extended Properties='Excel 12.0;IMEX=0;HDR=YES;';"
+					+ @";Extended Properties=""Excel 12.0;IMEX=1;HDR=NO;TypeGuessRows=0;ImportMixedTypes=Text"""
 			};
 			for (int i = 0; i < connStrs.Length; i++) {
 				string connStr = connStrs[i];
