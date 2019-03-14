@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Utilities.Reflection
+namespace Utilities.Reflection.Cache
 {
-	internal struct ConstructorKey : IEqualityComparer<ConstructorKey>
+	public struct ConstructorKey : IEqualityComparer<ConstructorKey>
 	{
 		public Type Output;
 		public Type Type;

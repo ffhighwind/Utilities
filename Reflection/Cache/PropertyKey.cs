@@ -5,9 +5,9 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Utilities.Reflection
+namespace Utilities.Reflection.Cache
 {
-	internal struct PropertyKey : IEqualityComparer<PropertyKey>
+	public struct PropertyKey : IEqualityComparer<PropertyKey>
 	{
 		public PropertyKey(Type type, PropertyInfo property)
 		{

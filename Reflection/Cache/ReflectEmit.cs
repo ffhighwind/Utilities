@@ -6,7 +6,7 @@ using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Utilities.Reflection
+namespace Utilities.Reflection.Cache
 {
 	/// <summary>
 	/// A modified implementation of Vexe's FastReflection.

@@ -5,9 +5,9 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Utilities.Reflection
+namespace Utilities.Reflection.Cache
 {
-	internal struct FieldKey : IEqualityComparer<FieldKey>
+	public struct FieldKey : IEqualityComparer<FieldKey>
 	{
 		public FieldKey(Type type, FieldInfo field)
 		{

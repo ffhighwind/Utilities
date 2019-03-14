@@ -5,9 +5,9 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Utilities.Reflection
+namespace Utilities.Reflection.Cache
 {
-	internal struct MethodKey : IEqualityComparer<MethodKey>
+	public struct MethodKey : IEqualityComparer<MethodKey>
 	{
 		public MethodKey(Type type, MethodInfo method)
 		{

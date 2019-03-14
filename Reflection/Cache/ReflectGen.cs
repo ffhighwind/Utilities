@@ -10,12 +10,8 @@ using System.Reflection.Emit;
 /// Original authors: Vexe and GeorgeR
 /// <see cref="https://github.com/vexe/Fast.Reflection/blob/master/FastReflection.cs"/>
 /// </summary>
-namespace Utilities.Reflection
+namespace Utilities.Reflection.Cache
 {
-	public delegate TTarget Ctor<TTarget>(params object[] param);
-	public delegate TReturn Invoker<TTarget, TReturn>(TTarget target, params object[] param);
-	public delegate void Invoker<TTarget>(TTarget target, params object[] param);
-
 	/// <summary>
 	/// A dynamic reflection extensions library that emits IL to set/get fields/properties, call methods and invoke constructors
 	/// Once the delegate is created, it can be stored and reused resulting in much faster access times than using regular reflection
@@ -82,20 +78,20 @@ namespace Utilities.Reflection
 		/// <summary>
 		/// Generates or gets a strongly-typed open-instance delegate to set the value of the specified property on a given target
 		/// </summary>
-		public static Func<TTarget, TValue> DelegateForSet<TValue>(PropertyInfo property)
+		public static Action<TTarget, TValue> DelegateForSet<TValue>(PropertyInfo property)
 		{
 			if (!property.CanWrite) {
 				throw new InvalidOperationException("Property is not writable " + property.Name);
 			}
 			Delegate result = GenDelegateForMember<PropertyInfo>(
-				typeof(Func<TTarget, TValue>),
+				typeof(Action<TTarget, TValue>),
 				property,
 				propertySetterName + property.DeclaringType.Name + "." + property.Name,
 				ReflectEmit<TTarget>.GenPropertySetter,
 				typeof(void),
 				property.DeclaringType.MakeByRefType(),
 				typeof(TValue));
-			return (Func<TTarget, TValue>) result;
+			return (Action<TTarget, TValue>) result;
 		}
 
 		/// <summary>
@@ -116,17 +112,17 @@ namespace Utilities.Reflection
 		/// <summary>
 		/// Generates a strongly-typed open-instance delegate to set the value of the field in a given target
 		/// </summary>
-		public static Func<TTarget, TValue> DelegateForSet<TValue>(FieldInfo field)
+		public static Action<TTarget, TValue> DelegateForSet<TValue>(FieldInfo field)
 		{
 			Delegate result = GenDelegateForMember<FieldInfo>(
-				typeof(Func<TTarget, TValue>),
+				typeof(Action<TTarget, TValue>),
 				field,
 				fieldSetterName + field.DeclaringType.Name + "." + field.Name,
 				ReflectEmit<TTarget>.GenFieldSetter,
 				typeof(void),
 				field.DeclaringType.MakeByRefType(),
 				typeof(TValue));
-			return (Func<TTarget, TValue>) result;
+			return (Action<TTarget, TValue>) result;
 		}
 
 		/// <summary>
