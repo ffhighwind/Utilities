@@ -281,11 +281,11 @@ namespace Utilities.Reflection.Cache
 			GenMemberSetter(emit, field, field.FieldType, field.IsStatic,
 				(e, f) =>
 				{
-					if (field.IsStatic) {
-						e.Emit(OpCodes.Stsfld, field);
+					if (f.IsStatic) {
+						e.Emit(OpCodes.Stsfld, f);
 					}
 					else {
-						e.Emit(OpCodes.Stfld, field);
+						e.Emit(OpCodes.Stfld, f);
 					}
 				}
 			);
@@ -296,7 +296,7 @@ namespace Utilities.Reflection.Cache
 			GenMemberSetter(emit, property, property.PropertyType,
 				property.GetSetMethod(true).IsStatic, (e, p) =>
 				{
-					MethodInfo m = ((PropertyInfo) p).GetSetMethod(true);
+					MethodInfo m = p.GetSetMethod(true);
 					if (m.IsVirtual)
 						emit.Emit(OpCodes.Callvirt, m);
 					else
@@ -305,7 +305,8 @@ namespace Utilities.Reflection.Cache
 			);
 		}
 
-		private static void GenMemberSetter(ILGenerator emit, MemberInfo member, Type memberType, bool isStatic, Action<ILGenerator, MemberInfo> set)
+		private static void GenMemberSetter<MInfo>(ILGenerator emit, MInfo member, Type memberType, bool isStatic, Action<ILGenerator, MInfo> set)
+			where MInfo : MemberInfo
 		{
 			Type targetType = typeof(TTarget);
 			bool stronglyTyped = targetType != typeof(object);

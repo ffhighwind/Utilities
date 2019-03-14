@@ -5,6 +5,13 @@ namespace Utilities.UnitTests
 {
 	public class Test16 : IEquatable<Test16>
 	{
+		public Test16() { }
+		public Test16(int year)
+		{
+			Year = year;
+		}
+
+		public int Field;
 		public int Year { get; set; }
 		public string Segment { get; set; }
 		public string Country { get; set; }
@@ -26,6 +33,8 @@ namespace Utilities.UnitTests
 		{
 			return Equals(obj as Test16);
 		}
+
+		public void Test() { }
 
 		public bool Equals(Test16 other)
 		{

@@ -27,13 +27,6 @@ namespace Utilities.Reflection.Cache
 	/// </summary>
 	public static class ReflectGen<TTarget>
 	{
-		private const string ctorName = "ctor.";
-		private const string methodName = "method.";
-		private const string fieldSetterName = "fset.";
-		private const string fieldGetterName = "fget.";
-		private const string propertySetterName = "pset.";
-		private const string propertyGetterName = "pget.";
-
 		private static Delegate GenDelegateForMember<TMember>(Type delegateType, TMember member, string dynMethodName,
 			Action<ILGenerator, TMember> generator, Type returnType, params Type[] paramTypes)
 			where TMember : MemberInfo
@@ -56,7 +49,8 @@ namespace Utilities.Reflection.Cache
 				Type = type,
 				ParamTypes = paramTypes,
 			};
-			DynamicMethod dynMethod = new DynamicMethod(ctorName + type.Name + "_" + paramTypes.Length, type, inputParamTypes, true);
+			string methodName = type.Name + "(" + string.Join(",", paramTypes.Select(p => p.Name)) + ")";
+			DynamicMethod dynMethod = new DynamicMethod(methodName, type, inputParamTypes, true);
 			ILGenerator emit = dynMethod.GetILGenerator();
 			ReflectEmit<TTarget>.GenCtor(emit, type, paramTypes);
 			Delegate result = dynMethod.CreateDelegate(delegateType);
@@ -87,13 +81,14 @@ namespace Utilities.Reflection.Cache
 			if (!property.CanRead) {
 				throw new InvalidOperationException("Property is not readable: " + property.Name);
 			}
+			//return (Func<TTarget, TReturn>) property.GetGetMethod().CreateDelegate(typeof(Func<TTarget, TReturn>));
 			Delegate result = GenDelegateForMember<PropertyInfo>(
 				typeof(Func<TTarget, TReturn>),
 				property,
-				propertyGetterName + property.DeclaringType.Name + "." + property.Name,
+				"get_" + property.Name + "(" + property.DeclaringType.Name + ")",
 				ReflectEmit<TTarget>.GenPropertyGetter,
 				typeof(TReturn),
-				property.DeclaringType);
+				typeof(TTarget));
 			return (Func<TTarget, TReturn>) result;
 		}
 
@@ -105,13 +100,16 @@ namespace Utilities.Reflection.Cache
 			if (!property.CanWrite) {
 				throw new InvalidOperationException("Property is not writable " + property.Name);
 			}
+			//return (Action<TTarget, TValue>) property.GetSetMethod().CreateDelegate(typeof(Action<TTarget, TValue>));
+
 			Delegate result = GenDelegateForMember<PropertyInfo>(
 				typeof(Action<TTarget, TValue>),
 				property,
-				propertySetterName + property.DeclaringType.Name + "." + property.Name,
+				"set_" + property.Name + "(" + property.DeclaringType.Name + ")",
 				ReflectEmit<TTarget>.GenPropertySetter,
-				typeof(void),
-				property.DeclaringType.MakeByRefType(),
+				null,
+				typeof(TTarget), 
+				//typeof(TTarget).MakeByRefType(),
 				typeof(TValue));
 			return (Action<TTarget, TValue>) result;
 		}
@@ -124,10 +122,10 @@ namespace Utilities.Reflection.Cache
 			Delegate result = GenDelegateForMember<FieldInfo>(
 				typeof(Func<TTarget, TReturn>),
 				field,
-				fieldGetterName + field.DeclaringType.Name + "." + field.Name,
+				"get_" + field.Name + "(" + field.DeclaringType.Name + ")",
 				ReflectEmit<TTarget>.GenFieldGetter,
 				typeof(TReturn),
-				field.DeclaringType);
+				typeof(TTarget));
 			return (Func<TTarget, TReturn>) result;
 		}
 
@@ -139,10 +137,11 @@ namespace Utilities.Reflection.Cache
 			Delegate result = GenDelegateForMember<FieldInfo>(
 				typeof(Action<TTarget, TValue>),
 				field,
-				fieldSetterName + field.DeclaringType.Name + "." + field.Name,
+				"set_" + field.Name + "(" + field.DeclaringType.Name + ")",
 				ReflectEmit<TTarget>.GenFieldSetter,
-				typeof(void),
-				field.DeclaringType.MakeByRefType(),
+				null,
+				typeof(TTarget), 
+				//typeof(TTarget).MakeByRefType(),
 				typeof(TValue));
 			return (Action<TTarget, TValue>) result;
 		}
@@ -155,10 +154,10 @@ namespace Utilities.Reflection.Cache
 			Delegate result = GenDelegateForMember<MethodInfo>(
 				typeof(Invoker<TTarget>),
 				method,
-				methodName + method.DeclaringType.Name + "." + method.Name,
+				method.Name + "(" + method.DeclaringType.Name + ")",
 				ReflectEmit<TTarget>.GenMethodInvocation,
-				typeof(void),
-				method.DeclaringType,
+				null,
+				typeof(TTarget),
 				typeof(object[]));
 			return (Invoker<TTarget>) result;
 		}
@@ -171,10 +170,10 @@ namespace Utilities.Reflection.Cache
 			Delegate result = GenDelegateForMember<MethodInfo>(
 				typeof(Invoker<TTarget, TReturn>),
 				method,
-				methodName + method.DeclaringType.Name + "." + method.Name,
+				method.Name + "(" + method.DeclaringType.Name + ")",
 				ReflectEmit<TTarget>.GenMethodInvocation,
 				typeof(TReturn),
-				method.DeclaringType,
+				typeof(TTarget),
 				typeof(object[]));
 			return (Invoker<TTarget, TReturn>) result;
 		}
