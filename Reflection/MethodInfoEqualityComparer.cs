@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace Utilities.Reflection
 {
+	/// <summary>
+	/// https://ayende.com/blog/2658/method-equality
+	/// </summary>
 	public class MethodInfoEqualityComparer : IEqualityComparer<MethodInfo>
 	{
 		public static readonly MethodInfoEqualityComparer Default = new MethodInfoEqualityComparer();
@@ -18,11 +21,7 @@ namespace Utilities.Reflection
 				return true;
 			// GetHashCode calls to RuntimeMethodHandle.StripMethodInstantiation()
 			// which is needed to fix issues with method equality from generic types.
-			if (x.GetHashCode() != y.GetHashCode())
-				return false;
-			if (x.DeclaringType != y.DeclaringType)
-				return false;
-			if (x.ReturnType != y.ReturnType)
+			if (x.GetHashCode() != y.GetHashCode() || x.Name != y.Name || x.DeclaringType != y.DeclaringType || x.ReturnType != y.ReturnType)
 				return false;
 			ParameterInfo[] leftParams = x.GetParameters();
 			ParameterInfo[] rightParams = y.GetParameters();
