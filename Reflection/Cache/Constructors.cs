@@ -7,15 +7,10 @@ using System.Threading.Tasks;
 
 namespace Utilities.Reflection.Cache
 {
-	internal static class Constructors
-	{
-		public static Type[] objectArrayParam = new Type[] { typeof(object[]) };
-	}
-
 	public static class Constructors<TTarget>
 	{
 		private static IDictionary<ConstructorKey, Ctor<TTarget>> Ctors;
-		public static readonly Func<TTarget> New = (Func<TTarget>) ReflectGen<TTarget>.DelegateForCtor(typeof(Func<TTarget>), typeof(TTarget), Array.Empty<Type>(), Array.Empty<Type>());
+		public static readonly Func<TTarget> New;
 
 		static Constructors()
 		{
@@ -25,6 +20,10 @@ namespace Utilities.Reflection.Cache
 			else {
 				Ctors = new Dictionary<ConstructorKey, Ctor<TTarget>>(ConstructorKey.Comparer);
 			}
+			try {
+				New = (Func<TTarget>) ReflectGen<TTarget>.DelegateForCtor(typeof(Func<TTarget>), typeof(TTarget), Array.Empty<Type>(), Array.Empty<Type>());
+			}
+			catch { }
 		}
 
 		public static void SetConcurrent(bool concurrent = true)
@@ -68,7 +67,7 @@ namespace Utilities.Reflection.Cache
 				ParamTypes = paramTypes
 			};
 			if (!Ctors.TryGetValue(key, out Ctor<TTarget> result)) {
-				result = (Ctor<TTarget>) ReflectGen<TTarget>.DelegateForCtor(typeof(Ctor<TTarget>), typeof(TTarget), Constructors.objectArrayParam, paramTypes);
+				result = (Ctor<TTarget>) ReflectGen<TTarget>.DelegateForCtor(typeof(Ctor<TTarget>), type, ReflectGen.objectArrayParam, paramTypes);
 				Ctors[key] = result;
 			}
 			return result;

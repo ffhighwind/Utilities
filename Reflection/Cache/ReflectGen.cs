@@ -12,6 +12,12 @@ using System.Reflection.Emit;
 /// </summary>
 namespace Utilities.Reflection.Cache
 {
+
+	internal static class ReflectGen
+	{
+		public static Type[] objectArrayParam = new Type[] { typeof(object[]) };
+	}
+
 	/// <summary>
 	/// A dynamic reflection extensions library that emits IL to set/get fields/properties, call methods and invoke constructors
 	/// Once the delegate is created, it can be stored and reused resulting in much faster access times than using regular reflection
@@ -55,6 +61,22 @@ namespace Utilities.Reflection.Cache
 			ReflectEmit<TTarget>.GenCtor(emit, type, paramTypes);
 			Delegate result = dynMethod.CreateDelegate(delegateType);
 			return result;
+		}
+
+		/// <summary>
+		/// Generates or gets a strongly-typed open-instance delegate to the specified type constructor that takes the specified type params
+		/// </summary>
+		public static Ctor<TTarget> DelegateForCtor(Type type, params Type[] paramTypes)
+		{
+			return (Ctor<TTarget>) DelegateForCtor(typeof(Ctor<TTarget>), type, ReflectGen.objectArrayParam, paramTypes);
+		}
+
+		/// <summary>
+		/// Generates or gets a strongly-typed open-instance delegate to the specified type constructor that takes the specified type params
+		/// </summary>
+		public static Ctor<TTarget> DelegateForCtor(params Type[] paramTypes)
+		{
+			return (Ctor<TTarget>) DelegateForCtor(typeof(Ctor<TTarget>), typeof(TTarget), ReflectGen.objectArrayParam, paramTypes);
 		}
 
 		/// <summary>
