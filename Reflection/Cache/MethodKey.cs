@@ -20,7 +20,7 @@ namespace Utilities.Reflection.Cache
 
 		public bool Equals(MethodKey x, MethodKey y)
 		{
-			return x.Type.Equals(y.Type) && MethodInfoEqualityComparer.Default.Equals(x.Method, y.Method);
+			return x.Type == y.Type && x.Method.Equals(y.Method);
 		}
 
 		public int GetHashCode(MethodKey obj)

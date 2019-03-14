@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Utilities.Reflection
+namespace Utilities.Comparers
 {
 	/// <summary>
 	/// https://ayende.com/blog/2658/method-equality
