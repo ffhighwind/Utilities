@@ -109,6 +109,28 @@ namespace Dapper
 			return new ConnectedEnumerable<T>(list, conn);
 		}
 
+		public override IEnumerable<T> GetTop(int limit, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			SqlConnection conn = new SqlConnection(ConnectionString);
+			IEnumerable<T> list = Queries.GetTopFunc(conn, limit, whereCondition, param, null, buffered, commandTimeout);
+			if (buffered) {
+				conn.Dispose(); // conn.Close();
+				return list;
+			}
+			return new ConnectedEnumerable<T>(list, conn);
+		}
+
+		public override IEnumerable<T> GetDistinct(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			SqlConnection conn = new SqlConnection(ConnectionString);
+			IEnumerable<T> list = Queries.GetDistinctFunc(conn, whereCondition, param, null, buffered, commandTimeout);
+			if (buffered) {
+				conn.Dispose(); // conn.Close();
+				return list;
+			}
+			return new ConnectedEnumerable<T>(list, conn);
+		}
+
 		public override T Insert(T obj, int? commandTimeout = null)
 		{
 			using (SqlConnection conn = new SqlConnection(ConnectionString)) {
@@ -240,6 +262,16 @@ namespace Dapper
 		public override IEnumerable<T> GetList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
 			return Queries.GetListFunc(transaction.Connection, whereCondition, param, transaction, buffered, commandTimeout);
+		}
+
+		public override IEnumerable<T> GetTop(IDbTransaction transaction, int limit, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			return Queries.GetTopFunc(transaction.Connection, limit, whereCondition, param, transaction, buffered, commandTimeout);
+		}
+
+		public override IEnumerable<T> GetDistinct(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			return Queries.GetDistinctFunc(transaction.Connection, whereCondition, param, transaction, buffered, commandTimeout);
 		}
 
 		public override T Insert(IDbTransaction transaction, T obj, int? commandTimeout = null)
@@ -407,6 +439,28 @@ namespace Dapper
 		{
 			SqlConnection conn = new SqlConnection(ConnectionString);
 			IEnumerable<T> objs = Queries.GetListFunc(conn, whereCondition, param, null, buffered, commandTimeout);
+			if (buffered) {
+				conn.Dispose(); // conn.Close();
+				return objs;
+			}
+			return new ConnectedEnumerable<T>(objs, conn);
+		}
+
+		public override IEnumerable<T> GetTop(int limit, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			SqlConnection conn = new SqlConnection(ConnectionString);
+			IEnumerable<T> objs = Queries.GetTopFunc(conn, limit, whereCondition, param, null, buffered, commandTimeout);
+			if (buffered) {
+				conn.Dispose(); // conn.Close();
+				return objs;
+			}
+			return new ConnectedEnumerable<T>(objs, conn);
+		}
+
+		public override IEnumerable<T> GetDistinct(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			SqlConnection conn = new SqlConnection(ConnectionString);
+			IEnumerable<T> objs = Queries.GetDistinctFunc(conn, whereCondition, param, null, buffered, commandTimeout);
 			if (buffered) {
 				conn.Dispose(); // conn.Close();
 				return objs;
@@ -593,6 +647,16 @@ namespace Dapper
 		public override IEnumerable<T> GetList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
 			return Queries.GetListFunc(transaction.Connection, whereCondition, param, transaction, buffered, commandTimeout);
+		}
+
+		public override IEnumerable<T> GetTop(IDbTransaction transaction, int limit, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			return Queries.GetTopFunc(transaction.Connection, limit, whereCondition, param, transaction, buffered, commandTimeout);
+		}
+
+		public override IEnumerable<T> GetDistinct(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			return Queries.GetDistinctFunc(transaction.Connection, whereCondition, param, transaction, buffered, commandTimeout);
 		}
 
 		public override int RecordCount(IDbTransaction transaction, string whereCondition = "", object param = null, int? commandTimeout = null)

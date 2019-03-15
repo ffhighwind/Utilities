@@ -57,6 +57,8 @@ namespace Dapper.Extension
 			GetFunc = impl.GetFunc;
 			GetKeysFunc = impl.GetKeysFunc;
 			GetListFunc = impl.GetListFunc;
+			GetTopFunc = impl.GetTopFunc;
+			GetDistinctFunc = impl.GetDistinctFunc;
 			InsertFunc = impl.InsertFunc;
 			RecordCountFunc = impl.RecordCountFunc;
 			UpdateFunc = impl.UpdateFunc;
@@ -86,6 +88,8 @@ namespace Dapper.Extension
 		public TableQueries<T>.Delegates.DbObjObj GetFunc { get; private set; }
 		public TableQueries<T>.Delegates.DbWhereList GetKeysFunc { get; private set; }
 		public TableQueries<T>.Delegates.DbWhereList GetListFunc { get; private set; }
+		public TableQueries<T>.Delegates.DbWhereList GetDistinctFunc { get; private set; }
+		public TableQueries<T>.Delegates.DbLimitList GetTopFunc { get; private set; }
 		public TableQueries<T>.Delegates.DbObjObj InsertFunc { get; private set; }
 		public TableQueries<T>.Delegates.DbWhereInt RecordCountFunc { get; private set; }
 		public TableQueries<T>.Delegates.DbObjBool UpdateFunc { get; private set; }

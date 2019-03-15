@@ -107,6 +107,18 @@ namespace Dapper
 			return TableData<T>.Queries.GetListFunc(connection, whereCondition, param, transaction, buffered, commandTimeout);
 		}
 
+		public static IEnumerable<T> GetTop<T>(this IDbConnection connection, int limit, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+			where T : class
+		{
+			return TableData<T>.Queries.GetTopFunc(connection, limit, whereCondition, param, transaction, buffered, commandTimeout);
+		}
+
+		public static IEnumerable<T> GetDistinct<T>(this IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+			where T : class
+		{
+			return TableData<T>.Queries.GetDistinctFunc(connection, whereCondition, param, transaction, buffered, commandTimeout);
+		}
+
 		public static int RecordCount<T>(this IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, int? commandTimeout = null)
 			where T : class
 		{
@@ -208,6 +220,18 @@ namespace Dapper
 			where T : class
 		{
 			return await Task.Run(() => GetList<T>(connection, whereCondition, param, transaction, buffered, commandTimeout));
+		}
+
+		public static async Task<IEnumerable<T>> GetTopAsync<T>(this IDbConnection connection, int limit, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+			where T : class
+		{
+			return await Task.Run(() => GetTop<T>(connection, limit, whereCondition, param, transaction, buffered, commandTimeout));
+		}
+
+		public static async Task<IEnumerable<T>> GetDistinctAsync<T>(this IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null)
+			where T : class
+		{
+			return await Task.Run(() => GetDistinct<T>(connection, whereCondition, param, transaction, buffered, commandTimeout));
 		}
 
 		public static async Task<int> RecordCountAsync<T>(this IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, int? commandTimeout = null)

@@ -34,6 +34,7 @@ namespace Dapper.Extension
 			public delegate int DbWhereInt(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, int? commandTimeout = null);
 			public delegate int DbWhereBufferedInt(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
 			public delegate IEnumerable<T> DbWhereList(IDbConnection connection, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
+			public delegate IEnumerable<T> DbLimitList(IDbConnection connection, int limit, string whereCondition = "", object param = null, IDbTransaction transaction = null, bool buffered = true, int? commandTimeout = null);
 			public delegate T DbDictObj(IDbConnection connection, IDictionary<string, object> key, IDbTransaction transaction = null, int? commandTimeout = null);
 			public delegate T DbObjObj(IDbConnection connection, T obj, IDbTransaction transaction = null, int? commandTimeout = null);
 		}

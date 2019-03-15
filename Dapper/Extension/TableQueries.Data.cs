@@ -50,6 +50,8 @@ namespace Dapper.Extension
 			public TableQueries<T>.Delegates.DbObjObj GetFunc { get; set; }
 			public TableQueries<T>.Delegates.DbWhereList GetKeysFunc { get; set; }
 			public TableQueries<T>.Delegates.DbWhereList GetListFunc { get; set; }
+			public TableQueries<T>.Delegates.DbWhereList GetDistinctFunc { get; set; }
+			public TableQueries<T>.Delegates.DbLimitList GetTopFunc { get; set; }
 			public TableQueries<T>.Delegates.DbObjObj InsertFunc { get; set; }
 			public TableQueries<T>.Delegates.DbWhereInt RecordCountFunc { get; set; }
 			//public TableQueries<T>.Delegates.RemoveDuplicatesFunc RemoveDuplicatesFunc { get; set; }

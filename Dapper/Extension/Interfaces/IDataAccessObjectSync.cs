@@ -27,6 +27,8 @@ namespace Dapper.Extension.Interfaces
 		Ret Get(IDictionary<string, object> key, int? commandTimeout = null);
 		Ret Get(T obj, int? commandTimeout = null);
 		IEnumerable<Ret> GetList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		IEnumerable<Ret> GetTop(int limit, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		IEnumerable<Ret> GetDistinct(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
 		int RecordCount(string whereCondition = "", object param = null, int? commandTimeout = null);
 
@@ -55,6 +57,8 @@ namespace Dapper.Extension.Interfaces
 		Ret Get(IDbTransaction transaction, IDictionary<string, object> key, int? commandTimeout = null);
 		Ret Get(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		IEnumerable<Ret> GetList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		IEnumerable<Ret> GetTop(IDbTransaction transaction, int limit, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		IEnumerable<Ret> GetDistinct(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
 		int RecordCount(IDbTransaction transaction, string whereCondition = "", object param = null, int? commandTimeout = null);
 
@@ -90,6 +94,8 @@ namespace Dapper.Extension.Interfaces
 		Ret Get(IDictionary<string, object> key, int? commandTimeout = null);
 		Ret Get(T obj, int? commandTimeout = null);
 		IEnumerable<Ret> GetList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		IEnumerable<Ret> GetTop(int limit, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		IEnumerable<Ret> GetDistinct(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
 		int RecordCount(string whereCondition = "", object param = null, int? commandTimeout = null);
 
@@ -121,6 +127,8 @@ namespace Dapper.Extension.Interfaces
 		Ret Get(IDbTransaction transaction, IDictionary<string, object> key, int? commandTimeout = null);
 		Ret Get(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		IEnumerable<Ret> GetList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		IEnumerable<Ret> GetTop(IDbTransaction transaction, int limit, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		IEnumerable<Ret> GetDistinct(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
 		int RecordCount(IDbTransaction transaction, string whereCondition = "", object param = null, int? commandTimeout = null);
 

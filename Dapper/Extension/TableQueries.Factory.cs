@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -166,8 +165,8 @@ namespace Dapper.Extension
 
 				deleteQuery = "DELETE FROM " + TableName + "\n";
 				deleteSingleQuery = deleteQuery + whereDeleteEquals;
-				selectQuery = "SELECT " + GetAsParams(SelectProperties) + " FROM " + TableName + "\n";
-				selectSingleQuery = selectQuery + whereEquals;
+				paramsSelectFrom = GetAsParams(SelectProperties) + " FROM " + TableName + "\n";
+				selectSingleQuery = "SELECT " + paramsSelectFrom + whereEquals;
 
 				List<object> _valuesInserted = new List<object>();
 				_valuesInserted.Add("VALUES (");
@@ -267,7 +266,21 @@ namespace Dapper.Extension
 
 				queries.GetListFunc = (connection, whereCondition, param, transaction, buffered, commandTimeout) =>
 				{
-					string query = selectQuery + whereCondition;
+					string query = "SELECT " + paramsSelectFrom + whereCondition;
+					IEnumerable<T> list = connection.Query<T>(query, param, transaction, buffered, commandTimeout);
+					return list;
+				};
+
+				queries.GetTopFunc = (connection, limit, whereCondition, param, transaction, buffered, commandTimeout) =>
+				{
+					string query = "SELECT TOP(" + limit + ") " + paramsSelectFrom + whereCondition;
+					IEnumerable<T> list = connection.Query<T>(query, param, transaction, buffered, commandTimeout);
+					return list;
+				};
+
+				queries.GetDistinctFunc = (connection, whereCondition, param, transaction, buffered, commandTimeout) =>
+				{
+					string query = "SELECT DISTINCT " + paramsSelectFrom + whereCondition;
 					IEnumerable<T> list = connection.Query<T>(query, param, transaction, buffered, commandTimeout);
 					return list;
 				};
@@ -291,7 +304,7 @@ namespace Dapper.Extension
 					return connection.Query<int>(query, param, transaction, true, commandTimeout).First();
 				};
 
-				string truncateQuery = countQuery + "TRUNCATE TABLE " + TableName;
+				string truncateQuery = countQuery + ";TRUNCATE TABLE " + TableName;
 				queries.DeleteWhereFunc = (connection, whereCondition, param, transaction, commandTimeout) =>
 				{
 					if (whereCondition.Length == 0) {
@@ -744,7 +757,7 @@ namespace Dapper.Extension
 
 			protected string deleteQuery { get; set; }
 			protected string deleteSingleQuery { get; set; }
-			protected string selectQuery { get; set; }
+			protected string paramsSelectFrom { get; set; }
 			protected string selectSingleQuery { get; set; }
 
 			/// <summary>

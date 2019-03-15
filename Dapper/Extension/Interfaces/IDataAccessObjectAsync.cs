@@ -27,6 +27,8 @@ namespace Dapper.Extension.Interfaces
 		Task<Ret> GetAsync(IDictionary<string, object> key, int? commandTimeout = null);
 		Task<Ret> GetAsync(T obj, int? commandTimeout = null);
 		Task<IEnumerable<Ret>> GetListAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		Task<IEnumerable<Ret>> GetTopAsync(int limit, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		Task<IEnumerable<Ret>> GetDistinctAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
 		Task<int> RecordCountAsync(string whereCondition = "", object param = null, int? commandTimeout = null);
 
@@ -56,6 +58,8 @@ namespace Dapper.Extension.Interfaces
 		Task<Ret> GetAsync(IDbTransaction transaction, IDictionary<string, object> key, int? commandTimeout = null);
 		Task<Ret> GetAsync(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		Task<IEnumerable<Ret>> GetListAsync(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		Task<IEnumerable<Ret>> GetTopAsync(IDbTransaction transaction, int limit, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		Task<IEnumerable<Ret>> GetDistinctAsync(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
 		Task<int> RecordCountAsync(IDbTransaction transaction, string whereCondition = "", object param = null, int? commandTimeout = null);
 
@@ -90,6 +94,8 @@ namespace Dapper.Extension.Interfaces
 		Task<Ret> GetAsync(IDictionary<string, object> key, int? commandTimeout = null);
 		Task<Ret> GetAsync(T obj, int? commandTimeout = null);
 		Task<IEnumerable<Ret>> GetListAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		Task<IEnumerable<Ret>> GetTopAsync(int limit, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		Task<IEnumerable<Ret>> GetDistinctAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
 		Task<int> RecordCountAsync(string whereCondition = "", object param = null, int? commandTimeout = null);
 
@@ -121,6 +127,8 @@ namespace Dapper.Extension.Interfaces
 		Task<Ret> GetAsync(IDbTransaction transaction, IDictionary<string, object> key, int? commandTimeout = null);
 		Task<Ret> GetAsync(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		Task<IEnumerable<Ret>> GetListAsync(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		Task<IEnumerable<Ret>> GetTopAsync(IDbTransaction transaction, int limit, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		Task<IEnumerable<Ret>> GetDistinctAsync(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 
 		Task<int> RecordCountAsync(IDbTransaction transaction, string whereCondition = "", object param = null, int? commandTimeout = null);
 

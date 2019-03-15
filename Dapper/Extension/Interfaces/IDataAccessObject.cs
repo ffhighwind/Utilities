@@ -37,6 +37,9 @@ namespace Dapper.Extension.Interfaces
 		public abstract Ret Get(T obj, int? commandTimeout = null);
 		public abstract IEnumerable<T> GetKeys(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		public abstract IEnumerable<Ret> GetList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		public abstract IEnumerable<Ret> GetTop(int limit, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		public abstract IEnumerable<Ret> GetDistinct(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+
 		public abstract Ret Insert(T obj, int? commandTimeout = null);
 		public abstract bool Update(T obj, int? commandTimeout = null);
 		public abstract Ret Upsert(T obj, int? commandTimeout = null);
@@ -96,6 +99,16 @@ namespace Dapper.Extension.Interfaces
 		public async Task<IEnumerable<Ret>> GetListAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
 			return await Task.Run(() => GetList(whereCondition, param, buffered, commandTimeout));
+		}
+
+		public async Task<IEnumerable<Ret>> GetTopAsync(int limit, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			return await Task.Run(() => GetTop(limit, whereCondition, param, buffered, commandTimeout));
+		}
+
+		public async Task<IEnumerable<Ret>> GetDistinctAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			return await Task.Run(() => GetDistinct(whereCondition, param, buffered, commandTimeout));
 		}
 
 		public async Task<Ret> InsertAsync(T obj, int? commandTimeout = null)
@@ -159,6 +172,9 @@ namespace Dapper.Extension.Interfaces
 		public abstract Ret Get(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		public abstract IEnumerable<T> GetKeys(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		public abstract IEnumerable<Ret> GetList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		public abstract IEnumerable<Ret> GetTop(IDbTransaction transaction, int limit, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		public abstract IEnumerable<Ret> GetDistinct(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+
 		public abstract Ret Insert(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		public abstract bool Update(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		//public abstract int Update(IDbTransaction transaction, string whereCondition = "", object param = null, int? commandTimeout = null);
@@ -214,6 +230,16 @@ namespace Dapper.Extension.Interfaces
 		public async Task<IEnumerable<Ret>> GetListAsync(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
 			return await Task.Run(() => GetList(transaction, whereCondition, param, buffered, commandTimeout));
+		}
+
+		public async Task<IEnumerable<Ret>> GetTopAsync(IDbTransaction transaction, int limit, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			return await Task.Run(() => GetTop(transaction, limit, whereCondition, param, buffered, commandTimeout));
+		}
+
+		public async Task<IEnumerable<Ret>> GetDistinctAsync(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			return await Task.Run(() => GetDistinct(transaction, whereCondition, param, buffered, commandTimeout));
 		}
 
 		public async Task<Ret> InsertAsync(IDbTransaction transaction, T obj, int? commandTimeout = null)
@@ -316,6 +342,8 @@ namespace Dapper.Extension.Interfaces
 		public abstract Ret Get(T obj, int? commandTimeout = null);
 		public abstract IEnumerable<KeyType> GetKeys(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		public abstract IEnumerable<Ret> GetList(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		public abstract IEnumerable<Ret> GetTop(int limit, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		public abstract IEnumerable<Ret> GetDistinct(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
 		public abstract Ret Insert(T obj, int? commandTimeout = null);
 		public abstract bool Update(T obj, int? commandTimeout = null);
 		public abstract Ret Upsert(T obj, int? commandTimeout = null);
@@ -393,6 +421,16 @@ namespace Dapper.Extension.Interfaces
 			return await Task.Run(() => GetList(whereCondition, param, buffered, commandTimeout));
 		}
 
+		public async Task<IEnumerable<Ret>> GetTopAsync(int limit, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			return await Task.Run(() => GetTop(limit, whereCondition, param, buffered, commandTimeout));
+		}
+
+		public async Task<IEnumerable<Ret>> GetDistinctAsync(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			return await Task.Run(() => GetDistinct(whereCondition, param, buffered, commandTimeout));
+		}
+
 		public async Task<Ret> InsertAsync(T obj, int? commandTimeout = null)
 		{
 			return await Task.Run(() => Insert(obj, commandTimeout));
@@ -459,6 +497,9 @@ namespace Dapper.Extension.Interfaces
 		public abstract Ret Get(IDbTransaction transaction, KeyType key, int? commandTimeout = null);
 		public abstract Ret Get(IDbTransaction transaction, T obj, int? commandTimeout = null);
 		public abstract IEnumerable<Ret> GetList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		public abstract IEnumerable<Ret> GetTop(IDbTransaction transaction, int limit, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+		public abstract IEnumerable<Ret> GetDistinct(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null);
+
 		public abstract int RecordCount(IDbTransaction transaction, string whereCondition = "", object param = null, int? commandTimeout = null);
 
 		public abstract IEnumerable<Ret> BulkInsert(SqlTransaction transaction, IEnumerable<T> objs, bool buffered = true, int? commandTimeout = null);
@@ -501,6 +542,16 @@ namespace Dapper.Extension.Interfaces
 		public async Task<IEnumerable<Ret>> GetListAsync(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
 			return await Task.Run(() => GetList(transaction, whereCondition, param, buffered, commandTimeout));
+		}
+
+		public async Task<IEnumerable<Ret>> GetTopAsync(IDbTransaction transaction, int limit, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			return await Task.Run(() => GetTop(transaction, limit, whereCondition, param, buffered, commandTimeout));
+		}
+
+		public async Task<IEnumerable<Ret>> GetDistinctAsync(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			return await Task.Run(() => GetDistinct(transaction, whereCondition, param, buffered, commandTimeout));
 		}
 
 		public async Task<Ret> InsertAsync(IDbTransaction transaction, T obj, int? commandTimeout = null)

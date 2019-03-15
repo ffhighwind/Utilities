@@ -189,6 +189,18 @@ namespace Dapper.Extension
 			return UpsertItems(list);
 		}
 
+		public override IEnumerable<Ret> GetTop(int limit, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			IEnumerable<T> list = DAO.GetTop(limit, whereCondition, param, buffered, commandTimeout);
+			return UpsertItems(list);
+		}
+
+		public override IEnumerable<Ret> GetDistinct(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			IEnumerable<T> list = DAO.GetDistinct(whereCondition, param, buffered, commandTimeout);
+			return UpsertItems(list);
+		}
+
 		public override int RecordCount(string whereCondition = "", object param = null, int? commandTimeout = null)
 		{
 			return DAO.RecordCount(whereCondition, param, commandTimeout);
@@ -315,6 +327,18 @@ namespace Dapper.Extension
 		public override IEnumerable<Ret> GetList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
 			return UpsertItems(DAO.GetList(transaction, whereCondition, param, buffered, commandTimeout));
+		}
+
+		public override IEnumerable<Ret> GetTop(IDbTransaction transaction, int limit, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			IEnumerable<T> list = DAO.GetTop(transaction, limit, whereCondition, param, buffered, commandTimeout);
+			return UpsertItems(list);
+		}
+
+		public override IEnumerable<Ret> GetDistinct(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			IEnumerable<T> list = DAO.GetDistinct(transaction, whereCondition, param, buffered, commandTimeout);
+			return UpsertItems(list);
 		}
 
 		public override int RecordCount(IDbTransaction transaction, string whereCondition = "", object param = null, int? commandTimeout = null)
@@ -511,6 +535,18 @@ namespace Dapper.Extension
 			return UpsertItems(list);
 		}
 
+		public override IEnumerable<Ret> GetTop(int limit, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			IEnumerable<T> list = DAO.GetTop(limit, whereCondition, param, buffered, commandTimeout);
+			return UpsertItems(list);
+		}
+
+		public override IEnumerable<Ret> GetDistinct(string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			IEnumerable<T> list = DAO.GetDistinct(whereCondition, param, buffered, commandTimeout);
+			return UpsertItems(list);
+		}
+
 		public override int RecordCount(string whereCondition = "", object param = null, int? commandTimeout = null)
 		{
 			return DAO.RecordCount(whereCondition, param, commandTimeout);
@@ -626,6 +662,18 @@ namespace Dapper.Extension
 		public override IEnumerable<Ret> GetList(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
 		{
 			IEnumerable<T> list = DAO.GetList(transaction, whereCondition, param, buffered, commandTimeout);
+			return UpsertItems(list);
+		}
+
+		public override IEnumerable<Ret> GetTop(IDbTransaction transaction, int limit, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			IEnumerable<T> list = DAO.GetTop(transaction, limit, whereCondition, param, buffered, commandTimeout);
+			return UpsertItems(list);
+		}
+
+		public override IEnumerable<Ret> GetDistinct(IDbTransaction transaction, string whereCondition = "", object param = null, bool buffered = true, int? commandTimeout = null)
+		{
+			IEnumerable<T> list = DAO.GetDistinct(transaction, whereCondition, param, buffered, commandTimeout);
 			return UpsertItems(list);
 		}
 
