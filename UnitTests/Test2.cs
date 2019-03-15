@@ -10,9 +10,17 @@ namespace Utilities.UnitTests
 	[Table("Test2")]
 	public class Test2 : IEquatable<Test2>
 	{
+		public Test2() { }
+		public Test2(string str, int i)
+		{
+			Col1 = i;
+			Col2 = str;
+		}
+
 		public int Col1 { get; set; }
 		public string Col2 { get; set; }
-		public float Col3 { get; set; }
+		public float Col3;
+		public string Col4;
 
 		public override bool Equals(object obj)
 		{
@@ -24,7 +32,8 @@ namespace Utilities.UnitTests
 			return other != null &&
 				   Col1 == other.Col1 &&
 				   Col2 == other.Col2 &&
-				   Col3 == other.Col3;
+				   Col3 == other.Col3 &&
+				   Col4 == other.Col4;
 		}
 
 		public override int GetHashCode()
@@ -33,6 +42,7 @@ namespace Utilities.UnitTests
 			hashCode = hashCode * -1521134295 + Col1.GetHashCode();
 			hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Col2);
 			hashCode = hashCode * -1521134295 + Col3.GetHashCode();
+			hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Col4);
 			return hashCode;
 		}
 	}

@@ -325,8 +325,8 @@ namespace Utilities.Reflection.Cache
 				// push target and value argument, set member immediately
 				// target.member = value;
 				emit.Emit(OpCodes.Ldarg_0);
-				if (!targetType.IsValueType)
-					emit.Emit(OpCodes.Ldind_Ref);
+				//if (!targetType.IsValueType)
+				//	emit.Emit(OpCodes.Ldind_Ref);
 				emit.Emit(OpCodes.Ldarg_1);
 				set(emit, member);
 				emit.Emit(OpCodes.Ret);
