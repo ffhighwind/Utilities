@@ -9,8 +9,15 @@ using Utilities.Reflection.Cache;
 namespace Utilities.Reflection
 {
 	public delegate TTarget Ctor<TTarget>(params object[] param);
+
+	public delegate TReturn InvokerRef<TTarget, TReturn>(ref TTarget target, params object[] param);
 	public delegate TReturn Invoker<TTarget, TReturn>(TTarget target, params object[] param);
+
+	public delegate void InvokerRef<TTarget>(ref TTarget target, params object[] param);
 	public delegate void Invoker<TTarget>(TTarget target, params object[] param);
+
+	public delegate TValue GetterRef<TTarget, TValue>(ref TTarget target);
+	public delegate void SetterRef<TTarget, TValue>(ref TTarget target, TValue value);
 
 	public static class Reflect
 	{
@@ -26,54 +33,104 @@ namespace Utilities.Reflection
 			return Constructors<TTarget>.Create(paramTypes);
 		}
 
-		public static Invoker<TTarget> Method<TTarget>(string name)
+		public static Invoker<TTarget> Method<TTarget>(string name) where TTarget : class
 		{
-			return Methods<TTarget>.Create(name);
+			return (Invoker<TTarget>) Methods<TTarget>.Create(name);
 		}
 
-		public static Invoker<TTarget, TReturn> Method<TTarget, TReturn>(string name)
+		public static InvokerRef<TTarget> MethodRef<TTarget>(string name) where TTarget : struct
 		{
-			return Methods<TTarget, TReturn>.Create(name);
+			return (InvokerRef<TTarget>) Methods<TTarget>.Create(name);
 		}
 
-		public static Invoker<TTarget> Method<TTarget>(MethodInfo method)
+		public static Invoker<TTarget, TReturn> Method<TTarget, TReturn>(string name) where TTarget : class
 		{
-			return Methods<TTarget>.Create(method);
+			return (Invoker<TTarget, TReturn>) Methods<TTarget, TReturn>.Create(name);
 		}
 
-		public static Invoker<TTarget, TReturn> Method<TTarget, TReturn>(MethodInfo method)
+		public static InvokerRef<TTarget, TReturn> MethodRef<TTarget, TReturn>(string name) where TTarget : struct
 		{
-			return Methods<TTarget, TReturn>.Create(method);
+			return (InvokerRef<TTarget, TReturn>) Methods<TTarget, TReturn>.Create(name);
 		}
 
-		public static Action<TTarget, TValue> Setter<TTarget, TValue>(string name)
+		public static Invoker<TTarget> Method<TTarget>(MethodInfo method) where TTarget : class
 		{
-			return Setters<TTarget, TValue>.Create(name);
+			return (Invoker<TTarget>) Methods<TTarget>.Create(method);
 		}
 
-		public static Action<TTarget, TValue> Setter<TTarget, TValue>(FieldInfo field)
+		public static InvokerRef<TTarget> MethodRef<TTarget>(MethodInfo method) where TTarget : struct
 		{
-			return Setters<TTarget, TValue>.Create(field);
+			return (InvokerRef<TTarget>) Methods<TTarget>.Create(method);
 		}
 
-		public static Action<TTarget, TValue> Setter<TTarget, TValue>(PropertyInfo property)
+		public static Invoker<TTarget, TReturn> Method<TTarget, TReturn>(MethodInfo method) where TTarget : class
 		{
-			return Setters<TTarget, TValue>.Create(property);
+			return (Invoker<TTarget, TReturn>) Methods<TTarget, TReturn>.Create(method);
 		}
 
-		public static Func<TTarget, TValue> Getter<TTarget, TValue>(string name)
+		public static InvokerRef<TTarget, TReturn> MethodRef<TTarget, TReturn>(MethodInfo method) where TTarget : struct
 		{
-			return Getters<TTarget, TValue>.Create(name);
+			return (InvokerRef<TTarget, TReturn>) Methods<TTarget, TReturn>.Create(method);
 		}
 
-		public static Func<TTarget, TValue> Getter<TTarget, TValue>(FieldInfo field)
+		public static Action<TTarget, TValue> Setter<TTarget, TValue>(string name) where TTarget : class
 		{
-			return Getters<TTarget, TValue>.Create(field);
+			return (Action<TTarget, TValue>) Setters<TTarget, TValue>.Create(name);
 		}
 
-		public static Func<TTarget, TValue> Getter<TTarget, TValue>(PropertyInfo property)
+		public static SetterRef<TTarget, TValue> SetterRef<TTarget, TValue>(string name) where TTarget : struct
 		{
-			return Getters<TTarget, TValue>.Create(property);
+			return (SetterRef<TTarget, TValue>) Setters<TTarget, TValue>.Create(name);
+		}
+
+		public static Action<TTarget, TValue> Setter<TTarget, TValue>(FieldInfo field) where TTarget : class
+		{
+			return (Action<TTarget, TValue>) Setters<TTarget, TValue>.Create(field);
+		}
+
+		public static SetterRef<TTarget, TValue> SetterRef<TTarget, TValue>(FieldInfo field) where TTarget : struct
+		{
+			return (SetterRef<TTarget, TValue>) Setters<TTarget, TValue>.Create(field);
+		}
+
+		public static Action<TTarget, TValue> Setter<TTarget, TValue>(PropertyInfo property) where TTarget : class
+		{
+			return (Action<TTarget, TValue>) Setters<TTarget, TValue>.Create(property);
+		}
+
+		public static SetterRef<TTarget, TValue> SetterRef<TTarget, TValue>(PropertyInfo property) where TTarget : struct
+		{
+			return (SetterRef<TTarget, TValue>) Setters<TTarget, TValue>.Create(property);
+		}
+
+		public static Func<TTarget, TValue> Getter<TTarget, TValue>(string name) where TTarget : class
+		{
+			return (Func<TTarget, TValue>) Getters<TTarget, TValue>.Create(name);
+		}
+
+		public static GetterRef<TTarget, TValue> GetterRef<TTarget, TValue>(string name) where TTarget : struct
+		{
+			return (GetterRef<TTarget, TValue>) Getters<TTarget, TValue>.Create(name);
+		}
+
+		public static Func<TTarget, TValue> Getter<TTarget, TValue>(FieldInfo field) where TTarget : class
+		{
+			return (Func<TTarget, TValue>) Getters<TTarget, TValue>.Create(field);
+		}
+
+		public static GetterRef<TTarget, TValue> GetterRef<TTarget, TValue>(FieldInfo field) where TTarget : struct
+		{
+			return (GetterRef<TTarget, TValue>) Getters<TTarget, TValue>.Create(field);
+		}
+
+		public static Func<TTarget, TValue> Getter<TTarget, TValue>(PropertyInfo property) where TTarget : class
+		{
+			return (Func<TTarget, TValue>) Getters<TTarget, TValue>.Create(property);
+		}
+
+		public static GetterRef<TTarget, TValue> GetterRef<TTarget, TValue>(PropertyInfo property) where TTarget : struct
+		{
+			return (GetterRef<TTarget, TValue>) Getters<TTarget, TValue>.Create(property);
 		}
 	}
 }

@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -21,7 +22,7 @@ namespace Utilities.Reflection.Cache
 				Ctors = new Dictionary<ConstructorKey, Ctor<TTarget>>(ConstructorKey.Comparer);
 			}
 			try {
-				New = (Func<TTarget>) ReflectGen<TTarget>.DelegateForCtor(typeof(Func<TTarget>), typeof(TTarget), Array.Empty<Type>(), Array.Empty<Type>());
+				New = (Func<TTarget>) ReflectGen<TTarget>.DelegateForCtor(typeof(TTarget));
 			}
 			catch { }
 		}
@@ -64,10 +65,10 @@ namespace Utilities.Reflection.Cache
 			{
 				Output = typeof(TTarget),
 				Type = type,
-				ParamTypes = paramTypes
+				ParamTypes = paramTypes,
 			};
 			if (!Ctors.TryGetValue(key, out Ctor<TTarget> result)) {
-				result = (Ctor<TTarget>) ReflectGen<TTarget>.DelegateForCtor(typeof(Ctor<TTarget>), type, ReflectGen.objectArrayParam, paramTypes);
+				result = (Ctor<TTarget>) ReflectGen<TTarget>.DelegateForCtor(key.Type, key.ParamTypes);
 				Ctors[key] = result;
 			}
 			return result;

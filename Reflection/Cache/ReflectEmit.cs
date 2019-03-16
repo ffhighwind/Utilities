@@ -82,6 +82,10 @@ namespace Utilities.Reflection.Cache
 				emit.Emit(OpCodes.Ldloca, tmp);
 				emit.Emit(OpCodes.Initobj, targetType);
 				emit.Emit(OpCodes.Ldloc, tmp);
+				if (typeof(TTarget) == typeof(object) && targetType.IsValueType) {
+					emit.Emit(OpCodes.Box, targetType);
+				}
+				emit.Emit(OpCodes.Ret);
 			}
 			else {
 				ConstructorInfo ctor = targetType.GetConstructor(paramTypes);
@@ -91,16 +95,26 @@ namespace Utilities.Reflection.Cache
 						"No constructor found that matches the following parameter types: " +
 						string.Join(",", paramTypes.Select(x => x.Name).ToArray())));
 				}
-
-				// push parameters in order to then call ctor
-				for (int i = 0, imax = paramTypes.Length; i < imax; i++) {
-					emit.Emit(OpCodes.Ldarg_0);     // push args array
-					emit.Emit(OpCodes.Ldc_I4, i);   // push index
-					emit.Emit(OpCodes.Ldelem_Ref);  // push array[index]
-					emit.Emit(OpCodes.Unbox_Any, paramTypes[i]); // cast
-				}
-				emit.Emit(OpCodes.Newobj, ctor);
+				_GenCtor(emit, type, targetType, ctor, paramTypes);
 			}
+		}
+
+		public static void GenCtor(ILGenerator emit, Type type, ConstructorInfo constructor)
+		{
+			Type targetType = typeof(TTarget) == typeof(object) ? type : typeof(TTarget);
+			_GenCtor(emit, type, targetType, constructor, constructor.GetParameters().Select(p => p.ParameterType).ToList());
+		}
+
+		private static void _GenCtor(ILGenerator emit, Type type, Type targetType, ConstructorInfo constructor, IList<Type> paramTypes)
+		{
+			// push parameters in order to then call ctor
+			for (int i = 0, imax = paramTypes.Count; i < imax; i++) {
+				emit.Emit(OpCodes.Ldarg_0);     // push args array
+				emit.Emit(OpCodes.Ldc_I4, i);   // push index
+				emit.Emit(OpCodes.Ldelem_Ref);  // push array[index]
+				emit.Emit(OpCodes.Unbox_Any, paramTypes[i]); // cast
+			}
+			emit.Emit(OpCodes.Newobj, constructor);
 
 			if (typeof(TTarget) == typeof(object) && targetType.IsValueType) {
 				emit.Emit(OpCodes.Box, targetType);

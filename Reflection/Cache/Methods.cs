@@ -10,32 +10,32 @@ namespace Utilities.Reflection.Cache
 {
 	public static class Methods<TTarget>
 	{
-		private static IDictionary<MethodKey, Invoker<TTarget>> Invokers;
-		private static IDictionary<string, Invoker<TTarget>> Names;
+		private static IDictionary<MethodKey, Delegate> Invokers;
+		private static IDictionary<string, Delegate> Names;
 
 		static Methods()
 		{
 			if (Reflect.Concurrent) {
-				Invokers = new ConcurrentDictionary<MethodKey, Invoker<TTarget>>(MethodKey.Comparer);
-				Names = new ConcurrentDictionary<string, Invoker<TTarget>>(StringComparer.Ordinal);
+				Invokers = new ConcurrentDictionary<MethodKey, Delegate>(MethodKey.Comparer);
+				Names = new ConcurrentDictionary<string, Delegate>(StringComparer.Ordinal);
 			}
 			else {
-				Invokers = new Dictionary<MethodKey, Invoker<TTarget>>(MethodKey.Comparer);
-				Names = new Dictionary<string, Invoker<TTarget>>(StringComparer.Ordinal);
+				Invokers = new Dictionary<MethodKey, Delegate>(MethodKey.Comparer);
+				Names = new Dictionary<string, Delegate>(StringComparer.Ordinal);
 			}
 		}
 
 		public static void SetConcurrent(bool concurrent = true)
 		{
 			if (concurrent) {
-				if (Invokers is Dictionary<MethodKey, Invoker<TTarget>>) {
-					Invokers = new ConcurrentDictionary<MethodKey, Invoker<TTarget>>(Invokers, MethodKey.Comparer);
-					Names = new ConcurrentDictionary<string, Invoker<TTarget>>(Names, StringComparer.Ordinal);
+				if (Invokers is Dictionary<MethodKey, Delegate>) {
+					Invokers = new ConcurrentDictionary<MethodKey, Delegate>(Invokers, MethodKey.Comparer);
+					Names = new ConcurrentDictionary<string, Delegate>(Names, StringComparer.Ordinal);
 				}
 			}
-			else if (Invokers is ConcurrentDictionary<MethodKey, Invoker<TTarget>>) {
-				Invokers = new Dictionary<MethodKey, Invoker<TTarget>>(Invokers, MethodKey.Comparer);
-				Names = new Dictionary<string, Invoker<TTarget>>(Names, StringComparer.Ordinal);
+			else if (Invokers is ConcurrentDictionary<MethodKey, Delegate>) {
+				Invokers = new Dictionary<MethodKey, Delegate>(Invokers, MethodKey.Comparer);
+				Names = new Dictionary<string, Delegate>(Names, StringComparer.Ordinal);
 			}
 		}
 
@@ -43,12 +43,12 @@ namespace Utilities.Reflection.Cache
 		{
 			if (resize) {
 				if (Invokers is Dictionary<MethodKey, Invoker<TTarget>>) {
-					Invokers = new Dictionary<MethodKey, Invoker<TTarget>>(MethodKey.Comparer);
-					Names = new Dictionary<string, Invoker<TTarget>>(StringComparer.Ordinal);
+					Invokers = new Dictionary<MethodKey, Delegate>(MethodKey.Comparer);
+					Names = new Dictionary<string, Delegate>(StringComparer.Ordinal);
 				}
 				else {
-					Invokers = new ConcurrentDictionary<MethodKey, Invoker<TTarget>>(MethodKey.Comparer);
-					Names = new ConcurrentDictionary<string, Invoker<TTarget>>(StringComparer.Ordinal);
+					Invokers = new ConcurrentDictionary<MethodKey, Delegate>(MethodKey.Comparer);
+					Names = new ConcurrentDictionary<string, Delegate>(StringComparer.Ordinal);
 				}
 			}
 			else {
@@ -57,9 +57,9 @@ namespace Utilities.Reflection.Cache
 			}
 		}
 
-		public static Invoker<TTarget> Create(string name)
+		public static Delegate Create(string name)
 		{
-			if (!Names.TryGetValue(name, out Invoker<TTarget> result)) {
+			if (!Names.TryGetValue(name, out Delegate result)) {
 				Type type = typeof(TTarget);
 				MethodInfo mi = _Method(type, name);
 				result = Create(mi);
@@ -85,15 +85,20 @@ namespace Utilities.Reflection.Cache
 			return type.GetMethod(name);
 		}
 
-		public static Invoker<TTarget> Create(MethodInfo method)
+		public static Delegate Create(MethodInfo method)
 		{
 			MethodKey key = new MethodKey()
 			{
 				Method = method,
 				Type = typeof(TTarget)
 			};
-			if (!Invokers.TryGetValue(key, out Invoker<TTarget> result)) {
-				result = ReflectGen<TTarget>.DelegateForCall(method);
+			if (!Invokers.TryGetValue(key, out Delegate result)) {
+				if (method.DeclaringType.IsClass) {
+					result = ReflectGen<TTarget>.DelegateForCall(method);
+				}
+				else {
+					result = ReflectGen<TTarget>.DelegateForCallRef(method);
+				}
 				Invokers[key] = result;
 			}
 			return result;
@@ -102,43 +107,43 @@ namespace Utilities.Reflection.Cache
 
 	public static class Methods<TTarget, TReturn>
 	{
-		private static IDictionary<MethodKey, Invoker<TTarget, TReturn>> Invokers;
-		private static IDictionary<string, Invoker<TTarget, TReturn>> Names;
+		private static IDictionary<MethodKey, Delegate> Invokers;
+		private static IDictionary<string, Delegate> Names;
 
 		static Methods()
 		{
 			if(Reflect.Concurrent) {
-				Invokers = new ConcurrentDictionary<MethodKey, Invoker<TTarget, TReturn>>(MethodKey.Comparer);
-				Names = new ConcurrentDictionary<string, Invoker<TTarget, TReturn>>(StringComparer.Ordinal);
+				Invokers = new ConcurrentDictionary<MethodKey, Delegate>(MethodKey.Comparer);
+				Names = new ConcurrentDictionary<string, Delegate>(StringComparer.Ordinal);
 			}
 			else {
-				Invokers = new Dictionary<MethodKey, Invoker<TTarget, TReturn>>(MethodKey.Comparer);
-				Names = new Dictionary<string, Invoker<TTarget, TReturn>>(StringComparer.Ordinal);
+				Invokers = new Dictionary<MethodKey, Delegate>(MethodKey.Comparer);
+				Names = new Dictionary<string, Delegate>(StringComparer.Ordinal);
 			}
 		}
 
 		public static void SetConcurrent(bool concurrent = true)
 		{
 			if(concurrent) {
-				Invokers = new ConcurrentDictionary<MethodKey, Invoker<TTarget, TReturn>>(Invokers, MethodKey.Comparer);
-				Names = new ConcurrentDictionary<string, Invoker<TTarget, TReturn>>(Names, StringComparer.Ordinal);
+				Invokers = new ConcurrentDictionary<MethodKey, Delegate>(Invokers, MethodKey.Comparer);
+				Names = new ConcurrentDictionary<string, Delegate>(Names, StringComparer.Ordinal);
 			}
 			else {
-				Invokers = new Dictionary<MethodKey, Invoker<TTarget, TReturn>>(Invokers, MethodKey.Comparer);
-				Names = new Dictionary<string, Invoker<TTarget, TReturn>>(Names, StringComparer.Ordinal);
+				Invokers = new Dictionary<MethodKey, Delegate>(Invokers, MethodKey.Comparer);
+				Names = new Dictionary<string, Delegate>(Names, StringComparer.Ordinal);
 			}
 		}
 
 		public static void ClearCache(bool resize = false)
 		{
 			if (resize) {
-				if (Invokers is Dictionary<MethodKey, Invoker<TTarget>>) {
-					Invokers = new Dictionary<MethodKey, Invoker<TTarget, TReturn>>(MethodKey.Comparer);
-					Names = new Dictionary<string, Invoker<TTarget, TReturn>>(StringComparer.Ordinal);
+				if (Invokers is Dictionary<MethodKey, Delegate>) {
+					Invokers = new Dictionary<MethodKey, Delegate>(MethodKey.Comparer);
+					Names = new Dictionary<string, Delegate>(StringComparer.Ordinal);
 				}
 				else {
-					Invokers = new ConcurrentDictionary<MethodKey, Invoker<TTarget, TReturn>>(MethodKey.Comparer);
-					Names = new ConcurrentDictionary<string, Invoker<TTarget, TReturn>>(StringComparer.Ordinal);
+					Invokers = new ConcurrentDictionary<MethodKey, Delegate>(MethodKey.Comparer);
+					Names = new ConcurrentDictionary<string, Delegate>(StringComparer.Ordinal);
 				}
 			}
 			else {
@@ -147,9 +152,9 @@ namespace Utilities.Reflection.Cache
 			}
 		}
 
-		public static Invoker<TTarget, TReturn> Create(string name)
+		public static Delegate Create(string name)
 		{
-			if (!Names.TryGetValue(name, out Invoker<TTarget, TReturn> result)) {
+			if (!Names.TryGetValue(name, out Delegate result)) {
 				Type type = typeof(TTarget);
 				MethodInfo mi = Methods<TTarget>._Method(type, name);
 				result = Create(mi);
@@ -158,15 +163,20 @@ namespace Utilities.Reflection.Cache
 			return result;
 		}
 
-		public static Invoker<TTarget, TReturn> Create(MethodInfo method)
+		public static Delegate Create(MethodInfo method)
 		{
 			MethodKey key = new MethodKey()
 			{
 				Method = method,
 				Type = typeof(TTarget)
 			};
-			if (!Invokers.TryGetValue(key, out Invoker<TTarget, TReturn> result)) {
-				result = ReflectGen<TTarget>.DelegateForCall<TReturn>(method);
+			if (!Invokers.TryGetValue(key, out Delegate result)) {
+				if (method.DeclaringType.IsClass) {
+					result = ReflectGen<TTarget>.DelegateForCall<TReturn>(method);
+				}
+				else {
+					result = ReflectGen<TTarget>.DelegateForCallRef<TReturn>(method);
+				}
 				Invokers[key] = result;
 			}
 			return result;

@@ -16,7 +16,7 @@ namespace Utilities.UnitTests
 	public class ReflectTest
 	{
 		[TestMethod]
-		public void Test()
+		public void TestClass()
 		{
 			// Constructors
 			Func<Test16> test16ctor1 = Reflect.Constructor<Test16>();
@@ -74,6 +74,67 @@ namespace Utilities.UnitTests
 			fieldSet(test16, 39);
 			if (fieldGet(test16) != 39)
 				throw new InvalidOperationException();
+		}
+
+		[TestMethod]
+		public void TestStruct()
+		{
+			// Constructors
+			Func<Test16Struct> test16ctor1 = Reflect.Constructor<Test16Struct>();
+			Ctor<Test16Struct> test16ctor2 = Reflect.Constructor<Test16Struct>(new Type[0]);
+			Ctor<Test16Struct> test16ctor3 = Reflect.Constructor<Test16Struct>(typeof(int));
+			if (test16ctor1 == null)
+				throw new InvalidOperationException();
+			if (test16ctor2 == null)
+				throw new InvalidOperationException();
+			if (test16ctor3 == null)
+				throw new InvalidOperationException();
+
+			Test16Struct test16 = test16ctor1();
+			Test16Struct test16_2 = test16ctor2();
+			Test16Struct test16_3 = test16ctor3(1);
+
+			if (!test16.Equals(test16_2))
+				throw new InvalidOperationException();
+			if (test16.Equals(test16_3))
+				throw new InvalidOperationException();
+
+			// Setters
+			PropertyInfo prop = typeof(Test16Struct).GetProperty("Segment");
+			GetterRef<Test16Struct, string> segmentGet = Reflect.GetterRef<Test16Struct, string>(prop);
+			SetterRef<Test16Struct, string> segmentSet = Reflect.SetterRef<Test16Struct, string>(prop);
+			segmentSet(ref test16, "abc");
+			if (segmentGet(ref test16) != "abc")
+				throw new InvalidOperationException();
+
+			// Field Get/Set
+			FieldInfo field = typeof(Test16Struct).GetField("Field");
+			GetterRef<Test16Struct, int> fieldGet = Reflect.GetterRef<Test16Struct, int>(field);
+			SetterRef<Test16Struct, int> fieldSet = Reflect.SetterRef<Test16Struct, int>(field);
+			fieldSet(ref test16, 39);
+			if (fieldGet(ref test16) != 39)
+				throw new InvalidOperationException();
+
+			// Methods
+			MethodInfo method = typeof(Test16Struct).GetMethod("Equals", new Type[] { typeof(object) });
+			InvokerRef<Test16Struct, bool> eqObj = Reflect.MethodRef<Test16Struct, bool>(method);
+			MethodInfo method2 = typeof(Test16Struct).GetMethod("Equals", new Type[] { typeof(Test16Struct) });
+			InvokerRef<Test16Struct, bool> eqTest16 = Reflect.MethodRef<Test16Struct, bool>(method2);
+			InvokerRef<Test16Struct, int> getHashCode = Reflect.MethodRef<Test16Struct, int>("GetHashCode");
+			InvokerRef<Test16Struct> test = Reflect.MethodRef<Test16Struct>("Test");
+
+			if (!eqObj(ref test16, test16_2))
+				throw new InvalidOperationException();
+			if (!eqTest16(ref test16, test16_2))
+				throw new InvalidOperationException();
+			if (eqTest16(ref test16, test16_3))
+				throw new InvalidOperationException();
+			test16.Year = 1;
+			int hashCode1 = getHashCode(ref test16);
+			int hashCode3 = getHashCode(ref test16_3);
+			if (hashCode1 != hashCode3)
+				throw new InvalidOperationException();
+			//test(test16);
 		}
 
 

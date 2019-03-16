@@ -10,21 +10,21 @@ namespace Utilities.Reflection.Cache
 {
 	public static class Getters<TTarget, TValue>
 	{
-		private static IDictionary<PropertyKey, Func<TTarget, TValue>> Properties;
-		private static IDictionary<FieldKey, Func<TTarget, TValue>> Fields;
-		private static IDictionary<string, Func<TTarget, TValue>> Names;
+		private static IDictionary<PropertyKey, Delegate> Properties;
+		private static IDictionary<FieldKey, Delegate> Fields;
+		private static IDictionary<string, Delegate> Names;
 
 		static Getters()
 		{
 			if (Reflect.Concurrent) {
-				Properties = new ConcurrentDictionary<PropertyKey, Func<TTarget, TValue>>(PropertyKey.Comparer);
-				Fields = new ConcurrentDictionary<FieldKey, Func<TTarget, TValue>>(FieldKey.Comparer);
-				Names = new ConcurrentDictionary<string, Func<TTarget, TValue>>(StringComparer.Ordinal);
+				Properties = new ConcurrentDictionary<PropertyKey, Delegate>(PropertyKey.Comparer);
+				Fields = new ConcurrentDictionary<FieldKey, Delegate>(FieldKey.Comparer);
+				Names = new ConcurrentDictionary<string, Delegate>(StringComparer.Ordinal);
 			}
 			else {
-				Properties = new Dictionary<PropertyKey, Func<TTarget, TValue>>(PropertyKey.Comparer);
-				Fields = new Dictionary<FieldKey, Func<TTarget, TValue>>(FieldKey.Comparer);
-				Names = new Dictionary<string, Func<TTarget, TValue>>(StringComparer.Ordinal);
+				Properties = new Dictionary<PropertyKey, Delegate>(PropertyKey.Comparer);
+				Fields = new Dictionary<FieldKey, Delegate>(FieldKey.Comparer);
+				Names = new Dictionary<string, Delegate>(StringComparer.Ordinal);
 			}
 		}
 
@@ -32,15 +32,15 @@ namespace Utilities.Reflection.Cache
 		{
 			if (concurrent) {
 				if (Properties is Dictionary<PropertyKey, Invoker<TTarget>>) {
-					Properties = new ConcurrentDictionary<PropertyKey, Func<TTarget, TValue>>(Properties, PropertyKey.Comparer);
-					Fields = new ConcurrentDictionary<FieldKey, Func<TTarget, TValue>>(Fields, FieldKey.Comparer);
-					Names = new ConcurrentDictionary<string, Func<TTarget, TValue>>(Names, StringComparer.Ordinal);
+					Properties = new ConcurrentDictionary<PropertyKey, Delegate>(Properties, PropertyKey.Comparer);
+					Fields = new ConcurrentDictionary<FieldKey, Delegate>(Fields, FieldKey.Comparer);
+					Names = new ConcurrentDictionary<string, Delegate>(Names, StringComparer.Ordinal);
 				}
 			}
 			else if (Properties is ConcurrentDictionary<PropertyKey, Func<TTarget, TValue>>) {
-				Properties = new Dictionary<PropertyKey, Func<TTarget, TValue>>(Properties, PropertyKey.Comparer);
-				Fields = new Dictionary<FieldKey, Func<TTarget, TValue>>(Fields, FieldKey.Comparer);
-				Names = new Dictionary<string, Func<TTarget, TValue>>(Names, StringComparer.Ordinal);
+				Properties = new Dictionary<PropertyKey, Delegate>(Properties, PropertyKey.Comparer);
+				Fields = new Dictionary<FieldKey, Delegate>(Fields, FieldKey.Comparer);
+				Names = new Dictionary<string, Delegate>(Names, StringComparer.Ordinal);
 			}
 		}
 
@@ -48,14 +48,14 @@ namespace Utilities.Reflection.Cache
 		{
 			if (resize) {
 				if (Properties is Dictionary<PropertyKey, Invoker<TTarget>>) {
-					Properties = new Dictionary<PropertyKey, Func<TTarget, TValue>>(PropertyKey.Comparer);
-					Fields = new Dictionary<FieldKey, Func<TTarget, TValue>>(FieldKey.Comparer);
-					Names = new Dictionary<string, Func<TTarget, TValue>>(StringComparer.Ordinal);
+					Properties = new Dictionary<PropertyKey, Delegate>(PropertyKey.Comparer);
+					Fields = new Dictionary<FieldKey, Delegate>(FieldKey.Comparer);
+					Names = new Dictionary<string, Delegate>(StringComparer.Ordinal);
 				}
 				else {
-					Properties = new ConcurrentDictionary<PropertyKey, Func<TTarget, TValue>>(PropertyKey.Comparer);
-					Fields = new ConcurrentDictionary<FieldKey, Func<TTarget, TValue>>(FieldKey.Comparer);
-					Names = new ConcurrentDictionary<string, Func<TTarget, TValue>>(StringComparer.Ordinal);
+					Properties = new ConcurrentDictionary<PropertyKey, Delegate>(PropertyKey.Comparer);
+					Fields = new ConcurrentDictionary<FieldKey, Delegate>(FieldKey.Comparer);
+					Names = new ConcurrentDictionary<string, Delegate>(StringComparer.Ordinal);
 				}
 			}
 			else {
@@ -65,9 +65,9 @@ namespace Utilities.Reflection.Cache
 			}
 		}
 
-		public static Func<TTarget, TValue> Create(string name)
+		public static Delegate Create(string name)
 		{
-			if (!Names.TryGetValue(name, out Func<TTarget, TValue> result)) {
+			if (!Names.TryGetValue(name, out Delegate result)) {
 				Type type = typeof(TTarget);
 				FieldInfo field = type.GetField(name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 				if (field == null) {
@@ -91,29 +91,39 @@ namespace Utilities.Reflection.Cache
 			return result;
 		}
 
-		public static Func<TTarget, TValue> Create(PropertyInfo property)
+		public static Delegate Create(PropertyInfo property)
 		{
 			PropertyKey key = new PropertyKey()
 			{
 				Property = property,
 				Type = typeof(TTarget)
 			};
-			if (!Properties.TryGetValue(key, out Func<TTarget, TValue> result)) {
-				result = ReflectGen<TTarget>.DelegateForGet<TValue>(property);
+			if (!Properties.TryGetValue(key, out Delegate result)) {
+				if (property.DeclaringType.IsClass) {
+					result = (Delegate) ReflectGen<TTarget>.DelegateForGet<TValue>(property);
+				}
+				else {
+					result = (Delegate) ReflectGen<TTarget>.DelegateForGetRef<TValue>(property);
+				}
 				Properties[key] = result;
 			}
 			return result;
 		}
 
-		public static Func<TTarget, TValue> Create(FieldInfo field)
+		public static Delegate Create(FieldInfo field)
 		{
 			FieldKey key = new FieldKey()
 			{
 				Field = field,
 				Type = typeof(TTarget)
 			};
-			if (!Fields.TryGetValue(key, out Func<TTarget, TValue> result)) {
-				result = ReflectGen<TTarget>.DelegateForGet<TValue>(field);
+			if (!Fields.TryGetValue(key, out Delegate result)) {
+				if (field.DeclaringType.IsClass) {
+					result = ReflectGen<TTarget>.DelegateForGet<TValue>(field);
+				}
+				else {
+					result = ReflectGen<TTarget>.DelegateForGetRef<TValue>(field);
+				}
 				Fields[key] = result;
 			}
 			return result;
