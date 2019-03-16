@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Utilities.Reflection.Cache
 {
@@ -22,7 +20,7 @@ namespace Utilities.Reflection.Cache
 		/// If 'method' is not null, it generates a call for that method
 		/// if 'targetType' and 'ctorParamTypes' are not null, it generates a constructor for the target type that takes the specified arguments
 		/// </summary>
-		public static void GenDebugAssembly(ILGenerator emit, string name, FieldInfo field, PropertyInfo property, MethodInfo method, Type targetType, Type[] ctorParamTypes)
+		public static void EmitDebugAssembly(ILGenerator emit, string name, FieldInfo field, PropertyInfo property, MethodInfo method, Type targetType, Type[] ctorParamTypes)
 		{
 			AssemblyName asmName = new AssemblyName("Asm");
 			AssemblyBuilder asmBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(asmName, AssemblyBuilderAccess.RunAndSave);
@@ -43,35 +41,35 @@ namespace Utilities.Reflection.Cache
 			if (field != null) {
 				Type fieldType = weakTyping ? typeof(object) : field.FieldType;
 				emit = buildMethod("FieldSetter", typeof(void), new Type[] { typeof(TTarget).MakeByRefType(), fieldType });
-				GenFieldSetter(emit, field);
+				EmitSetter(emit, field);
 				emit = buildMethod("FieldGetter", fieldType, new Type[] { typeof(TTarget) });
-				GenFieldGetter(emit, field);
+				EmitGetter(emit, field);
 			}
 
 			if (property != null) {
 				Type propType = weakTyping ? typeof(object) : property.PropertyType;
 				emit = buildMethod("PropertySetter", typeof(void), new Type[] { typeof(TTarget).MakeByRefType(), propType });
-				GenPropertySetter(emit, property);
+				EmitSetter(emit, property);
 				emit = buildMethod("PropertyGetter", propType, new Type[] { typeof(TTarget) });
-				GenPropertyGetter(emit, property);
+				EmitGetter(emit, property);
 			}
 
 			if (method != null) {
 				Type returnType = (weakTyping || method.ReturnType == typeof(void)) ? typeof(object) : method.ReturnType;
 				emit = buildMethod("MethodCaller", returnType, new Type[] { typeof(TTarget), typeof(object[]) });
-				GenMethodInvocation(emit, method);
+				EmitMethod(emit, method);
 			}
 
 			if (targetType != null) {
 				emit = buildMethod("Ctor", typeof(TTarget), new Type[] { typeof(object[]) });
-				GenCtor(emit, targetType, ctorParamTypes);
+				EmitConstructor(emit, targetType, ctorParamTypes);
 			}
 
 			typeBuilder.CreateType();
 			asmBuilder.Save(name);
 		}
 
-		public static void GenCtor(ILGenerator emit, Type type, Type[] paramTypes)
+		public static void EmitConstructor(ILGenerator emit, Type type, Type[] paramTypes)
 		{
 			// arg0: object[] arguments
 			// goal: return new T(arguments)
@@ -95,17 +93,17 @@ namespace Utilities.Reflection.Cache
 						"No constructor found that matches the following parameter types: " +
 						string.Join(",", paramTypes.Select(x => x.Name).ToArray())));
 				}
-				_GenCtor(emit, type, targetType, ctor, paramTypes);
+				_EmitConstructor(emit, type, targetType, ctor, paramTypes);
 			}
 		}
 
-		public static void GenCtor(ILGenerator emit, Type type, ConstructorInfo constructor)
+		public static void EmitConstructor(ILGenerator emit, Type type, ConstructorInfo constructor)
 		{
 			Type targetType = typeof(TTarget) == typeof(object) ? type : typeof(TTarget);
-			_GenCtor(emit, type, targetType, constructor, constructor.GetParameters().Select(p => p.ParameterType).ToList());
+			_EmitConstructor(emit, type, targetType, constructor, constructor.GetParameters().Select(p => p.ParameterType).ToList());
 		}
 
-		private static void _GenCtor(ILGenerator emit, Type type, Type targetType, ConstructorInfo constructor, IList<Type> paramTypes)
+		private static void _EmitConstructor(ILGenerator emit, Type type, Type targetType, ConstructorInfo constructor, IList<Type> paramTypes)
 		{
 			// push parameters in order to then call ctor
 			for (int i = 0, imax = paramTypes.Count; i < imax; i++) {
@@ -122,7 +120,7 @@ namespace Utilities.Reflection.Cache
 			emit.Emit(OpCodes.Ret);
 		}
 
-		public static void GenMethodInvocation(ILGenerator emit, MethodInfo method)
+		public static void EmitMethod(ILGenerator emit, MethodInfo method)
 		{
 			bool weaklyTyped = typeof(TTarget) == typeof(object);
 
@@ -199,9 +197,9 @@ namespace Utilities.Reflection.Cache
 			emit.Emit(OpCodes.Ret);
 		}
 
-		public static void GenFieldGetter(ILGenerator emit, FieldInfo field)
+		public static void EmitGetter(ILGenerator emit, FieldInfo field)
 		{
-			GenMemberGetter(emit, field, field.FieldType, field.IsStatic,
+			_EmitGetter(emit, field, field.FieldType, field.IsStatic,
 				(e, f) =>
 				{
 					if (field.IsLiteral) {
@@ -236,9 +234,9 @@ namespace Utilities.Reflection.Cache
 			);
 		}
 
-		public static void GenPropertyGetter(ILGenerator emit, PropertyInfo property)
+		public static void EmitGetter(ILGenerator emit, PropertyInfo property)
 		{
-			GenMemberGetter(emit, property, property.PropertyType,
+			_EmitGetter(emit, property, property.PropertyType,
 				property.GetGetMethod(true).IsStatic,
 				(e, p) =>
 				{
@@ -251,7 +249,7 @@ namespace Utilities.Reflection.Cache
 			);
 		}
 
-		private static void GenMemberGetter(ILGenerator emit, MemberInfo member, Type memberType, bool isStatic, Action<ILGenerator, MemberInfo> get)
+		private static void _EmitGetter(ILGenerator emit, MemberInfo member, Type memberType, bool isStatic, Action<ILGenerator, MemberInfo> get)
 		{
 			if (typeof(TTarget) == typeof(object)) // weakly-typed?
 			{
@@ -290,9 +288,9 @@ namespace Utilities.Reflection.Cache
 			emit.Emit(OpCodes.Ret);
 		}
 
-		public static void GenFieldSetter(ILGenerator emit, FieldInfo field)
+		public static void EmitSetter(ILGenerator emit, FieldInfo field)
 		{
-			GenMemberSetter(emit, field, field.FieldType, field.IsStatic,
+			EmitSetter(emit, field, field.FieldType, field.IsStatic,
 				(e, f) =>
 				{
 					if (f.IsStatic) {
@@ -305,9 +303,9 @@ namespace Utilities.Reflection.Cache
 			);
 		}
 
-		public static void GenPropertySetter(ILGenerator emit, PropertyInfo property)
+		public static void EmitSetter(ILGenerator emit, PropertyInfo property)
 		{
-			GenMemberSetter(emit, property, property.PropertyType,
+			EmitSetter(emit, property, property.PropertyType,
 				property.GetSetMethod(true).IsStatic, (e, p) =>
 				{
 					MethodInfo m = p.GetSetMethod(true);
@@ -319,7 +317,7 @@ namespace Utilities.Reflection.Cache
 			);
 		}
 
-		private static void GenMemberSetter<MInfo>(ILGenerator emit, MInfo member, Type memberType, bool isStatic, Action<ILGenerator, MInfo> set)
+		private static void EmitSetter<MInfo>(ILGenerator emit, MInfo member, Type memberType, bool isStatic, Action<ILGenerator, MInfo> set)
 			where MInfo : MemberInfo
 		{
 			Type targetType = typeof(TTarget);

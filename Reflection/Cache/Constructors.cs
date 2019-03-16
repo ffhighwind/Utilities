@@ -22,7 +22,7 @@ namespace Utilities.Reflection.Cache
 				Ctors = new Dictionary<ConstructorKey, Ctor<TTarget>>(ConstructorKey.Comparer);
 			}
 			try {
-				New = (Func<TTarget>) ReflectGen<TTarget>.DelegateForCtor(typeof(TTarget));
+				New = (Func<TTarget>) ReflectGen<TTarget>.Constructor(typeof(TTarget));
 			}
 			catch { }
 		}
@@ -68,7 +68,7 @@ namespace Utilities.Reflection.Cache
 				ParamTypes = paramTypes,
 			};
 			if (!Ctors.TryGetValue(key, out Ctor<TTarget> result)) {
-				result = (Ctor<TTarget>) ReflectGen<TTarget>.DelegateForCtor(key.Type, key.ParamTypes);
+				result = (Ctor<TTarget>) ReflectGen<TTarget>.Constructor(key.Type, key.ParamTypes);
 				Ctors[key] = result;
 			}
 			return result;

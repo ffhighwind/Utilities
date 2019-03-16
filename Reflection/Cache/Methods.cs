@@ -8,67 +8,61 @@ using System.Threading.Tasks;
 
 namespace Utilities.Reflection.Cache
 {
-	public static class Methods<TTarget>
+	public static class Methods<TTarget, TReturn>
 	{
-		private static IDictionary<MethodKey, Delegate> Invokers;
-		private static IDictionary<string, Delegate> Names;
-
-		static Methods()
-		{
-			if (Reflect.Concurrent) {
-				Invokers = new ConcurrentDictionary<MethodKey, Delegate>(MethodKey.Comparer);
-				Names = new ConcurrentDictionary<string, Delegate>(StringComparer.Ordinal);
-			}
-			else {
-				Invokers = new Dictionary<MethodKey, Delegate>(MethodKey.Comparer);
-				Names = new Dictionary<string, Delegate>(StringComparer.Ordinal);
-			}
-		}
-
 		public static void SetConcurrent(bool concurrent = true)
 		{
-			if (concurrent) {
-				if (Invokers is Dictionary<MethodKey, Delegate>) {
-					Invokers = new ConcurrentDictionary<MethodKey, Delegate>(Invokers, MethodKey.Comparer);
-					Names = new ConcurrentDictionary<string, Delegate>(Names, StringComparer.Ordinal);
-				}
-			}
-			else if (Invokers is ConcurrentDictionary<MethodKey, Delegate>) {
-				Invokers = new Dictionary<MethodKey, Delegate>(Invokers, MethodKey.Comparer);
-				Names = new Dictionary<string, Delegate>(Names, StringComparer.Ordinal);
-			}
+			_Methods<TTarget, TReturn, Invoker<TTarget, TReturn>>.SetConcurrent(concurrent);
 		}
 
 		public static void ClearCache(bool resize = false)
 		{
-			if (resize) {
-				if (Invokers is Dictionary<MethodKey, Invoker<TTarget>>) {
-					Invokers = new Dictionary<MethodKey, Delegate>(MethodKey.Comparer);
-					Names = new Dictionary<string, Delegate>(StringComparer.Ordinal);
-				}
-				else {
-					Invokers = new ConcurrentDictionary<MethodKey, Delegate>(MethodKey.Comparer);
-					Names = new ConcurrentDictionary<string, Delegate>(StringComparer.Ordinal);
-				}
-			}
-			else {
-				Invokers.Clear();
-				Names.Clear();
-			}
+			_Methods<TTarget, TReturn, Invoker<TTarget, TReturn>>.ClearCache(resize);
 		}
+	}
 
-		public static Delegate Create(string name)
+	public static class MethodsRef<TTarget, TReturn>
+	{
+		public static void SetConcurrent(bool concurrent = true)
 		{
-			if (!Names.TryGetValue(name, out Delegate result)) {
-				Type type = typeof(TTarget);
-				MethodInfo mi = _Method(type, name);
-				result = Create(mi);
-				Names[name] = result;
-			}
-			return result;
+			_Methods<TTarget, TReturn, InvokerRef<TTarget, TReturn>>.SetConcurrent(concurrent);
 		}
 
-		internal static MethodInfo _Method(Type type, string name)
+		public static void ClearCache(bool resize = false)
+		{
+			_Methods<TTarget, TReturn, InvokerRef<TTarget, TReturn>>.ClearCache(resize);
+		}
+	}
+
+	public static class Methods<TTarget>
+	{
+		public static void SetConcurrent(bool concurrent = true)
+		{
+			_Methods<TTarget, Invoker<TTarget>>.SetConcurrent(concurrent);
+		}
+
+		public static void ClearCache(bool resize = false)
+		{
+			_Methods<TTarget, Invoker<TTarget>>.ClearCache(resize);
+		}
+	}
+
+	public static class MethodsRef<TTarget>
+	{
+		public static void SetConcurrent(bool concurrent = true)
+		{
+			_Methods<TTarget, InvokerRef<TTarget>>.SetConcurrent(concurrent);
+		}
+
+		public static void ClearCache(bool resize = false)
+		{
+			_Methods<TTarget, InvokerRef<TTarget>>.ClearCache(resize);
+		}
+	}
+
+	internal static class _Methods
+	{
+		internal static MethodInfo GetMethod(Type type, string name)
 		{
 			MethodInfo[] mis = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 			for (int i = 0; i < mis.Length; i++) {
@@ -84,66 +78,51 @@ namespace Utilities.Reflection.Cache
 			}
 			return type.GetMethod(name);
 		}
-
-		public static Delegate Create(MethodInfo method)
-		{
-			MethodKey key = new MethodKey()
-			{
-				Method = method,
-				Type = typeof(TTarget)
-			};
-			if (!Invokers.TryGetValue(key, out Delegate result)) {
-				if (method.DeclaringType.IsClass) {
-					result = ReflectGen<TTarget>.DelegateForCall(method);
-				}
-				else {
-					result = ReflectGen<TTarget>.DelegateForCallRef(method);
-				}
-				Invokers[key] = result;
-			}
-			return result;
-		}
 	}
 
-	public static class Methods<TTarget, TReturn>
+	internal static class _Methods<TTarget, TDelegate>
 	{
-		private static IDictionary<MethodKey, Delegate> Invokers;
-		private static IDictionary<string, Delegate> Names;
+		private static IDictionary<MethodKey, TDelegate> Invokers;
+		private static IDictionary<string, TDelegate> Names;
+		private static readonly Type TargetType;
 
-		static Methods()
+		static _Methods()
 		{
-			if(Reflect.Concurrent) {
-				Invokers = new ConcurrentDictionary<MethodKey, Delegate>(MethodKey.Comparer);
-				Names = new ConcurrentDictionary<string, Delegate>(StringComparer.Ordinal);
+			if (Reflect.Concurrent) {
+				Invokers = new ConcurrentDictionary<MethodKey, TDelegate>(MethodKey.Comparer);
+				Names = new ConcurrentDictionary<string, TDelegate>(StringComparer.Ordinal);
 			}
 			else {
-				Invokers = new Dictionary<MethodKey, Delegate>(MethodKey.Comparer);
-				Names = new Dictionary<string, Delegate>(StringComparer.Ordinal);
+				Invokers = new Dictionary<MethodKey, TDelegate>(MethodKey.Comparer);
+				Names = new Dictionary<string, TDelegate>(StringComparer.Ordinal);
 			}
+			TargetType = typeof(TDelegate) == typeof(InvokerRef<TTarget>) ? typeof(TTarget).MakeByRefType() : typeof(TTarget);
 		}
 
 		public static void SetConcurrent(bool concurrent = true)
 		{
-			if(concurrent) {
-				Invokers = new ConcurrentDictionary<MethodKey, Delegate>(Invokers, MethodKey.Comparer);
-				Names = new ConcurrentDictionary<string, Delegate>(Names, StringComparer.Ordinal);
+			if (concurrent) {
+				if (Invokers is Dictionary<MethodKey, TDelegate>) {
+					Invokers = new ConcurrentDictionary<MethodKey, TDelegate>(Invokers, MethodKey.Comparer);
+					Names = new ConcurrentDictionary<string, TDelegate>(Names, StringComparer.Ordinal);
+				}
 			}
-			else {
-				Invokers = new Dictionary<MethodKey, Delegate>(Invokers, MethodKey.Comparer);
-				Names = new Dictionary<string, Delegate>(Names, StringComparer.Ordinal);
+			else if (Invokers is ConcurrentDictionary<MethodKey, TDelegate>) {
+				Invokers = new Dictionary<MethodKey, TDelegate>(Invokers, MethodKey.Comparer);
+				Names = new Dictionary<string, TDelegate>(Names, StringComparer.Ordinal);
 			}
 		}
 
 		public static void ClearCache(bool resize = false)
 		{
 			if (resize) {
-				if (Invokers is Dictionary<MethodKey, Delegate>) {
-					Invokers = new Dictionary<MethodKey, Delegate>(MethodKey.Comparer);
-					Names = new Dictionary<string, Delegate>(StringComparer.Ordinal);
+				if (Invokers is Dictionary<MethodKey, TDelegate>) {
+					Invokers = new Dictionary<MethodKey, TDelegate>(MethodKey.Comparer);
+					Names = new Dictionary<string, TDelegate>(StringComparer.Ordinal);
 				}
 				else {
-					Invokers = new ConcurrentDictionary<MethodKey, Delegate>(MethodKey.Comparer);
-					Names = new ConcurrentDictionary<string, Delegate>(StringComparer.Ordinal);
+					Invokers = new ConcurrentDictionary<MethodKey, TDelegate>(MethodKey.Comparer);
+					Names = new ConcurrentDictionary<string, TDelegate>(StringComparer.Ordinal);
 				}
 			}
 			else {
@@ -152,31 +131,103 @@ namespace Utilities.Reflection.Cache
 			}
 		}
 
-		public static Delegate Create(string name)
+		public static TDelegate Create(string name)
 		{
-			if (!Names.TryGetValue(name, out Delegate result)) {
+			if (!Names.TryGetValue(name, out TDelegate result)) {
 				Type type = typeof(TTarget);
-				MethodInfo mi = Methods<TTarget>._Method(type, name);
+				MethodInfo mi = _Methods.GetMethod(type, name);
 				result = Create(mi);
 				Names[name] = result;
 			}
 			return result;
 		}
 
-		public static Delegate Create(MethodInfo method)
+		public static TDelegate Create(MethodInfo method)
 		{
 			MethodKey key = new MethodKey()
 			{
 				Method = method,
 				Type = typeof(TTarget)
 			};
-			if (!Invokers.TryGetValue(key, out Delegate result)) {
-				if (method.DeclaringType.IsClass) {
-					result = ReflectGen<TTarget>.DelegateForCall<TReturn>(method);
+			if (!Invokers.TryGetValue(key, out TDelegate result)) {
+				Delegate func = ReflectGen<TTarget>.Method(method, typeof(TDelegate), null, TargetType, typeof(object[]));
+				result = (TDelegate) (object) func;
+				Invokers[key] = result;
+			}
+			return result;
+		}
+	}
+
+	internal static class _Methods<TTarget, TReturn, TDelegate>
+	{
+		private static IDictionary<MethodKey, TDelegate> Invokers;
+		private static IDictionary<string, TDelegate> Names;
+		private static readonly Type TargetType;
+
+		static _Methods()
+		{
+			if(Reflect.Concurrent) {
+				Invokers = new ConcurrentDictionary<MethodKey, TDelegate>(MethodKey.Comparer);
+				Names = new ConcurrentDictionary<string, TDelegate>(StringComparer.Ordinal);
+			}
+			else {
+				Invokers = new Dictionary<MethodKey, TDelegate>(MethodKey.Comparer);
+				Names = new Dictionary<string, TDelegate>(StringComparer.Ordinal);
+			}
+			TargetType = typeof(TDelegate) == typeof(InvokerRef<TTarget, TReturn>) ? typeof(TTarget).MakeByRefType() : typeof(TTarget);
+		}
+
+		public static void SetConcurrent(bool concurrent = true)
+		{
+			if(concurrent) {
+				Invokers = new ConcurrentDictionary<MethodKey, TDelegate>(Invokers, MethodKey.Comparer);
+				Names = new ConcurrentDictionary<string, TDelegate>(Names, StringComparer.Ordinal);
+			}
+			else {
+				Invokers = new Dictionary<MethodKey, TDelegate>(Invokers, MethodKey.Comparer);
+				Names = new Dictionary<string, TDelegate>(Names, StringComparer.Ordinal);
+			}
+		}
+
+		public static void ClearCache(bool resize = false)
+		{
+			if (resize) {
+				if (Invokers is Dictionary<MethodKey, TDelegate>) {
+					Invokers = new Dictionary<MethodKey, TDelegate>(MethodKey.Comparer);
+					Names = new Dictionary<string, TDelegate>(StringComparer.Ordinal);
 				}
 				else {
-					result = ReflectGen<TTarget>.DelegateForCallRef<TReturn>(method);
+					Invokers = new ConcurrentDictionary<MethodKey, TDelegate>(MethodKey.Comparer);
+					Names = new ConcurrentDictionary<string, TDelegate>(StringComparer.Ordinal);
 				}
+			}
+			else {
+				Invokers.Clear();
+				Names.Clear();
+			}
+		}
+
+		public static TDelegate Create(string name)
+		{
+			if (!Names.TryGetValue(name, out TDelegate result)) {
+				Type type = typeof(TTarget);
+				MethodInfo mi = _Methods.GetMethod(type, name);
+				result = Create(mi);
+				Names[name] = result;
+			}
+			return result;
+		}
+
+		public static TDelegate Create(MethodInfo method)
+		{
+			MethodKey key = new MethodKey()
+			{
+				Method = method,
+				Type = typeof(TTarget)
+			};
+			if (!Invokers.TryGetValue(key, out TDelegate result)) {
+				Delegate func = ReflectGen<TTarget>.Method(method, typeof(TDelegate), typeof(TReturn), TargetType, typeof(object[]));
+				result = (TDelegate) (object) func;
 				Invokers[key] = result;
 			}
 			return result;

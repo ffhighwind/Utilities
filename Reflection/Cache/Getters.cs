@@ -10,52 +10,80 @@ namespace Utilities.Reflection.Cache
 {
 	public static class Getters<TTarget, TValue>
 	{
-		private static IDictionary<PropertyKey, Delegate> Properties;
-		private static IDictionary<FieldKey, Delegate> Fields;
-		private static IDictionary<string, Delegate> Names;
+		public static void SetConcurrent(bool concurrent = true)
+		{
+			_Getters<TTarget, TValue, Func<TTarget, TValue>>.SetConcurrent(concurrent);
+		}
 
-		static Getters()
+		public static void ClearCache(bool resize = false)
+		{
+			_Getters<TTarget, TValue, Func<TTarget, TValue>>.ClearCache(resize);
+		}
+	}
+
+	public static class GettersRef<TTarget, TValue>
+	{
+		public static void SetConcurrent(bool concurrent = true)
+		{
+			_Getters<TTarget, TValue, GetterRef<TTarget, TValue>>.SetConcurrent(concurrent);
+		}
+
+		public static void ClearCache(bool resize = false)
+		{
+			_Getters<TTarget, TValue, GetterRef<TTarget, TValue>>.ClearCache(resize);
+		}
+	}
+
+	internal static class _Getters<TTarget, TValue, TDelegate>
+	{
+		private static IDictionary<PropertyKey, TDelegate> Properties;
+		private static IDictionary<FieldKey, TDelegate> Fields;
+		private static IDictionary<string, TDelegate> Names;
+		private static readonly Type TargetType;
+
+		static _Getters()
 		{
 			if (Reflect.Concurrent) {
-				Properties = new ConcurrentDictionary<PropertyKey, Delegate>(PropertyKey.Comparer);
-				Fields = new ConcurrentDictionary<FieldKey, Delegate>(FieldKey.Comparer);
-				Names = new ConcurrentDictionary<string, Delegate>(StringComparer.Ordinal);
+				Properties = new ConcurrentDictionary<PropertyKey, TDelegate>(PropertyKey.Comparer);
+				Fields = new ConcurrentDictionary<FieldKey, TDelegate>(FieldKey.Comparer);
+				Names = new ConcurrentDictionary<string, TDelegate>(StringComparer.Ordinal);
 			}
 			else {
-				Properties = new Dictionary<PropertyKey, Delegate>(PropertyKey.Comparer);
-				Fields = new Dictionary<FieldKey, Delegate>(FieldKey.Comparer);
-				Names = new Dictionary<string, Delegate>(StringComparer.Ordinal);
+				Properties = new Dictionary<PropertyKey, TDelegate>(PropertyKey.Comparer);
+				Fields = new Dictionary<FieldKey, TDelegate>(FieldKey.Comparer);
+				Names = new Dictionary<string, TDelegate>(StringComparer.Ordinal);
 			}
+			TargetType = typeof(TDelegate) == typeof(GetterRef<TTarget, TValue>) ? typeof(TTarget).MakeByRefType() : typeof(TTarget);
 		}
 
 		public static void SetConcurrent(bool concurrent = true)
 		{
 			if (concurrent) {
 				if (Properties is Dictionary<PropertyKey, Invoker<TTarget>>) {
-					Properties = new ConcurrentDictionary<PropertyKey, Delegate>(Properties, PropertyKey.Comparer);
-					Fields = new ConcurrentDictionary<FieldKey, Delegate>(Fields, FieldKey.Comparer);
-					Names = new ConcurrentDictionary<string, Delegate>(Names, StringComparer.Ordinal);
+					Properties = new ConcurrentDictionary<PropertyKey, TDelegate>(Properties, PropertyKey.Comparer);
+					Fields = new ConcurrentDictionary<FieldKey, TDelegate>(Fields, FieldKey.Comparer);
+					Names = new ConcurrentDictionary<string, TDelegate>(Names, StringComparer.Ordinal);
 				}
 			}
-			else if (Properties is ConcurrentDictionary<PropertyKey, Func<TTarget, TValue>>) {
-				Properties = new Dictionary<PropertyKey, Delegate>(Properties, PropertyKey.Comparer);
-				Fields = new Dictionary<FieldKey, Delegate>(Fields, FieldKey.Comparer);
-				Names = new Dictionary<string, Delegate>(Names, StringComparer.Ordinal);
+			else if (Properties is ConcurrentDictionary<PropertyKey, TDelegate>) {
+				Properties = new Dictionary<PropertyKey, TDelegate>(Properties, PropertyKey.Comparer);
+				Fields = new Dictionary<FieldKey, TDelegate>(Fields, FieldKey.Comparer);
+				Names = new Dictionary<string, TDelegate>(Names, StringComparer.Ordinal);
 			}
 		}
 
 		public static void ClearCache(bool resize = false)
 		{
 			if (resize) {
-				if (Properties is Dictionary<PropertyKey, Invoker<TTarget>>) {
-					Properties = new Dictionary<PropertyKey, Delegate>(PropertyKey.Comparer);
-					Fields = new Dictionary<FieldKey, Delegate>(FieldKey.Comparer);
-					Names = new Dictionary<string, Delegate>(StringComparer.Ordinal);
+				if (Properties is Dictionary<PropertyKey, TDelegate>) {
+					Properties = new Dictionary<PropertyKey, TDelegate>(PropertyKey.Comparer);
+					Fields = new Dictionary<FieldKey, TDelegate>(FieldKey.Comparer);
+					Names = new Dictionary<string, TDelegate>(StringComparer.Ordinal);
 				}
 				else {
-					Properties = new ConcurrentDictionary<PropertyKey, Delegate>(PropertyKey.Comparer);
-					Fields = new ConcurrentDictionary<FieldKey, Delegate>(FieldKey.Comparer);
-					Names = new ConcurrentDictionary<string, Delegate>(StringComparer.Ordinal);
+					Properties = new ConcurrentDictionary<PropertyKey, TDelegate>(PropertyKey.Comparer);
+					Fields = new ConcurrentDictionary<FieldKey, TDelegate>(FieldKey.Comparer);
+					Names = new ConcurrentDictionary<string, TDelegate>(StringComparer.Ordinal);
 				}
 			}
 			else {
@@ -65,9 +93,9 @@ namespace Utilities.Reflection.Cache
 			}
 		}
 
-		public static Delegate Create(string name)
+		public static TDelegate Create(string name)
 		{
-			if (!Names.TryGetValue(name, out Delegate result)) {
+			if (!Names.TryGetValue(name, out TDelegate result)) {
 				Type type = typeof(TTarget);
 				FieldInfo field = type.GetField(name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 				if (field == null) {
@@ -91,39 +119,31 @@ namespace Utilities.Reflection.Cache
 			return result;
 		}
 
-		public static Delegate Create(PropertyInfo property)
+		public static TDelegate Create(PropertyInfo property)
 		{
 			PropertyKey key = new PropertyKey()
 			{
 				Property = property,
 				Type = typeof(TTarget)
 			};
-			if (!Properties.TryGetValue(key, out Delegate result)) {
-				if (property.DeclaringType.IsClass) {
-					result = (Delegate) ReflectGen<TTarget>.DelegateForGet<TValue>(property);
-				}
-				else {
-					result = (Delegate) ReflectGen<TTarget>.DelegateForGetRef<TValue>(property);
-				}
+			if (!Properties.TryGetValue(key, out TDelegate result)) {
+				Delegate getter = ReflectGen<TTarget>.Getter(property, typeof(TDelegate), typeof(TValue), TargetType);
+				result = (TDelegate) (object) getter;
 				Properties[key] = result;
 			}
 			return result;
 		}
 
-		public static Delegate Create(FieldInfo field)
+		public static TDelegate Create(FieldInfo field)
 		{
 			FieldKey key = new FieldKey()
 			{
 				Field = field,
 				Type = typeof(TTarget)
 			};
-			if (!Fields.TryGetValue(key, out Delegate result)) {
-				if (field.DeclaringType.IsClass) {
-					result = ReflectGen<TTarget>.DelegateForGet<TValue>(field);
-				}
-				else {
-					result = ReflectGen<TTarget>.DelegateForGetRef<TValue>(field);
-				}
+			if (!Fields.TryGetValue(key, out TDelegate result)) {
+				Delegate getter = ReflectGen<TTarget>.Getter(field, typeof(TDelegate), typeof(TValue), TargetType);
+				result = (TDelegate) (object) getter;
 				Fields[key] = result;
 			}
 			return result;

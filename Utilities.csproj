@@ -95,7 +95,7 @@
     <Compile Include="Reflection\Cache\PropertyKey.cs" />
     <Compile Include="Reflection\Cache\ConstructorKey.cs" />
     <Compile Include="Reflection\Reflect.cs" />
-    <Compile Include="Reflection\Cache\ReflectGen.cs" />
+    <Compile Include="Reflection\ReflectGen.cs" />
     <Compile Include="Reflection\Cache\ReflectEmit.cs" />
     <Compile Include="Reflection\Cache\FieldKey.cs" />
     <Compile Include="Reflection\Cache\MethodKey.cs" />
