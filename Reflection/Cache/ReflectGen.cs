@@ -43,12 +43,6 @@ namespace Utilities.Reflection.Cache
 		/// </summary>
 		public static Delegate DelegateForCtor(Type delegateType, Type type, Type[] inputParamTypes, params Type[] paramTypes)
 		{
-			ConstructorKey key = new ConstructorKey()
-			{
-				Output = typeof(TTarget),
-				Type = type,
-				ParamTypes = paramTypes,
-			};
 			string methodName = type.Name + "(" + string.Join(",", paramTypes.Select(p => p.Name)) + ")";
 			DynamicMethod dynMethod = new DynamicMethod(methodName, type, inputParamTypes, true);
 			ILGenerator emit = dynMethod.GetILGenerator();
