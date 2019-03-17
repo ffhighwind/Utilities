@@ -72,6 +72,7 @@
     <Compile Include="Dapper\KeyAttribute.cs" />
     <Compile Include="Dapper\MatchUpdateAttribute.cs" />
     <Compile Include="Dapper\TableAttribute.cs" />
+    <Compile Include="Dapper\WhereClauseGenerator.cs" />
     <Compile Include="Database.cs" />
     <Compile Include="Email\Extensions.cs" />
     <Compile Include="Email\ItemClass.cs" />

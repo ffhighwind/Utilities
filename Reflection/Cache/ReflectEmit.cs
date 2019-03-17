@@ -41,23 +41,23 @@ namespace Utilities.Reflection.Cache
 			if (field != null) {
 				Type fieldType = weakTyping ? typeof(object) : field.FieldType;
 				emit = buildMethod("FieldSetter", typeof(void), new Type[] { typeof(TTarget).MakeByRefType(), fieldType });
-				EmitSetter(emit, field);
+				EmitSetter(emit, typeof(TTarget), field);
 				emit = buildMethod("FieldGetter", fieldType, new Type[] { typeof(TTarget) });
-				EmitGetter(emit, field);
+				EmitGetter(emit, targetType, field);
 			}
 
 			if (property != null) {
 				Type propType = weakTyping ? typeof(object) : property.PropertyType;
 				emit = buildMethod("PropertySetter", typeof(void), new Type[] { typeof(TTarget).MakeByRefType(), propType });
-				EmitSetter(emit, property);
+				EmitSetter(emit, typeof(TTarget), property);
 				emit = buildMethod("PropertyGetter", propType, new Type[] { typeof(TTarget) });
-				EmitGetter(emit, property);
+				EmitGetter(emit, targetType, property);
 			}
 
 			if (method != null) {
 				Type returnType = (weakTyping || method.ReturnType == typeof(void)) ? typeof(object) : method.ReturnType;
 				emit = buildMethod("MethodCaller", returnType, new Type[] { typeof(TTarget), typeof(object[]) });
-				EmitMethod(emit, method);
+				EmitMethod(emit, typeof(TTarget), method);
 			}
 
 			if (targetType != null) {
@@ -93,17 +93,17 @@ namespace Utilities.Reflection.Cache
 						"No constructor found that matches the following parameter types: " +
 						string.Join(",", paramTypes.Select(x => x.Name).ToArray())));
 				}
-				_EmitConstructor(emit, type, targetType, ctor, paramTypes);
+				_EmitConstructor(emit, targetType, ctor, paramTypes);
 			}
 		}
 
 		public static void EmitConstructor(ILGenerator emit, Type type, ConstructorInfo constructor)
 		{
 			Type targetType = typeof(TTarget) == typeof(object) ? type : typeof(TTarget);
-			_EmitConstructor(emit, type, targetType, constructor, constructor.GetParameters().Select(p => p.ParameterType).ToList());
+			_EmitConstructor(emit, targetType, constructor, constructor.GetParameters().Select(p => p.ParameterType).ToList());
 		}
 
-		private static void _EmitConstructor(ILGenerator emit, Type type, Type targetType, ConstructorInfo constructor, IList<Type> paramTypes)
+		private static void _EmitConstructor(ILGenerator emit, Type targetType, ConstructorInfo constructor, IList<Type> paramTypes)
 		{
 			// push parameters in order to then call ctor
 			for (int i = 0, imax = paramTypes.Count; i < imax; i++) {
@@ -120,14 +120,12 @@ namespace Utilities.Reflection.Cache
 			emit.Emit(OpCodes.Ret);
 		}
 
-		public static void EmitMethod(ILGenerator emit, MethodInfo method)
+		public static void EmitMethod(ILGenerator emit, Type targetType, MethodInfo method)
 		{
 			bool weaklyTyped = typeof(TTarget) == typeof(object);
 
 			// push target if not static (instance-method. in that case first arg is always 'this')
 			if (!method.IsStatic) {
-				Type targetType = weaklyTyped ? method.DeclaringType : typeof(TTarget);
-
 				emit.DeclareLocal(targetType);
 				emit.Emit(OpCodes.Ldarg_0);
 				if (weaklyTyped) {
@@ -197,7 +195,7 @@ namespace Utilities.Reflection.Cache
 			emit.Emit(OpCodes.Ret);
 		}
 
-		public static void EmitGetter(ILGenerator emit, FieldInfo field)
+		public static void EmitGetter(ILGenerator emit, Type targetType, FieldInfo field)
 		{
 			_EmitGetter(emit, field, field.FieldType, field.IsStatic,
 				(e, f) =>
@@ -234,7 +232,7 @@ namespace Utilities.Reflection.Cache
 			);
 		}
 
-		public static void EmitGetter(ILGenerator emit, PropertyInfo property)
+		public static void EmitGetter(ILGenerator emit, Type targetType, PropertyInfo property)
 		{
 			_EmitGetter(emit, property, property.PropertyType,
 				property.GetGetMethod(true).IsStatic,
@@ -288,9 +286,9 @@ namespace Utilities.Reflection.Cache
 			emit.Emit(OpCodes.Ret);
 		}
 
-		public static void EmitSetter(ILGenerator emit, FieldInfo field)
+		public static void EmitSetter(ILGenerator emit, Type targetType, FieldInfo field)
 		{
-			EmitSetter(emit, field, field.FieldType, field.IsStatic,
+			EmitSetter(emit, field, field.FieldType, targetType, field.IsStatic,
 				(e, f) =>
 				{
 					if (f.IsStatic) {
@@ -303,10 +301,10 @@ namespace Utilities.Reflection.Cache
 			);
 		}
 
-		public static void EmitSetter(ILGenerator emit, PropertyInfo property)
+		public static void EmitSetter(ILGenerator emit, Type targetType, PropertyInfo property)
 		{
-			EmitSetter(emit, property, property.PropertyType,
-				property.GetSetMethod(true).IsStatic, (e, p) =>
+			EmitSetter(emit, property, property.PropertyType, targetType, property.GetSetMethod(true).IsStatic, 
+				(e, p) =>
 				{
 					MethodInfo m = p.GetSetMethod(true);
 					if (m.IsVirtual)
@@ -317,11 +315,10 @@ namespace Utilities.Reflection.Cache
 			);
 		}
 
-		private static void EmitSetter<MInfo>(ILGenerator emit, MInfo member, Type memberType, bool isStatic, Action<ILGenerator, MInfo> set)
+		private static void EmitSetter<MInfo>(ILGenerator emit, MInfo member, Type memberType, Type targetType, bool isStatic, Action<ILGenerator, MInfo> set)
 			where MInfo : MemberInfo
 		{
-			Type targetType = typeof(TTarget);
-			bool stronglyTyped = targetType != typeof(object);
+			bool stronglyTyped = typeof(TTarget) != typeof(object);
 
 			// if we're static set member immediately
 			if (isStatic) {
@@ -337,8 +334,8 @@ namespace Utilities.Reflection.Cache
 				// push target and value argument, set member immediately
 				// target.member = value;
 				emit.Emit(OpCodes.Ldarg_0);
-				//if (!targetType.IsValueType)
-				//	emit.Emit(OpCodes.Ldind_Ref);
+				if (!targetType.IsValueType && targetType.IsByRef)
+					emit.Emit(OpCodes.Ldind_Ref);
 				emit.Emit(OpCodes.Ldarg_1);
 				set(emit, member);
 				emit.Emit(OpCodes.Ret);

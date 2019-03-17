@@ -27,12 +27,12 @@ namespace Utilities.Reflection
 	public static class ReflectGen<TTarget>
 	{
 		private static Delegate GenDelegate<TMember>(Type delegateType, TMember member, string dynMethodName,
-			Action<ILGenerator, TMember> generator, Type returnType, params Type[] paramTypes)
+			Action<ILGenerator, Type, TMember> generator, Type returnType, params Type[] paramTypes)
 			where TMember : MemberInfo
 		{
 			DynamicMethod dynMethod = new DynamicMethod(dynMethodName, returnType, paramTypes, true);
 			ILGenerator emit = dynMethod.GetILGenerator();
-			generator(emit, member);
+			generator(emit, paramTypes.Length == 0 ? typeof(TTarget) : paramTypes[0], member);
 			Delegate result = dynMethod.CreateDelegate(delegateType);
 			return result;
 		}
