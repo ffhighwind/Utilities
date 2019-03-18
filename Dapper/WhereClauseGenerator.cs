@@ -13,9 +13,12 @@ namespace Dapper.Extension
 	public class WhereClauseVisitor<Ty> : ExpressionVisitor
 	{
 		protected ParameterExpression Var;
-		private string TableName;
+		protected readonly string TableName;
 		protected StringBuilder Results = new StringBuilder(500);
 
+		public WhereClauseVisitor() : base() {
+			TableName = typeof(Ty).GetCustomAttribute<TableAttribute>(false)?.Name ?? Var.Type.Name;
+		}
 
 		/// <summary>
 		/// Dispatches the <see cref="System.Linq.Expressions.Expression"/> to one of the more specialized visit methods in this class.
@@ -25,7 +28,6 @@ namespace Dapper.Extension
 		public string Create(Expression<Predicate<Ty>> node)
 		{
 			Var = node.Parameters[0];
-			TableName = Var.Type.GetCustomAttribute<TableAttribute>(false)?.Name ?? Var.Type.Name;
 			base.Visit(node.Body);
 			return Results.ToString();
 		}
@@ -76,23 +78,11 @@ namespace Dapper.Extension
 					Op = " | ";
 					break;
 				case ExpressionType.AndAlso: // a && b
-					Op = ") AND (";
-					Results.Append('(');
-					base.Visit(node.Left);
-					Results.Append(Op);
-					base.Visit(node.Right);
-					Results.Append(')');
-					return node;
-					//break;
+					Op = " AND ";
+					break;
 				case ExpressionType.OrElse: // a || b
-					Op = ") OR (";
-					Results.Append('(');
-					base.Visit(node.Left);
-					Results.Append(Op);
-					base.Visit(node.Right);
-					Results.Append(')');
-					return node;
-					//break;
+					Op = " OR ";
+					break;
 				case ExpressionType.LessThan: // a < b
 					Op = " < ";
 					break;
@@ -127,10 +117,12 @@ namespace Dapper.Extension
 				default:
 					throw new InvalidOperationException("Unknown NodeType " + node.NodeType.ToString());
 			}
+			Results.Append('(');
 			base.Visit(node.Left);
 			Results.Append(Op);
 			base.Visit(node.Right);
-			return node;
+			Results.Append(')');
+			return null;
 		}
 
 		/// <summary>
@@ -142,7 +134,7 @@ namespace Dapper.Extension
 		{
 			string str = SqlValue(node.Value, node.Type);
 			Results.Append(str);
-			return node;
+			return null;
 		}
 
 		/// <summary>
@@ -155,7 +147,7 @@ namespace Dapper.Extension
 			// default(a)
 			string str = SqlDefaultValue(node.Type);
 			Results.Append(str);
-			return node;
+			return null;
 		}
 
 		/// <summary>
@@ -184,13 +176,13 @@ namespace Dapper.Extension
 				case ExpressionType.Quote: // Expression<a>
 				case ExpressionType.UnaryPlus: // +a
 					base.Visit(node.Operand);
-					return node;
+					return null;
 				default:
 					throw new InvalidOperationException("Unknown NodeType " + node.NodeType.ToString());
 			}
 			Results.Append(Op);
 			base.Visit(node.Operand);
-			return node;
+			return null;
 		}
 
 		/// <summary>
@@ -215,7 +207,7 @@ namespace Dapper.Extension
 			Results.Append("].[");
 			Results.Append(node.Member.Name);
 			Results.Append(']');
-			return node;
+			return null;
 		}
 
 		/// <summary>
@@ -227,11 +219,12 @@ namespace Dapper.Extension
 		{
 			// a.b(c, d)
 			if (node.Method.Name == "Equals" && node.Arguments.Count == 1) {
+				Results.Append('(');
 				base.Visit(node.Object);
-				Results.Append(" = (");
+				Results.Append(" = ");
 				base.Visit(node.Arguments[0]);
 				Results.Append(')');
-				return node;
+				return null;
 			}
 			else if(node.Method.Name == "Contains" && node.Arguments.Count > 1) {
 				base.Visit(node.Arguments[1]);
@@ -240,9 +233,9 @@ namespace Dapper.Extension
 					_VisitNewArray(newExp);
 				}
 				else {
-					throw new InvalidOperationException("Invalid expression: " + node.ToString() + "\nExpecting new[] { ... }.Contains(...)");
+					throw InvalidExpression(node);
 				}
-				return node;
+				return null;
 			}
 			throw InvalidExpression(node);
 		}
@@ -252,7 +245,7 @@ namespace Dapper.Extension
 			Type type = node.Type.GetElementType();
 			// new a[] { b, c, d }
 			if (!IsValidSqlType(type)) {
-				throw new InvalidOperationException("Invalid type " + node.Type.Name);
+				throw new InvalidOperationException("Invalid type " + node.Type.Name + "\n" + node.ToString());
 			}
 			bool isQuoted = IsQuotedSqlType(type);
 			Results.Append('(');
@@ -269,7 +262,7 @@ namespace Dapper.Extension
 					Results.Append(',');
 				}
 				else {
-					throw new InvalidOperationException("Array must contain constant values");
+					throw new InvalidOperationException("Arrays can only contain constant values");
 				}
 			}
 			Results.Remove(Results.Length - 1, 1);
@@ -283,7 +276,7 @@ namespace Dapper.Extension
 		/// <returns>The modified expression, if it or any subexpression was modified; otherwise, returns the original expression.</returns>
 		protected override Expression VisitNewArray(NewArrayExpression node)
 		{
-			return node;
+			return null;
 		}
 
 		/// <summary>
@@ -298,7 +291,7 @@ namespace Dapper.Extension
 				throw new InvalidOperationException("Variable '" + node.Name + "' is out of scope. Only allowed to access variable '" + Var.Name + "'.");
 			}
 			Results.Append(TableName);
-			return node;
+			return null;
 		}
 
 		private bool IsValidSqlType(Type type)
@@ -369,8 +362,6 @@ namespace Dapper.Extension
 		{
 			TypeCode typeCode = Type.GetTypeCode(type);
 			switch (typeCode) {
-				case TypeCode.Empty:
-					return "NULL";
 				case TypeCode.Object:
 					string tmp;
 					if (type == typeof(TimeSpan)) {
@@ -415,8 +406,10 @@ namespace Dapper.Extension
 					return ((DateTime) value).ToString();
 				case TypeCode.String:
 					return value == null ? "NULL" : ("'" + (string) value + "'");
-				case TypeCode.DBNull:
-					return "NULL";
+				//case TypeCode.DBNull:
+				//	return "NULL";
+				//case TypeCode.Empty:
+				//	return "NULL";
 				default:
 					throw new InvalidOperationException("Invalid type " + type.Name.ToString());
 			}
@@ -455,16 +448,15 @@ namespace Dapper.Extension
 				case TypeCode.UInt32:
 				case TypeCode.Int64:
 				case TypeCode.UInt64:
-					return "0";
 				case TypeCode.Single:
 				case TypeCode.Double:
 				case TypeCode.Decimal:
-					return "0.0";
+					return "0";
 				case TypeCode.DateTime:
 					return "'" + (default(DateTime)).ToString() + "'";
-				case TypeCode.Empty:
 				case TypeCode.String:
-				case TypeCode.DBNull:
+				//case TypeCode.Empty:
+				//case TypeCode.DBNull:
 					return "NULL";
 				default:
 					throw new InvalidOperationException("Invalid type " + type.Name.ToString());

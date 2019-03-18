@@ -38,7 +38,7 @@ namespace Utilities.UnitTests
 			};
 			TestDTO4 t = list2[0];
 			Dapper.Extension.WhereClauseVisitor<TestDTO4> gen = new WhereClauseVisitor<TestDTO4>();
-			string str = gen.Create(x => x.FirstName == "A" && new string[] { "A", "B" }.Contains(t.FirstName[0].ToString()));
+			string str = gen.Create(x => x.FirstName == "A" && (new string[] { "A", "B" }.Contains(x.LastName) && x.ID <= 3));
 
 			TestDTO dto = new TestDTO() { CreatedDt = new DateTime(2019, 1, 15), Name = "Test" };
 
