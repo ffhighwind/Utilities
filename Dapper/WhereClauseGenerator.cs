@@ -29,7 +29,9 @@ namespace Dapper.Extension
 		{
 			Var = node.Parameters[0];
 			base.Visit(node.Body);
-			return Results.ToString();
+			string str= Results.ToString();
+			Results.Clear();
+			return str;
 		}
 
 		/// <summary>
