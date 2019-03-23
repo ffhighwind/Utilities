@@ -273,7 +273,7 @@ namespace Utilities.Converters
 				case TypeCode.UInt16:
 					return ToUInt16;
 				case TypeCode.UInt32:
-					return ToInt32;
+					return ToUInt32;
 				case TypeCode.UInt64:
 					return ToUInt64;
 				case TypeCode.Object:
@@ -647,7 +647,6 @@ namespace Utilities.Converters
 		public static object ToInt16(object value)
 		{
 			return System.Convert.ToInt16(value);
-			////return ToInt16(value.GetType())(value);
 		}
 
 		/// <summary>
@@ -664,6 +663,7 @@ namespace Utilities.Converters
 		{
 			return System.Convert.ToInt16(value);
 		}
+		#endregion ToInt64
 
 		#region ToInt32
 		/// <summary>
@@ -702,8 +702,6 @@ namespace Utilities.Converters
 		}
 		#endregion // ToInt32
 
-		#endregion ToInt64
-
 		#region ToInt64
 		/// <summary>
 		/// Converts the value of the specified <see cref="object"/> to its equivalent <see cref="long"/> representation.
@@ -713,7 +711,6 @@ namespace Utilities.Converters
 		public static object ToInt64(object value)
 		{
 			return System.Convert.ToInt64(value);
-			////return ToInt64(value.GetType())(value);
 		}
 
 		/// <summary>
@@ -741,7 +738,6 @@ namespace Utilities.Converters
 		public static object ToUInt16(object value)
 		{
 			return System.Convert.ToUInt16(value);
-			////return ToUInt16(value.GetType())(value);
 		}
 
 		/// <summary>
@@ -769,7 +765,6 @@ namespace Utilities.Converters
 		public static object ToUInt32(object value)
 		{
 			return System.Convert.ToUInt32(value);
-			////return ToUInt32(value.GetType())(value);
 		}
 
 		/// <summary>
@@ -797,7 +792,6 @@ namespace Utilities.Converters
 		public static object ToUInt64(object value)
 		{
 			return System.Convert.ToUInt64(value);
-			////return ToUInt64(value.GetType())(value);
 		}
 
 		/// <summary>
@@ -825,7 +819,6 @@ namespace Utilities.Converters
 		public static object ToBoolean(object value)
 		{
 			return ObjectToBoolean(value);
-			////return ToBoolean(value.GetType())(value);
 		}
 
 		/// <summary>
@@ -861,7 +854,6 @@ namespace Utilities.Converters
 		public static object ToByte(object value)
 		{
 			return System.Convert.ToByte(value);
-			////return ToByte(value.GetType())(value);
 		}
 
 		/// <summary>
@@ -889,7 +881,6 @@ namespace Utilities.Converters
 		public static object ToSByte(object value)
 		{
 			return System.Convert.ToSByte(value);
-			////return ToSByte(value.GetType())(value);
 		}
 
 		/// <summary>
@@ -917,7 +908,6 @@ namespace Utilities.Converters
 		public static object ToChar(object value)
 		{
 			return System.Convert.ToChar(value);
-			////return ToChar(value.GetType())(value);
 		}
 
 		/// <summary>
@@ -945,7 +935,6 @@ namespace Utilities.Converters
 		public static object ToSingle(object value)
 		{
 			return System.Convert.ToSingle(value);
-			////return ToSingle(value.GetType())(value);
 		}
 
 		/// <summary>
@@ -973,7 +962,6 @@ namespace Utilities.Converters
 		public static object ToDouble(object value)
 		{
 			return System.Convert.ToDouble(value);
-			////return ToDouble(value.GetType())(value);
 		}
 
 		/// <summary>
@@ -1001,7 +989,6 @@ namespace Utilities.Converters
 		public static object ToDecimal(object value)
 		{
 			return System.Convert.ToDecimal(value);
-			////return ToDecimal(value.GetType())(value);
 		}
 
 		/// <summary>
@@ -1045,7 +1032,7 @@ namespace Utilities.Converters
 				case TypeCode.Single:
 					return new BigInteger((float)value);
 				case TypeCode.String:
-					return BigInteger.Parse(value as string);
+					return BigInteger.Parse((string)value);
 				case TypeCode.UInt16:
 					return new BigInteger((ushort)value);
 				case TypeCode.UInt32:

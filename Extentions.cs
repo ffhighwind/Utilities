@@ -435,11 +435,6 @@ namespace Utilities
 			typeof(ushort), typeof(uint),
 		};
 
-		private static readonly List<Type> FloatTypes = new List<Type>
-		{
-			typeof(double), typeof(decimal), typeof(float),
-		};
-
 		/// <summary>
 		/// Determines if a <see cref="Type"/> is an integral numeric type.
 		/// </summary>
@@ -457,7 +452,8 @@ namespace Utilities
 		/// <returns>True if the <see cref="Type"/> is a floating-point type. False otherwise.</returns>
 		public static bool IsFloatingPoint(this Type type)
 		{
-			return FloatTypes.Contains(Nullable.GetUnderlyingType(type) ?? type);
+			Type ty = Nullable.GetUnderlyingType(type) ?? type;
+			return ty == typeof(double) || ty == typeof(decimal) || ty == typeof(float);
 		}
 
 		/// <summary>

@@ -474,7 +474,6 @@ namespace Utilities
 		/// <returns>A shallow clone of an object.</returns>
 		public static T Clone<T>(T obj) where T : class
 		{
-
 			if (obj != null) {
 				System.Reflection.MethodInfo inst = obj.GetType().GetMethod("MemberwiseClone",
 					System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
@@ -485,8 +484,41 @@ namespace Utilities
 			return null;
 		}
 
-		// Deep Cloning with IL
-		//http://whizzodev.blogspot.com/2008/06/object-deep-cloning-using-il-in-c_20.html
-		/// Use NuGet DeepCloner instead
+		public static bool IsNumeric(TypeCode typeCode)
+		{
+			switch (typeCode) {
+				case TypeCode.Single:
+				case TypeCode.Double:
+				case TypeCode.Decimal:
+				case TypeCode.Int16:
+				case TypeCode.Int32:
+				case TypeCode.Int64:
+				case TypeCode.Byte:
+				case TypeCode.SByte:
+				case TypeCode.UInt16:
+				case TypeCode.UInt32:
+				case TypeCode.UInt64:
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		public static bool IsIntegral(TypeCode typeCode)
+		{
+			switch (typeCode) {
+				case TypeCode.Int16:
+				case TypeCode.Int32:
+				case TypeCode.Int64:
+				case TypeCode.Byte:
+				case TypeCode.SByte:
+				case TypeCode.UInt16:
+				case TypeCode.UInt32:
+				case TypeCode.UInt64:
+					return true;
+				default:
+					return false;
+			}
+		}
 	}
 }
