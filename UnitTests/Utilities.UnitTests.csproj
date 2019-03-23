@@ -55,8 +55,6 @@
     <Compile Include="Convert.cs" />
     <Compile Include="DapperExtension.cs" />
     <Compile Include="Database.cs" />
-    <Compile Include="Program.cs" />
-    <Compile Include="Reflect.cs" />
     <Compile Include="Test16.cs" />
     <Compile Include="Test16S.cs" />
     <Compile Include="Test16Struct.cs" />
