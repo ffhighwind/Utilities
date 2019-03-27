@@ -389,7 +389,7 @@ namespace Utilities.Converters
 		{
 			return DefaultEncoding.GetString((byte[])value);
 		}
-		#endregion // ToString
+		#endregion ToString
 
 		#region ToDateTime
 		/// <summary>
@@ -442,7 +442,7 @@ namespace Utilities.Converters
 			else
 				return dateTimeOff.DateTime;
 		}
-		#endregion // ToDateTime
+		#endregion ToDateTime
 
 		#region ToDateTimeOffset
 		/// <summary>
@@ -493,7 +493,8 @@ namespace Utilities.Converters
 		{
 			return new DateTimeOffset(0, (TimeSpan)value);
 		}
-		#endregion // ToDateTimeOffset
+		#endregion ToDateTimeOffset
+
 
 		#region ToTimeSpan
 		/// <summary>
@@ -547,7 +548,8 @@ namespace Utilities.Converters
 		{
 			return Extensions.ToDateTime((DateTimeOffset)value).TimeOfDay;
 		}
-		#endregion // ToTimeSpan
+		#endregion ToTimeSpan
+
 
 		#region ToChars
 		/// <summary>
@@ -586,7 +588,8 @@ namespace Utilities.Converters
 		{
 			return ((string)value).ToCharArray();
 		}
-		#endregion // ToChars
+		#endregion ToChars
+
 
 		#region ToBytes
 		/// <summary>
@@ -636,7 +639,8 @@ namespace Utilities.Converters
 		{
 			return new byte[] { (byte)value };
 		}
-		#endregion // ToBytes
+		#endregion ToBytes
+
 
 		#region ToInt16
 		/// <summary>
@@ -700,7 +704,8 @@ namespace Utilities.Converters
 		{
 			return System.Convert.ToInt32(value);
 		}
-		#endregion // ToInt32
+		#endregion ToInt32
+
 
 		#region ToInt64
 		/// <summary>
@@ -727,7 +732,8 @@ namespace Utilities.Converters
 		{
 			return System.Convert.ToInt64(value);
 		}
-		#endregion // ToInt64
+		#endregion ToInt64
+
 
 		#region ToUInt16
 		/// <summary>
@@ -754,7 +760,8 @@ namespace Utilities.Converters
 		{
 			return System.Convert.ToUInt16(value);
 		}
-		#endregion // ToUInt16
+		#endregion ToUInt16
+
 
 		#region ToUInt32
 		/// <summary>
@@ -781,7 +788,8 @@ namespace Utilities.Converters
 		{
 			return System.Convert.ToUInt32(value);
 		}
-		#endregion // ToUInt32
+		#endregion ToUInt32
+
 
 		#region ToUInt64
 		/// <summary>
@@ -808,7 +816,8 @@ namespace Utilities.Converters
 		{
 			return System.Convert.ToUInt64(value);
 		}
-		#endregion // ToUInt32
+		#endregion ToUInt32
+
 
 		#region ToBoolean
 		/// <summary>
@@ -843,7 +852,8 @@ namespace Utilities.Converters
 			}
 			return System.Convert.ToBoolean(value);
 		}
-		#endregion // ToBoolean
+		#endregion ToBoolean
+
 
 		#region ToByte
 		/// <summary>
@@ -870,7 +880,8 @@ namespace Utilities.Converters
 		{
 			return System.Convert.ToByte(value);
 		}
-		#endregion // ToByte
+		#endregion ToByte
+
 
 		#region ToSByte
 		/// <summary>
@@ -897,7 +908,8 @@ namespace Utilities.Converters
 		{
 			return System.Convert.ToSByte(value);
 		}
-		#endregion // ToSByte
+		#endregion ToSByte
+
 
 		#region ToChar
 		/// <summary>
@@ -924,7 +936,8 @@ namespace Utilities.Converters
 		{
 			return System.Convert.ToChar(value);
 		}
-		#endregion // ToChar
+		#endregion ToChar
+
 
 		#region ToSingle
 		/// <summary>
@@ -951,7 +964,8 @@ namespace Utilities.Converters
 		{
 			return System.Convert.ToSingle(value);
 		}
-		#endregion // ToSingle
+		#endregion ToSingle
+
 
 		#region ToDouble
 		/// <summary>
@@ -978,7 +992,8 @@ namespace Utilities.Converters
 		{
 			return System.Convert.ToDouble(value);
 		}
-		#endregion // ToDouble
+		#endregion ToDouble
+
 
 		#region ToDecimal
 		/// <summary>
@@ -1005,7 +1020,8 @@ namespace Utilities.Converters
 		{
 			return System.Convert.ToDecimal(value);
 		}
-		#endregion // ToDecimal
+		#endregion ToDecimal
+
 
 		#region ToBigInteger
 		public static object ObjectToBigInteger(object value)

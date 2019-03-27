@@ -421,7 +421,8 @@ namespace Utilities
 				return table.Trim();
 			}
 		}
-		#endregion //Delimited
+		#endregion Delimited
+
 
 		#region CSV
 		/// <summary>
@@ -738,7 +739,7 @@ namespace Utilities
 				}
 			}
 		}
-		#endregion // CSV
+		#endregion CSV
 
 		#region XLS
 		/// <summary>

@@ -156,7 +156,8 @@ namespace Utilities
 				table.Rows.Add(row);
 			return table;
 		}
-		#endregion //Sort/Distinct
+		#endregion Sort/Distinct
+
 
 		#region DataTable/Enumerable/Collection
 		/// <summary>
@@ -347,7 +348,6 @@ namespace Utilities
 			}
 			return list;
 		}
-		#endregion //DataTable/List
 
 		/// <summary>
 		/// Returns an <see cref="IEnumerable{T}"/> of <see cref="List{T}"/> split into partitions of a given size.
@@ -390,6 +390,7 @@ namespace Utilities
 				yield return result;
 			}
 		}
+		#endregion DataTable/Enumerable/Collection
 
 		#region Type
 		/// <summary>
@@ -465,7 +466,8 @@ namespace Utilities
 		{
 			return NumericTypes.Contains(Nullable.GetUnderlyingType(type) ?? type);
 		}
-		#endregion //Type
+		#endregion Type
+
 
 		#region String/StringBuilder
 		/// <summary>
@@ -489,7 +491,8 @@ namespace Utilities
 		{
 			return str.Remove(str.Length - length, length);
 		}
-		#endregion //String/StringBuilder
+		#endregion String/StringBuilder
+
 
 		#region Print
 		/// <summary>

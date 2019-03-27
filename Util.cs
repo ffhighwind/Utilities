@@ -233,7 +233,8 @@ namespace Utilities
 			//// A full list can be found using Encoding.GetEncodings();
 			return Encoding.Default;
 		}
-		#endregion //Encoding/TextReader
+		#endregion Encoding/TextReader
+
 
 		#region Properties
 		/// <summary>
@@ -279,7 +280,8 @@ namespace Utilities
 		{
 			return ty.GetProperties(flags).Select(prop => prop.PropertyType).ToList();
 		}
-		#endregion //Properties
+		#endregion Properties
+
 
 		#region ToString
 		private delegate string ToStringDelegate();
@@ -339,7 +341,8 @@ namespace Utilities
 				? obj.ToString()
 				: JsonConvert.SerializeObject(obj, Formatting.None);
 		}
-		#endregion //ToString
+		#endregion ToString
+
 
 		/// <summary>
 		/// Parses a string into a basic <see cref="Type"/>.
