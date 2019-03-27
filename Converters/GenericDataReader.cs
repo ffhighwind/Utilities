@@ -6,7 +6,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Reflection;
 
-namespace Utilities.Converters
+namespace Fasterflect
 {
 	/// <summary>
 	/// Generic <see cref="DbDataReader"/> for use with ADO.NET SQL select commands. Converts from a <see cref="DataTable"/> to <see cref="IEnumerable{T}"/>.
@@ -37,7 +37,6 @@ namespace Utilities.Converters
 		/// Initializes a new instance of the <see cref="GenericDataReader{T}"/> class.
 		/// </summary>
 		/// <param name="source">The <see cref="IEnumerable{T}"/> to read.</param>
-		/// <param name="columns">The names of the table columns that match the properties.</param>
 		/// <param name="props">The properties that will be read. If this is empty then all properties will be read.</param>
 		public GenericDataReader(IEnumerable<T> source, PropertyInfo[] props)
 		{
@@ -439,7 +438,7 @@ namespace Utilities.Converters
 		public override int GetValues(object[] values)
 		{
 			for (int i = 0; i < pinfos.Length; i++)
-				values[i] = pinfos[i].GetValue(current) ?? DBNull.Value;
+				values[i] = pinfos[i].GetValue(current, null) ?? DBNull.Value;
 			return pinfos.Length;
 		}
 
@@ -458,13 +457,13 @@ namespace Utilities.Converters
 		/// </summary>
 		/// <param name="name">The name of the column.</param>
 		/// <returns>The value of the specified column.</returns>
-		public override object this[string name] => pinfos.First(prop => prop.Name == name).GetValue(current) ?? DBNull.Value;
+		public override object this[string name] => pinfos.First(prop => prop.Name == name).GetValue(current, null) ?? DBNull.Value;
 
 		/// <summary>
 		/// Gets the value of the specified column as an instance of <see cref="object"/>.
 		/// </summary>
 		/// <param name="ordinal">The zero-based column ordinal.</param>
 		/// <returns>The value of the specified column.</returns>
-		public override object this[int ordinal] => pinfos[ordinal].GetValue(current) ?? DBNull.Value;
+		public override object this[int ordinal] => pinfos[ordinal].GetValue(current, null) ?? DBNull.Value;
 	}
 }

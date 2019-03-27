@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Dapper;
 
 namespace Utilities.UnitTests
 {
-	[Table("Test2")]
 	public class Test2 : IEquatable<Test2>
 	{
 		public Test2() { }

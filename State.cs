@@ -8,6 +8,12 @@ namespace Utilities
 	/// </summary>
 	public class State
 	{
+		public static IReadOnlyDictionary<string, State> States;
+		static State()
+		{
+			States = _States;
+		}
+
 		/// <summary>
 		/// For determining if daylight savings time (DST) is currently in affect.
 		/// </summary>
@@ -21,7 +27,7 @@ namespace Utilities
 		/// <param name="mstdiff">The time zone hour difference from MST.</param>
 		private State(string fullname, string name, int mstdiff)
 		{
-			Fullname = fullname;
+			FullName = fullname;
 			Name = name;
 			MSTDiff = mstdiff;
 			TimeZone = GetTimezone(mstdiff);
@@ -35,7 +41,7 @@ namespace Utilities
 		/// <param name="timezone">The time zone of the state.</param>
 		private State(string fullname, string name, string timezone)
 		{
-			Fullname = fullname;
+			FullName = fullname;
 			Name = name;
 			MSTDiff = GetMSTDiff(timezone);
 			TimeZone = timezone;
@@ -48,27 +54,42 @@ namespace Utilities
 		/// <returns>The hour difference from the MST time zone.</returns>
 		public static double GetMSTDiff(string timezone)
 		{
-			double diff = 0;
-			if (timezone == "MST" || timezone == "MT" || timezone == "MDT")
-				diff = 0;
-			else if (timezone == "PST" || timezone == "PT" || timezone == "PDT")
-				diff = 1;
-			else if (timezone == "CST" || timezone == "CT" || timezone == "CDT")
-				diff = -1;
-			else if (timezone == "EST" || timezone == "AST" || timezone == "ET" || timezone == "EDT")
-				diff = -2;
-			else if (timezone == "AKST" || timezone == "AKDT")
-				diff = 4;
-			else if (timezone == "HST")
-				diff = IsDaylightSavings ? 5 : 4;
-			else if (timezone.StartsWith("UTC") || timezone.StartsWith("GMT")) {
-				string diffstr = timezone.Substring(3);
-				if (double.TryParse(diffstr, out diff))
-					diff = -(diff + 6 + (IsDaylightSavings ? 1 : 0));
+			switch (timezone[0]) {
+				case 'M':
+					if (timezone == "MST" || timezone == "MT" || timezone == "MDT") {
+						return 0;
+					}
+					break;
+				case 'P':
+					if (timezone == "PST" || timezone == "PT" || timezone == "PDT") {
+						return 1;
+					}
+					break;
+				case 'C':
+					if (timezone == "CST" || timezone == "CT" || timezone == "CDT") {
+						return -1;
+					}
+					break;
+				case 'E':
+					if (timezone == "EST" || timezone == "ET" || timezone == "EDT") {
+						return -2;
+					}
+					break;
+				case 'A':
+					if (timezone == "AST") {
+						return -2;
+					}
+					else if (timezone == "AKST" || timezone == "AKDT") {
+						return 4;
+					}
+					break;
+				case 'H':
+					if (timezone == "HST") {
+						return IsDaylightSavings ? 5 : 4;
+					}
+					break;
 			}
-			else
-				throw new InvalidTimeZoneException(timezone + " is not a valid timezone.");
-			return diff;
+			throw new InvalidTimeZoneException(timezone + " is not a valid timezone.");
 		}
 
 		/// <summary>
@@ -78,38 +99,30 @@ namespace Utilities
 		/// <returns>The abbreviated time zone for a given hour difference from Mountain Stanard Time.</returns>
 		public static string GetTimezone(int mstdiff)
 		{
-			string timezone;
 			switch (mstdiff) {
 				case 1:
-					timezone = "PT";
-					break;
+					return "PT";
 				case 0:
-					timezone = "MT";
-					break;
+					return "MT";
 				case -1:
-					timezone = "CT";
-					break;
+					return "CT";
 				case -2:
-					timezone = "ET";
-					break;
+					return "ET";
 				case -3:
-					timezone = IsDaylightSavings ? "AKDT" : "AKST";
-					break;
+					return IsDaylightSavings ? "AKDT" : "AKST";
 				default:
 					if (mstdiff < -12 || mstdiff > 24)
 						throw new ArgumentOutOfRangeException(nameof(mstdiff), "Value must be between -12 and 24");
 					int utcdiff = ((mstdiff + 24 + 6 + (IsDaylightSavings ? 1 : 0)) % 24) - 12;
-					timezone = string.Format("UTC{0}", utcdiff);
-					break;
+					return string.Format("UTC{0}", utcdiff);
 			}
-			return timezone;
 		}
 
 		/// <summary>
 		/// Gets the full name of the state.
 		/// </summary>
 		/// <returns>The full name of the state.</returns>
-		public string Fullname { get; private set; }
+		public string FullName { get; private set; }
 
 		/// <summary>
 		/// Gets the abbreviation for the state.
@@ -136,7 +149,7 @@ namespace Utilities
 		/// <returns>The state with the abbreviated name; or null if it doesn't exist.</returns>
 		public static State GetState(string abbrev)
 		{
-			if (States.TryGetValue(abbrev, out State state))
+			if (_States.TryGetValue(abbrev, out State state))
 				return state;
 			return null;
 		}
@@ -217,7 +230,7 @@ namespace Utilities
 		public static readonly State SK = new State("Saskatchewan", "SK", "UTC-6");
 		public static readonly State YT = new State("Yukon", "YT", "PST");
 
-		private static readonly Dictionary<string, State> States = new Dictionary<string, State>() {
+		private static readonly Dictionary<string, State> _States = new Dictionary<string, State>() {
 			{ "AL", AL },
 			{ "AK", AK },
 			{ "AS", AS },
