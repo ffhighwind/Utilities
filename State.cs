@@ -88,6 +88,16 @@ namespace Utilities
 						return IsDaylightSavings ? 5 : 4;
 					}
 					break;
+				case 'U':
+				case 'G':
+					if (timezone.StartsWith("UTC") || timezone.StartsWith("GMT")) {
+						string diffstr = timezone.Substring(3);
+						if (double.TryParse(diffstr, out double diff)) {
+							diff = -(diff + 6 + (IsDaylightSavings ? 1 : 0));
+							return diff;
+						}
+					}
+					break;
 			}
 			throw new InvalidTimeZoneException(timezone + " is not a valid timezone.");
 		}
