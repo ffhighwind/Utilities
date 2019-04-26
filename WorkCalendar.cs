@@ -36,9 +36,42 @@ namespace Utilities
 			////return FirstDay(year, month, WEEK_START).AddDays(7 * 4).Month == month ? 5 : 4;
 			// checks if the start of the 5th week is in the same month
 			DateTime day1 = new DateTime(year, month, 1);
-			int daysAdd = ((int)Monday - (int)day1.DayOfWeek + 7) % 7 + 7 * 4;
+			int daysAdd = ((int) Monday - (int) day1.DayOfWeek + 7) % 7 + 7 * 4;
 			////return day1.AddDays(daysAdd).Month == month ? 5 : 4;
 			return daysAdd < DateTime.DaysInMonth(year, month) ? 5 : 4;
+		}
+
+		/// <summary>
+		/// Returns the weekly billing period for a given date.
+		/// </summary>
+		/// <param name="date">A day that falls in the weekly billing period.</param>
+		/// <param name="start">The start of the weekly billing period. This will be Monday or the beginning of the month.</param>
+		/// <param name="end">The end of the billing period. This will be Sunday or the end of the month.</param>
+		public static void GetWeeklyBillingPeriod(DateTime date, out DateTime start, out DateTime end)
+		{
+			if (date.Day <= 2) {
+				start = date.AddDays(-date.Day + 1);
+				end = WorkCalendar.NextDay(date.AddDays(-1), DayOfWeek.Sunday);
+				if (end.Day < 3) {
+					end = end.AddDays(7);
+				}
+			}
+			else {
+				start = WorkCalendar.PreviousDay(date.AddDays(1), DayOfWeek.Monday);
+				end = start.AddDays(6);
+				if (end.Day < 6) {
+					end = end.AddDays(-end.Day);
+				}
+				else if (start.Day <= 4) {
+					start = start.AddDays(-start.Day + 1);
+				}
+			}
+
+			// Need to fix the method and do a lot of testing before I can remove this
+			double totalDays = (end - start).TotalDays;
+			if (totalDays < 2 || start > date || end < date) {
+				throw new InvalidOperationException("Invalid weekly billing calculation");
+			}
 		}
 
 		/// <summary>
@@ -51,7 +84,7 @@ namespace Utilities
 		public static DateTime FirstDay(int year, int month, DayOfWeek day)
 		{
 			DateTime day1 = new DateTime(year, month, 1);
-			int daysAdd = ((int)day - (int)day1.DayOfWeek + 7) % 7;
+			int daysAdd = ((int) day - (int) day1.DayOfWeek + 7) % 7;
 			return day1.AddDays(daysAdd).Date;
 		}
 
@@ -63,7 +96,7 @@ namespace Utilities
 		/// <returns>The previous day with the given <see cref="DayOfWeek"/>.</returns>
 		public static DateTime PreviousDay(DateTime date, DayOfWeek day)
 		{
-			int daysAdd = ((int)day - (int)date.DayOfWeek + 7) % 7 - 7;
+			int daysAdd = ((int) day - (int) date.DayOfWeek + 7) % 7 - 7;
 			return date.AddDays(daysAdd).Date;
 		}
 
@@ -85,7 +118,7 @@ namespace Utilities
 		/// <returns>The next day with the given <see cref="DayOfWeek"/>.</returns>
 		public static DateTime NextDay(DateTime date, DayOfWeek day)
 		{
-			int daysAdd = ((int)day - (int)date.DayOfWeek + 6) % 7 + 1;
+			int daysAdd = ((int) day - (int) date.DayOfWeek + 6) % 7 + 1;
 			return date.AddDays(daysAdd).Date;
 		}
 
@@ -140,7 +173,7 @@ namespace Utilities
 		public static DateTime WeekStart(int year, int month, int week)
 		{
 			DateTime day1 = new DateTime(year, month, 1);
-			int daysAdd = ((int)Monday - (int)day1.DayOfWeek + 7) % 7 + 7 * (week - 1);
+			int daysAdd = ((int) Monday - (int) day1.DayOfWeek + 7) % 7 + 7 * (week - 1);
 			return new DateTime(year, month, daysAdd + 1);
 		}
 
@@ -281,8 +314,8 @@ namespace Utilities
 					if (day == 2)
 						return dow == DayOfWeek.Monday;
 					return false;
-					// MLK Jr Day
-					//return weekOfMonth == 3 && dow == DayOfWeek.Monday;
+				// MLK Jr Day
+				////return weekOfMonth == 3 && dow == DayOfWeek.Monday;
 				//// case 2:
 				//// President’s Day (3rd Monday in February)
 				////if (date.Month == 2 && isMonday && nthWeekDay == 3) return true;
@@ -332,18 +365,18 @@ namespace Utilities
 		public static HashSet<DateTime> Holidays(int year)
 		{
 			HashSet<DateTime> holidays = new HashSet<DateTime> {
-                // New Years
-                NearestWeekDay(new DateTime(year, 1, 1)),
-                // Martin Luther King Jr Day -- 3rd Monday of January
-                //FirstDay(year, 1, DayOfWeek.Monday).AddDays(7 * 2),
-                // Memorial Day -- last monday in May
-                PreviousDay(new DateTime(year, 6, 1), DayOfWeek.Monday),
-                // Independence Day
-                NearestWeekDay(new DateTime(year, 7, 4)),
-                // Labor Day -- 1st Monday in September
-                FirstDay(year, 9, DayOfWeek.Monday),
-                // Christmas
-                NearestWeekDay(new DateTime(year, 12, 25))
+				// New Years
+				NearestWeekDay(new DateTime(year, 1, 1)),
+				// Martin Luther King Jr Day -- 3rd Monday of January
+				//FirstDay(year, 1, DayOfWeek.Monday).AddDays(7 * 2),
+				// Memorial Day -- last monday in May
+				PreviousDay(new DateTime(year, 6, 1), DayOfWeek.Monday),
+				// Independence Day
+				NearestWeekDay(new DateTime(year, 7, 4)),
+				// Labor Day -- 1st Monday in September
+				FirstDay(year, 9, DayOfWeek.Monday),
+				// Christmas
+				NearestWeekDay(new DateTime(year, 12, 25))
 			};
 			// Thanksgiving -- 4th Thursday in November
 			DateTime thanksgiving = FirstDay(year, 11, DayOfWeek.Thursday).AddDays(7 * 3);
