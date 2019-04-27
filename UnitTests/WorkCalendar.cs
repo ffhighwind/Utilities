@@ -11,6 +11,32 @@ namespace Utilities.UnitTests
 		private const DayOfWeek WEEK_START = DayOfWeek.Monday;
 
 		[TestMethod]
+		public void WeeklyBillingPeriod()
+		{
+			//WeeklyBillingPeriod
+			DateTime date = WorkCalendar.PreviousDay(new DateTime(2, 1, 14), DayOfWeek.Monday);
+			while (date.Year < 9999) {
+				WorkCalendar.WeeklyBillingPeriod(date, out DateTime start, out DateTime end);
+				if (start != date) {
+					throw new Exception();
+				}
+				double totalDays = (end - start).TotalDays;
+				if (totalDays < 3 || totalDays > 9) {
+					// at least 4, at most 10 (3 days in either direction from 7)
+					throw new Exception();
+				}
+				date = date.AddDays(1);
+				while (date <= end) {
+					WorkCalendar.WeeklyBillingPeriod(date, out DateTime startT, out DateTime endT);
+					if (start != startT || end != endT) {
+						throw new Exception();
+					}
+					date = date.AddDays(1);
+				}
+			}
+		}
+
+		[TestMethod]
 		public void PreviousWeek()
 		{
 			//PreviousWeek
@@ -101,8 +127,8 @@ namespace Utilities.UnitTests
 					for (int day = 1; day <= days; day++) {
 						DateTime date = new DateTime(year, month, day);
 						for (int i = 0; i <= 6; i++) {
-							DateTime date2 = WorkCalendar.PreviousDay(date, (DayOfWeek)i);
-							if (date2.DayOfWeek != (DayOfWeek)i)
+							DateTime date2 = WorkCalendar.PreviousDay(date, (DayOfWeek) i);
+							if (date2.DayOfWeek != (DayOfWeek) i)
 								throw new Exception();
 							double totalDays = (date - date2).TotalDays;
 							if (totalDays > 7 || totalDays <= 0)
@@ -122,8 +148,8 @@ namespace Utilities.UnitTests
 					for (int day = 1; day <= days; day++) {
 						DateTime date = new DateTime(year, month, day);
 						for (int i = 0; i <= 6; i++) {
-							DateTime date2 = WorkCalendar.NextDay(date, (DayOfWeek)i);
-							if (date2.DayOfWeek != (DayOfWeek)i)
+							DateTime date2 = WorkCalendar.NextDay(date, (DayOfWeek) i);
+							if (date2.DayOfWeek != (DayOfWeek) i)
 								throw new Exception();
 							double totalDays = (date2 - date).TotalDays;
 							if (totalDays > 7 || totalDays <= 0)

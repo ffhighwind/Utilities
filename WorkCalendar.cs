@@ -42,35 +42,26 @@ namespace Utilities
 		}
 
 		/// <summary>
-		/// Returns the weekly billing period for a given date.
+		/// Returns the weekly billing period for a given date. This will be at least 4 days and at most 10 days in duration.
 		/// </summary>
-		/// <param name="date">A day that falls in the weekly billing period.</param>
+		/// <param name="date">A date that falls in the weekly billing period.</param>
 		/// <param name="start">The start of the weekly billing period. This will be Monday or the beginning of the month.</param>
 		/// <param name="end">The end of the billing period. This will be Sunday or the end of the month.</param>
-		public static void GetWeeklyBillingPeriod(DateTime date, out DateTime start, out DateTime end)
+		public static void WeeklyBillingPeriod(DateTime date, out DateTime start, out DateTime end)
 		{
-			if (date.Day <= 2) {
-				start = date.AddDays(-date.Day + 1);
-				end = WorkCalendar.NextDay(date.AddDays(-1), DayOfWeek.Sunday);
-				if (end.Day < 3) {
+			end = WorkCalendar.NextDay(date.Date.AddDays(-1), DayOfWeek.Sunday);
+			start = end.AddDays(-6);
+			if (end.Day <= 3) {
+				if (date.Day <= 3) {
+					start = end.AddDays(-end.Day + 1);
 					end = end.AddDays(7);
 				}
-			}
-			else {
-				start = WorkCalendar.PreviousDay(date.AddDays(1), DayOfWeek.Monday);
-				end = start.AddDays(6);
-				if (end.Day < 6) {
+				else {
 					end = end.AddDays(-end.Day);
 				}
-				else if (start.Day <= 4) {
-					start = start.AddDays(-start.Day + 1);
-				}
 			}
-
-			// Need to fix the method and do a lot of testing before I can remove this
-			double totalDays = (end - start).TotalDays;
-			if (totalDays < 2 || start > date || end < date) {
-				throw new InvalidOperationException("Invalid weekly billing calculation");
+			else if (start.Day <= 4) {
+				start = start.AddDays(-start.Day + 1);
 			}
 		}
 
