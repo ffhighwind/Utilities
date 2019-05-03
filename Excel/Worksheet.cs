@@ -440,7 +440,7 @@ namespace Utilities.Excel
 		public void AutoFit(double minimumWidth = 0, double? maximumWidth = null)
 		{
 			int cols = Data.Dimension?.Columns ?? 0;
-			for(int col = 1; col <= cols; col++) {
+			for (int col = 1; col <= cols; col++) {
 				if (maximumWidth == null) {
 					Data.Column(col).AutoFit(minimumWidth);
 				}
@@ -558,30 +558,30 @@ namespace Utilities.Excel
 		}
 
 		/*ID  Format Code
-        9   0%
-        10  0.00%
-        11  0.00E+00
-        12  # ?/?
-        13  # ??/??
-        14  d/m/yyyy
-        15  d-mmm-yy
-        16  d-mmm
-        17  mmm-yy
-        18  h:mm tt
-        19  h:mm:ss tt
-        20  H:mm
-        21  H:mm:ss
-        22  m/d/yyyy H:mm
-        37  #,##0 ;(#,##0)
-        38  #,##0 ;[Red](#,##0)
-        39  #,##0.00;(#,##0.00)
-        40  #,##0.00;[Red](#,##0.00)
-        45  mm:ss
-        46  [h]:mm:ss
-        47  mmss.0
-        48  ##0.0E+0
-        49  @
-        */
+		9   0%
+		10  0.00%
+		11  0.00E+00
+		12  # ?/?
+		13  # ??/??
+		14  d/m/yyyy
+		15  d-mmm-yy
+		16  d-mmm
+		17  mmm-yy
+		18  h:mm tt
+		19  h:mm:ss tt
+		20  H:mm
+		21  H:mm:ss
+		22  m/d/yyyy H:mm
+		37  #,##0 ;(#,##0)
+		38  #,##0 ;[Red](#,##0)
+		39  #,##0.00;(#,##0.00)
+		40  #,##0.00;[Red](#,##0.00)
+		45  mm:ss
+		46  [h]:mm:ss
+		47  mmss.0
+		48  ##0.0E+0
+		49  @
+		*/
 
 		/// <summary>
 		/// Returns the <see cref="Type"/> of data stored in the <see cref="ExcelColumn"/>.
@@ -920,7 +920,7 @@ namespace Utilities.Excel
 				|| denominator == 0)
 				return false;
 			if (numerator != 0)
-				d = ((decimal)numerator) / denominator;
+				d = ((decimal) numerator) / denominator;
 			return true;
 		}
 
