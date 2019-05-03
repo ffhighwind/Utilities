@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Windows.Forms;
 
 namespace Utilities
 {
@@ -13,7 +14,7 @@ namespace Utilities
 	/// </summary>
 	public static class Extensions
 	{
-		#region DataTable Sort/Distinct
+		#region DataTable Sort/Distinct/Combine
 		/// <summary>
 		/// Removes duplicate rows from a <see cref="DataTable"/>.
 		/// </summary>
@@ -156,7 +157,60 @@ namespace Utilities
 				table.Rows.Add(row);
 			return table;
 		}
-		#endregion Sort/Distinct
+
+		public static DataTable Combine(this DataTable destination, DataTable source, bool addSourceColumns = true)
+		{
+			return Combine(destination, source, addSourceColumns, StringComparer.Ordinal);
+		}
+
+		public static DataTable Combine(this DataTable destination, DataTable source, bool addSourceColumns, StringComparer comparer)
+		{
+			Dictionary<string, int> destOrdinals = new Dictionary<string, int>(comparer);
+			foreach (DataColumn col in destination.Columns) {
+				destOrdinals.Add(col.ColumnName, col.Ordinal);
+			}
+			// Mapping from Source[ordinal] -> DestOrdinal
+			List<int> map = new List<int>(destination.Columns.Count);
+			for (int i = 0, count = source.Columns.Count; i < count; i++) {
+				DataColumn col = source.Columns[i];
+				int destOrdinal;
+				if (!destOrdinals.TryGetValue(col.ColumnName, out destOrdinal)) {
+					if (addSourceColumns) {
+						DataColumn destCol = destination.Columns.Add(col.ColumnName, col.DataType);
+						destOrdinal = destCol.Ordinal;
+					}
+					else {
+						destOrdinal = -1;
+					}
+				}
+				map.Add(destOrdinal);
+			}
+
+			// Skip unused columns (find start/end)
+			int end = map.Count - 1;
+			for (; end >= 0 && map[end] < 0; end--) { // skip until we find end
+			}
+			if (end < 0) {
+				return destination; // nothing to add
+			}
+			int start = 0;
+			for (; start < map.Count && map[start] < 0; start++) { // skip until we find start
+			}
+
+			foreach (DataRow sourceRow in source.Rows) {
+				DataRow destRow = destination.NewRow();
+				for (int i = start; i <= end; i++) {
+					int destOrdinal = map[i];
+					if (destOrdinal >= 0) {
+						destRow[destOrdinal] = sourceRow[i];
+					}
+				}
+				destination.Rows.Add(destRow);
+			}
+
+			return destination;
+		}
+		#endregion DataTable Sort/Distinct/Combine
 
 
 		#region DataTable/Enumerable/Collection
@@ -392,6 +446,7 @@ namespace Utilities
 		}
 		#endregion DataTable/Enumerable/Collection
 
+
 		#region Type
 		/// <summary>
 		/// Converts a <see cref="Type"/> to its <see cref="Nullable{T}"/> equivalent.
@@ -583,6 +638,7 @@ namespace Utilities
 		}
 		#endregion
 
+
 		#region DateTime/DateTimeOffset
 		/// <summary>
 		/// Determines if a <see cref="DateTime"/> is between start/end or equal to start.
@@ -622,5 +678,16 @@ namespace Utilities
 			return dateTimeOff?.ToDateTime();
 		}
 		#endregion
+
+
+		public static void DoubleBuffer(this DataGridView dgv)
+		{
+			typeof(DataGridView).InvokeMember(
+			   "DoubleBuffered",
+			   BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetProperty,
+			   null,
+			   dgv,
+			   new object[] { true });
+		}
 	}
 }

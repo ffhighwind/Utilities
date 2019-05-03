@@ -167,9 +167,7 @@ namespace Utilities.ActiveDirectory
 		/// <see cref="https://docs.microsoft.com/en-us/previous-versions/bb384378(v=vs.90)">example</see>
 		public UserPrincipal GetUser(UserPrincipal filter = null)
 		{
-			using (PrincipalSearcher searcher = filter == null
-				? new PrincipalSearcher(new UserPrincipal(Context))
-				: new PrincipalSearcher(filter)) {
+			using (PrincipalSearcher searcher = new PrincipalSearcher(filter ?? new UserPrincipal(Context))) {
 				return searcher.FindOne() as UserPrincipal;
 			}
 		}
@@ -198,9 +196,7 @@ namespace Utilities.ActiveDirectory
 		/// <see cref="https://docs.microsoft.com/en-us/previous-versions/bb384378(v=vs.90)">example</see>
 		public GroupPrincipal GetGroup(GroupPrincipal filter = null)
 		{
-			using (PrincipalSearcher searcher = filter == null
-				? new PrincipalSearcher(new GroupPrincipal(Context))
-				: new PrincipalSearcher(filter)) {
+			using (PrincipalSearcher searcher = new PrincipalSearcher(filter ?? new GroupPrincipal(Context))) {
 				return searcher.FindOne() as GroupPrincipal;
 			}
 		}
@@ -229,9 +225,7 @@ namespace Utilities.ActiveDirectory
 		/// <see cref="https://docs.microsoft.com/en-us/previous-versions/bb384378(v=vs.90)">example</see>
 		public ComputerPrincipal GetComputer(ComputerPrincipal filter = null)
 		{
-			using (PrincipalSearcher searcher = filter == null
-				? new PrincipalSearcher(new ComputerPrincipal(Context))
-				: new PrincipalSearcher(filter)) {
+			using (PrincipalSearcher searcher = new PrincipalSearcher(filter ?? new ComputerPrincipal(Context))) {
 				return searcher.FindOne() as ComputerPrincipal;
 			}
 		}
@@ -245,9 +239,7 @@ namespace Utilities.ActiveDirectory
 		/// <see cref="https://docs.microsoft.com/en-us/previous-versions/bb384378(v=vs.90)">example</see>
 		public PrincipalSearcher GetUserSearcher(UserPrincipal filter = null, int pageSize = 1000)
 		{
-			PrincipalSearcher searcher = filter == null
-				? new PrincipalSearcher(new UserPrincipal(Context))
-				: new PrincipalSearcher(filter);
+			PrincipalSearcher searcher = new PrincipalSearcher(filter ?? new UserPrincipal(Context));
 			DirectorySearcher dirSearcher = searcher.GetUnderlyingSearcher() as DirectorySearcher;
 			dirSearcher.PageSize = pageSize;
 			return searcher;
@@ -262,9 +254,7 @@ namespace Utilities.ActiveDirectory
 		/// <see cref="https://docs.microsoft.com/en-us/previous-versions/bb384378(v=vs.90)">example</see>
 		public PrincipalSearcher GetGroupSearcher(GroupPrincipal filter = null, int pageSize = 1000)
 		{
-			PrincipalSearcher searcher = filter == null
-				? new PrincipalSearcher(new GroupPrincipal(Context))
-				: new PrincipalSearcher(filter);
+			PrincipalSearcher searcher = new PrincipalSearcher(filter ?? new GroupPrincipal(Context));
 			DirectorySearcher dirSearcher = searcher.GetUnderlyingSearcher() as DirectorySearcher;
 			dirSearcher.PageSize = pageSize;
 			return searcher;
@@ -279,9 +269,7 @@ namespace Utilities.ActiveDirectory
 		/// <see cref="https://docs.microsoft.com/en-us/previous-versions/bb384378(v=vs.90)">example</see>
 		public PrincipalSearcher GetComputerSearcher(ComputerPrincipal filter = null, int pageSize = 1000)
 		{
-			PrincipalSearcher searcher = filter == null
-				? new PrincipalSearcher(new ComputerPrincipal(Context))
-				: new PrincipalSearcher(filter);
+			PrincipalSearcher searcher = new PrincipalSearcher(filter ?? new ComputerPrincipal(Context));
 			DirectorySearcher dirSearcher = searcher.GetUnderlyingSearcher() as DirectorySearcher;
 			dirSearcher.PageSize = pageSize;
 			return searcher;
@@ -303,7 +291,7 @@ namespace Utilities.ActiveDirectory
 			return entry.Properties.Contains(prop) ? entry.Properties[prop].Value : null;
 		}
 
-		public static DirectoryEntry Root => new DirectoryEntry("LDAP://RootDSE");//var tmp = "LDAP://" +//  de.Properties["defaultNamingContext"];
+		public static DirectoryEntry Root => new DirectoryEntry("LDAP://RootDSE"); //var tmp = "LDAP://" +//  de.Properties["defaultNamingContext"];
 
 		#region IDisposable Support
 		private bool disposedValue = false; // To detect redundant calls
@@ -328,6 +316,5 @@ namespace Utilities.ActiveDirectory
 			Dispose(true);
 		}
 		#endregion
-
 	}
 }
