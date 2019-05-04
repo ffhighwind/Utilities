@@ -15,15 +15,32 @@ namespace Utilities.UnitTests
 		{
 			//WeeklyBillingPeriod
 			DateTime date = WorkCalendar.PreviousDay(new DateTime(2, 1, 14), DayOfWeek.Monday);
+
+			date = new DateTime(2019, 4, 22);
 			while (date.Year < 9999) {
 				WorkCalendar.WeeklyBillingPeriod(date, out DateTime start, out DateTime end);
 				if (start != date) {
 					throw new Exception();
 				}
-				double totalDays = (end - start).TotalDays;
-				if (totalDays < 3 || totalDays > 9) {
+				double totalDays = (end - start).TotalDays + 1.0;
+				if (totalDays < 4 || totalDays > 10) {
 					// at least 4, at most 10 (3 days in either direction from 7)
 					throw new Exception();
+				}
+				if (start.DayOfWeek != DayOfWeek.Monday && end.DayOfWeek != DayOfWeek.Sunday) {
+					throw new Exception();
+				}
+				if (start.Day != 1 && end.AddDays(1).Day != 1) {
+					double leeway = 10 - totalDays;
+					if(leeway != 3.0) {
+						throw new Exception();
+					}
+					if (end.AddDays(3).Day < 3) {
+						throw new Exception();
+					}
+					if (start.AddDays(-3).Month != start.Month) {
+						throw new Exception();
+					}
 				}
 				date = date.AddDays(1);
 				while (date <= end) {
@@ -34,6 +51,7 @@ namespace Utilities.UnitTests
 					date = date.AddDays(1);
 				}
 			}
+			int x = 5;
 		}
 
 		[TestMethod]

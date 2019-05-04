@@ -158,11 +158,27 @@ namespace Utilities
 			return table;
 		}
 
+		/// <summary>
+		/// Copies the rows from a source <see cref="DataTable"/> to destination <see cref="DataTable"/>.
+		/// </summary>
+		/// <param name="destination">The <see cref="DataTable"/> to copy to.</param>
+		/// <param name="source">The <see cref="DataTable"/> to copy from.</param>
+		/// <param name="addSourceColumns">Determines if columns should be added to the destination 
+		/// if they don't exist in the source <see cref="DataTable"/>.</param>
+		/// <returns>The destination <see cref="DataTable"/>.</returns>
 		public static DataTable Combine(this DataTable destination, DataTable source, bool addSourceColumns = true)
 		{
 			return Combine(destination, source, addSourceColumns, StringComparer.Ordinal);
 		}
 
+		/// <summary>
+		/// Copies the rows from a source <see cref="DataTable"/> to destination <see cref="DataTable"/>.
+		/// </summary>
+		/// <param name="destination">The <see cref="DataTable"/> to copy to.</param>
+		/// <param name="source">The <see cref="DataTable"/> to copy from.</param>
+		/// <param name="addSourceColumns">Determines if columns should be added to the destination 
+		/// if they don't exist in the source <see cref="DataTable"/>.</param>
+		/// <returns>The destination <see cref="DataTable"/>.</returns>
 		public static DataTable Combine(this DataTable destination, DataTable source, bool addSourceColumns, StringComparer comparer)
 		{
 			Dictionary<string, int> destOrdinals = new Dictionary<string, int>(comparer);
@@ -679,7 +695,10 @@ namespace Utilities
 		}
 		#endregion
 
-
+		/// <summary>
+		/// Double buffers a <see cref="DataGridView"/>. This makes it more readable while scrolling.
+		/// </summary>
+		/// <param name="dgv">The <see cref="DataGridView"/> to double buffer.</param>
 		public static void DoubleBuffer(this DataGridView dgv)
 		{
 			typeof(DataGridView).InvokeMember(

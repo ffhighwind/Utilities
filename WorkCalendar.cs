@@ -51,17 +51,29 @@ namespace Utilities
 		{
 			end = WorkCalendar.NextDay(date.Date.AddDays(-1), DayOfWeek.Sunday);
 			start = end.AddDays(-6);
-			if (end.Day <= 3) {
-				if (date.Day <= 3) {
-					start = end.AddDays(-end.Day + 1);
-					end = end.AddDays(7);
+			int endDay = end.Day;
+			if (endDay <= 6) {
+				if (date.Month == end.Month) {
+					start = end.AddDays(-endDay + 1);
+					if (endDay <= 3) {
+						end = end.AddDays(7);
+					}
 				}
 				else {
-					end = end.AddDays(-end.Day);
+					end = end.AddDays(-endDay);
+					if (endDay >= 4) {
+						start = start.AddDays(-7);
+					}
 				}
 			}
 			else if (start.Day <= 4) {
 				start = start.AddDays(-start.Day + 1);
+			}
+			else {
+				DateTime endAdd4 = end.AddDays(4);
+				if (endAdd4.Day < 4) {
+					end = endAdd4.AddDays(-endAdd4.Day);
+				}
 			}
 		}
 
