@@ -51,7 +51,6 @@ namespace Utilities.UnitTests
 					date = date.AddDays(1);
 				}
 			}
-			int x = 5;
 		}
 
 		[TestMethod]

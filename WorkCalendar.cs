@@ -53,6 +53,11 @@ namespace Utilities
 			start = end.AddDays(-6);
 			int endDay = end.Day;
 			if (endDay <= 6) {
+				// the billing week falls within two different months
+				// the billing period must do the following:
+				// 1. Have the same month as the date
+				// 2. Be between 4-10 days in length
+				// 3. Start on a Monday or end on a Sunday 
 				if (date.Month == end.Month) {
 					start = end.AddDays(-endDay + 1);
 					if (endDay <= 3) {
@@ -67,9 +72,11 @@ namespace Utilities
 				}
 			}
 			else if (start.Day <= 4) {
+				// within 3 days of the start of the month
 				start = start.AddDays(-start.Day + 1);
 			}
 			else {
+				// within 3 days of the end of the month
 				DateTime endAdd4 = end.AddDays(4);
 				if (endAdd4.Day < 4) {
 					end = endAdd4.AddDays(-endAdd4.Day);
