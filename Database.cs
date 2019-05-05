@@ -158,7 +158,7 @@ namespace Utilities
 		/// <param name="transaction">The database transaction.</param>
 		/// <param name="commandTimeout">The maximum timeout in seconds for the command. A value of 0 means no timeout.</param>
 		/// <returns>The number of rows that were deleted from the database.</returns>
-		public static int DeleteTable(IDbConnection conn, string tablename, IDbTransaction transaction, int? commandTimeout = null)
+		public static int TruncateTable(IDbConnection conn, string tablename, IDbTransaction transaction, int? commandTimeout = null)
 		{
 			return conn.Execute($"TRUNCATE TABLE {tablename}", null, transaction, commandTimeout);
 		}
@@ -246,7 +246,7 @@ namespace Utilities
 			public bool HasMaxLength { get; set; }
 		}
 
-		private static Dictionary<Type, DefaultData> usesDefault = new Dictionary<Type, DefaultData>() {
+		private static readonly Dictionary<Type, DefaultData> usesDefault = new Dictionary<Type, DefaultData>() {
 			{ typeof(bool), new DefaultData("bit", false, true) },
 			{ typeof(char), new DefaultData("nchar(1)", false, false) },
 			{ typeof(byte), new DefaultData("tinyint", false, true) },

@@ -225,7 +225,7 @@ namespace Utilities
 			return Foreach<T>(path, hasHeaders, sheetName);
 		}
 		#endregion
-
+		
 		#region Delimited
 		/// <summary>
 		/// Enumerates each row in a delimited file.

@@ -17,12 +17,7 @@ namespace Utilities
 		/// <summary>
 		/// The start of the string returned by <see cref="CreateTableScript(string)"/>.
 		/// </summary>
-		private string createTable = null;
-
-		/// <summary>
-		/// The primary key constraint to append to createTable when calling <see cref="CreateTableScript(string)"/>.
-		/// </summary>
-		private string pkeyConstraint = null;
+		private string createTable;
 
 		/// <summary>
 		/// The primary key columns for the input schema.
@@ -83,19 +78,16 @@ namespace Utilities
 				if (UniqueColumns.Count > 0) {
 					sql.AppendFormat("\r\n CONSTRAINT AK_{0} UNIQUE ({0})," + UniqueColumns[0], string.Join(",", UniqueColumns));
 				}
+				string pkeyConstraint = "";
 				if (PrimaryKey.Count > 0) {
 					sql.Append("\r\n CONSTRAINT PK_");
-					pkeyConstraint = string.Format(" PRIMARY KEY ({0})\n);", string.Join(",", PrimaryKey.Select(col => col.Name)));
+					pkeyConstraint = tablename + string.Format(" PRIMARY KEY ({0})\n);", string.Join(",", PrimaryKey.Select(col => col.Name)));
 				}
 				else
 					sql.Remove(sql.Length - 1, 1).Append("\n);"); // remove last comma
-				createTable = sql.ToString();
+				createTable = "CREATE TABLE " + tablename + sql.ToString() + pkeyConstraint;
 			}
-
-			string result = "CREATE TABLE " + tablename + createTable;
-			if (pkeyConstraint != null)
-				result += tablename + pkeyConstraint;
-			return result;
+			return createTable;
 		}
 	}
 }

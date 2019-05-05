@@ -26,6 +26,11 @@
     <NoWarn>CA2100</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <RunCodeAnalysis>false</RunCodeAnalysis>
+    <DefineConstants Condition="$([System.Version]::Parse('$(TargetFrameworkVersion.Substring(1))').CompareTo($([System.Version]::Parse('4.5.1')))) &gt;= 0">$(DefineConstants);NETFX_451</DefineConstants>
+    <DefineConstants Condition="$([System.Version]::Parse('$(TargetFrameworkVersion.Substring(1))').CompareTo($([System.Version]::Parse('4.5'))))   &gt;= 0">$(DefineConstants);NETFX_45</DefineConstants>
+    <DefineConstants Condition="$([System.Version]::Parse('$(TargetFrameworkVersion.Substring(1))').CompareTo($([System.Version]::Parse('4.0'))))   &gt;= 0">$(DefineConstants);NETFX_40</DefineConstants>
+    <DefineConstants Condition="$([System.Version]::Parse('$(TargetFrameworkVersion.Substring(1))').CompareTo($([System.Version]::Parse('3.5'))))   &gt;= 0">$(DefineConstants);NETFX_35</DefineConstants>
+    <DefineConstants Condition="$([System.Version]::Parse('$(TargetFrameworkVersion.Substring(1))').CompareTo($([System.Version]::Parse('3.0'))))   &gt;= 0">$(DefineConstants);NETFX_30</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -48,6 +53,7 @@
     </Compile>
     <Compile Include="Comparers\DataRowEqualityComparer.cs" />
     <Compile Include="Database.cs" />
+    <Compile Include="DotNet\DotNetVersion.cs" />
     <Compile Include="Email\Extensions.cs" />
     <Compile Include="Email\ItemClass.cs" />
     <Compile Include="Email\PropertySets.cs" />
@@ -55,11 +61,20 @@
     <Compile Include="Excel\PivotTable.cs" />
     <Compile Include="Excel\Sorting.cs" />
     <Compile Include="Extentions.cs" />
+    <Compile Include="Logging\NoLogAction.cs" />
+    <Compile Include="Logging\StreamWriterLogAction.cs" />
+    <Compile Include="Logging\StringWriterLogAction.cs" />
+    <Compile Include="Logging\TextWriterLogAction.cs" />
+    <Compile Include="DotNet\DotNetFramework.cs" />
     <Compile Include="IO.cs" />
     <Compile Include="Comparers\ListViewItemComparer.cs" />
+    <Compile Include="Logging\Logger4_5_1.cs" />
+    <Compile Include="Logging\LogAction.cs" />
     <Compile Include="Logging\Logger.cs" />
     <Compile Include="Email\NetworkConnection.cs" />
     <Compile Include="Converters\OptionalAttribute.cs" />
+    <Compile Include="Logging\LogLevel.cs" />
+    <Compile Include="Logging\LogState.cs" />
     <Compile Include="Processes.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Comparers\MethodInfoEqualityComparer.cs" />
@@ -67,7 +82,6 @@
     <Compile Include="Security.cs" />
     <Compile Include="Excel\Spreadsheet.cs" />
     <Compile Include="State.cs" />
-    <Compile Include="Logging\SyncLogger.cs" />
     <Compile Include="SchemaTable.cs" />
     <Compile Include="Email\EmailService.cs" />
     <Compile Include="WorkCalendar.cs" />
@@ -115,5 +129,6 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

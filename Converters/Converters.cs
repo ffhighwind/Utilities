@@ -186,7 +186,7 @@ namespace Utilities.Converters
 		}
 
 		/// <summary>
-		/// Creates a converter that accepts <see langword="null"/> values. This should be used if the either the input
+		/// Creates a converter that accepts <see langword="null"/> values. This should be used if either the input
 		/// or output types are <see cref="Nullable"/>.
 		/// </summary>
 		/// <param name="input">The input <see cref="Type"/>.</param>
@@ -194,13 +194,13 @@ namespace Utilities.Converters
 		/// <returns>A function that converts objects from one type to another.</returns>
 		public static Func<object, object> GetNullableConverter(Type input, Type output)
 		{
-			if (!output.IsNullable() || !input.IsNullable()) {
-				return GetConverter(output)(input);
-			}
-			else if (input == output) {
+			if (input == output) {
 				return NoConvert;
 			}
 			Func<object, object> converter = GetConverter(input, output);
+			if (!output.IsNullable() || !input.IsNullable()) {
+				return converter;
+			}
 			if (input == typeof(string)) {
 				object nullableConverter(object value)
 				{

@@ -53,9 +53,9 @@ namespace Utilities
 			start = end.AddDays(-6);
 			int endDay = end.Day;
 			if (endDay <= 6) {
-				// the billing week falls within two different months
-				// the billing period must do the following:
-				// 1. Have the same month as the date
+				// The week is not allowed to falls within two different months
+				// Fix the billing period by:
+				// 1. Force the week to be within the same month as the date
 				// 2. Be between 4-10 days in length
 				// 3. Start on a Monday or end on a Sunday 
 				if (date.Month == end.Month) {
@@ -78,7 +78,7 @@ namespace Utilities
 			else {
 				// within 3 days of the end of the month
 				DateTime endAdd4 = end.AddDays(4);
-				if (endAdd4.Day < 4) {
+				if (endAdd4.Day <= 3) {
 					end = endAdd4.AddDays(-endAdd4.Day);
 				}
 			}
@@ -91,7 +91,7 @@ namespace Utilities
 		/// <param name="month">The month (1-12).</param>
 		/// <param name="day">The <see cref="DayOfWeek"/>.</param>
 		/// <returns>The first day of a month with the given <see cref="DayOfWeek"/>.</returns>
-		public static DateTime FirstDay(int year, int month, DayOfWeek day)
+		public static DateTime FirstDayOfMonth(int year, int month, DayOfWeek day)
 		{
 			DateTime day1 = new DateTime(year, month, 1);
 			int daysAdd = ((int) day - (int) day1.DayOfWeek + 7) % 7;
@@ -384,12 +384,12 @@ namespace Utilities
 				// Independence Day
 				NearestWeekDay(new DateTime(year, 7, 4)),
 				// Labor Day -- 1st Monday in September
-				FirstDay(year, 9, DayOfWeek.Monday),
+				FirstDayOfMonth(year, 9, DayOfWeek.Monday),
 				// Christmas
 				NearestWeekDay(new DateTime(year, 12, 25))
 			};
 			// Thanksgiving -- 4th Thursday in November
-			DateTime thanksgiving = FirstDay(year, 11, DayOfWeek.Thursday).AddDays(7 * 3);
+			DateTime thanksgiving = FirstDayOfMonth(year, 11, DayOfWeek.Thursday).AddDays(7 * 3);
 			holidays.Add(thanksgiving);
 			holidays.Add(thanksgiving.AddDays(1)); // day after Thanksgiving
 

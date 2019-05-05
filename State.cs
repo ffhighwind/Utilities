@@ -175,7 +175,6 @@ namespace Utilities
 		{
 			FullName = fullname;
 			Name = name;
-			MSTDiff = mstdiff;
 			TimeZone = GetTimezone(mstdiff);
 		}
 
@@ -189,7 +188,6 @@ namespace Utilities
 		{
 			FullName = fullname;
 			Name = name;
-			MSTDiff = GetMSTDiff(timezone);
 			TimeZone = timezone;
 		}
 
@@ -290,7 +288,7 @@ namespace Utilities
 		/// Gets the hour difference from Mountain Stanard Time for the state.
 		/// </summary>
 		/// <returns>The hour difference from Mountain Stanard Time.</returns>
-		public double MSTDiff { get; private set; }
+		public double MSTDiff => GetMSTDiff(TimeZone);
 
 		/// <summary>
 		/// Gets the time zone for a given state.

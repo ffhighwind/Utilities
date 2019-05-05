@@ -75,7 +75,7 @@ namespace Utilities.UnitTests
 			for (int year = 1; year <= 9998; year++) {
 				for (int month = 1; month <= 12; month++) {
 					int weeks1 = WorkCalendar.WeeksInMonth(year, month);
-					int weeks2 = WorkCalendar.FirstDay(year, month, WEEK_START).AddDays(7 * 4).Month == month ? 5 : 4;
+					int weeks2 = WorkCalendar.FirstDayOfMonth(year, month, WEEK_START).AddDays(7 * 4).Month == month ? 5 : 4;
 					if (weeks1 != weeks2)
 						throw new Exception();
 				}
@@ -106,7 +106,7 @@ namespace Utilities.UnitTests
 			for (int year = 1; year <= 9998; year++) {
 				int weekCount = 0;
 				for (int month = 1; month <= 12; month++) {
-					DateTime week1 = WorkCalendar.FirstDay(year, month, DayOfWeek.Monday);
+					DateTime week1 = WorkCalendar.FirstDayOfMonth(year, month, DayOfWeek.Monday);
 					int weeks = WorkCalendar.WeeksInMonth(year, month);
 					weekCount += weeks;
 					for (int week = 0; week < weeks; week++) {
@@ -128,7 +128,7 @@ namespace Utilities.UnitTests
 				for (int month = 1; month <= 12; month++) {
 					for (int day = 1; day <= 7; day++) {
 						DateTime date = new DateTime(year, month, day);
-						if (WorkCalendar.FirstDay(year, month, date.DayOfWeek) != date)
+						if (WorkCalendar.FirstDayOfMonth(year, month, date.DayOfWeek) != date)
 							throw new Exception();
 					}
 				}

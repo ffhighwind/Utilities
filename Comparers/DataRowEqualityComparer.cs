@@ -2,7 +2,7 @@
 using System.Data;
 using System.Linq;
 
-namespace Utilities
+namespace Utilities.Comparers
 {
 	/// <summary>
 	/// An <seealso cref="IEqualityComparer{T}"/> for <see cref="DataRow"/> objects. 
@@ -128,7 +128,14 @@ namespace Utilities
 				bool result = x.ItemArray.Length == y.ItemArray.Length;
 				if (result) {
 					for (int i = 0; i < columnIndexes.Length; i++) {
-						result = x.ItemArray[columnIndexes[i]].Equals(y.ItemArray[columnIndexes[i]]);
+						object xVal = x.ItemArray[columnIndexes[i]];
+						object yVal = y.ItemArray[columnIndexes[i]];
+						if(xVal == null) {
+							result = yVal == null;
+						}
+						else {
+							result = xVal.Equals(yVal);
+						}
 						if (!result)
 							break;
 					}
