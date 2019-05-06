@@ -53,6 +53,7 @@
     </Compile>
     <Compile Include="Comparers\DataRowEqualityComparer.cs" />
     <Compile Include="Database.cs" />
+    <Compile Include="DotNet\DotNetFramework.cs" />
     <Compile Include="DotNet\DotNetVersion.cs" />
     <Compile Include="Email\Extensions.cs" />
     <Compile Include="Email\ItemClass.cs" />
@@ -61,14 +62,13 @@
     <Compile Include="Excel\PivotTable.cs" />
     <Compile Include="Excel\Sorting.cs" />
     <Compile Include="Extentions.cs" />
-    <Compile Include="Logging\NoLogAction.cs" />
     <Compile Include="Logging\StreamWriterLogAction.cs" />
     <Compile Include="Logging\StringWriterLogAction.cs" />
+    <Compile Include="Logging\SyncLogger.cs" />
     <Compile Include="Logging\TextWriterLogAction.cs" />
-    <Compile Include="DotNet\DotNetFramework.cs" />
+    <Compile Include="DotNet\DotNetRegistry.cs" />
     <Compile Include="IO.cs" />
     <Compile Include="Comparers\ListViewItemComparer.cs" />
-    <Compile Include="Logging\Logger4_5_1.cs" />
     <Compile Include="Logging\LogAction.cs" />
     <Compile Include="Logging\Logger.cs" />
     <Compile Include="Email\NetworkConnection.cs" />

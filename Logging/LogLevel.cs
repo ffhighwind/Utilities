@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace Utilities.Logging
 {
+	/// <summary>
+	/// The severity level of a log message.
+	/// </summary>
 	public enum LogLevel
 	{
 		ALL = int.MinValue,

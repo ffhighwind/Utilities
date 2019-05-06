@@ -9,78 +9,44 @@ using Microsoft.Win32;
 namespace Utilities.DotNet
 {
 	/// <summary>
-	/// Can be replaced with System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription 
-	/// on Frameworks 4.7.1 and higher. That method also supports .NET Core and .NET Native.
+	/// Determines the supported runtime of the .NET Framework. It is not gaurenteed to be 100% accurate, 
+	/// but it will be close to the expected Framework version. This can be replaced with 
+	/// <see cref="System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription"/>
+	/// on Frameworks 4.7.1 and higher. FrameworkDescription also supports .NET Core and .NET Native.
 	/// </summary>
-	public class DotNetFramework : IComparable<DotNetFramework>
+	public static class DotNetFramework
 	{
-		private DotNetFramework(string key, string subKey, string version, int? release, int? sp)
+		/// <summary>
+		/// Returns the highest runtime <see cref="DotNetVersion"/>.
+		/// </summary>
+		/// <see cref="https://docs.microsoft.com/en-us/dotnet/framework/migration-guide/versions-and-dependencies"/> 
+		/// <see cref="https://docs.microsoft.com/en-us/dotnet/framework/migration-guide/how-to-determine-which-versions-are-installed"/>
+		public static DotNetVersion GetVersion()
 		{
-			Key = key?.Trim();
-			SubKey = subKey;
-			Version = version?.Trim();
-			Release = release;
-			SP = sp;
-			DotNetVersion = release != null ? GetVersion((int) Release) : GetVersion(Version ?? Key);
-		}
-
-		public string Key { get; private set; }
-		public string SubKey { get; private set; }
-		public DotNetVersion DotNetVersion { get; private set; }
-		public string Version { get; private set; }
-		public int? Release { get; private set; }
-		public int? SP { get; private set; }
-		private string toString;
-
-
-		public override string ToString()
-		{
-			return toString ?? CreateToString();
-		}
-
-		private string CreateToString()
-		{
-			StringBuilder sb = new StringBuilder();
-			if (Version != null) {
-				sb.Append(Version);
+			try {
+				string subKey = @"SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full\";
+				using (RegistryKey ndpKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32).OpenSubKey(subKey)) {
+					if (ndpKey == null) {
+						return _GetVersion();
+					}
+					object releaseKey = ndpKey.GetValue("Release");
+					if (releaseKey != null) {
+						int release = Convert.ToInt32(releaseKey);
+						return GetVersion(release);
+					}
+				}
 			}
-			else {
-				sb.Append(Key.Substring(1));
+			catch {
+				// ignore, probably an access violation
 			}
-			if (SP != null) {
-				sb.Append(" SP" + SP);
-			}
-			if (Release != null) {
-				sb.Append(" release " + Release);
-			}
-			if (SubKey != null) {
-				sb.Append(" " + SubKey);
-			}
-			toString = sb.ToString();
-			return toString;
+			return _GetVersion();
 		}
 
 		/// <summary>
-		/// https://docs.microsoft.com/en-us/dotnet/framework/migration-guide/versions-and-dependencies
-		/// https://docs.microsoft.com/en-us/dotnet/framework/migration-guide/how-to-determine-which-versions-are-installed
+		/// Returns the <see cref="DotNetVersion"/> from a given release number.
 		/// </summary>
-		public static DotNetVersion GetVersion()
-		{
-			string subKey = @"SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full\";
-			int release;
-			using (RegistryKey ndpKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32).OpenSubKey(subKey)) {
-				if (ndpKey == null) {
-					return DotNetFramework._GetVersion();
-				}
-				object releaseKey = ndpKey.GetValue("Release");
-				if (releaseKey == null) {
-					return DotNetFramework._GetVersion();
-				}
-				release = Convert.ToInt32(releaseKey);
-				return GetVersion(release);
-			}
-		}
-
+		/// <param name="release"></param>
+		/// <returns></returns>
 		public static DotNetVersion GetVersion(int release)
 		{
 			// Windows 10 and below (Windows 7)
@@ -135,8 +101,10 @@ namespace Utilities.DotNet
 		}
 
 		/// <summary>
-		/// https://stackoverflow.com/questions/951856/is-there-an-easy-way-to-check-the-net-framework-version
+		/// Backup strategy for getting the <see cref="DotNetVersion"/> if there is an <see cref="AccessViolationException"/> from
+		/// trying to access the registry.
 		/// </summary>
+		/// <see cref="https://stackoverflow.com/questions/951856/is-there-an-easy-way-to-check-the-net-framework-version"/> 
 		private static DotNetVersion _GetVersion()
 		{
 			// Can also get AppDomain.CurrentDomain.GetAssemblies() and check the Version of the FullName for mscorlib
@@ -177,34 +145,42 @@ namespace Utilities.DotNet
 			return DotNetVersion.NET4;
 		}
 
+		/// <summary>
+		/// Returns the <see cref="FileVersionInfo"/> that the application was compiled under.
+		/// </summary>
+		/// <returns></returns>
 		public static FileVersionInfo GetAssemblyVersion()
 		{
 			return FileVersionInfo.GetVersionInfo(typeof(Uri).Assembly.Location);
 		}
 
 		/// <summary>
-		/// https://docs.microsoft.com/en-us/dotnet/framework/migration-guide/how-to-determine-which-versions-are-installed
+		/// Returns a list of <see cref="DotNetRegistry"/> that contain details about what .NET Framworks versions are supported 
+		/// by the system. This should be the highest version per major version.
 		/// </summary>
-		public static IEnumerable<DotNetFramework> GetVersions()
+		/// <see cref="https://docs.microsoft.com/en-us/dotnet/framework/migration-guide/how-to-determine-which-versions-are-installed"/>
+		public static IEnumerable<DotNetRegistry> GetVersions()
 		{
 			const string registryKey = @"SOFTWARE\Microsoft\NET Framework Setup\NDP\";
 			// using (RegistryKey ndpKey = RegistryKey.OpenRemoteBaseKey(RegistryHive.LocalMachine, "").OpenSubKey(registryKey)) {
 			using (RegistryKey ndpKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32).OpenSubKey(registryKey)) {
-				foreach (DotNetFramework vers in _GetVersions(ndpKey)) {
+				foreach (DotNetRegistry vers in _GetVersions(ndpKey)) {
 					yield return vers;
 				}
 			}
 		}
 
 		/// <summary>
-		/// https://docs.microsoft.com/en-us/dotnet/framework/migration-guide/how-to-determine-which-versions-are-installed
+		/// Returns a list of <see cref="DotNetRegistry"/> that contain details about what .NET Framworks versions are supported 
+		/// by the system. This should be the highest version per major version.
 		/// </summary>
-		private static IEnumerable<DotNetFramework> _GetVersions(RegistryKey registryKey)
+		/// <see cref="https://docs.microsoft.com/en-us/dotnet/framework/migration-guide/how-to-determine-which-versions-are-installed"/>
+		private static IEnumerable<DotNetRegistry> _GetVersions(RegistryKey registryKey)
 		{
 			if (registryKey == null)
 				yield break;
 			foreach (string keyName in registryKey.GetSubKeyNames()) {
-				if (keyName.StartsWith("v")) {
+				if (keyName[0] == 'v') {
 					RegistryKey versionKey = registryKey.OpenSubKey(keyName);
 					string version = (string) versionKey.GetValue("Version");
 					int? sp = (int?) versionKey.GetValue("SP");
@@ -212,12 +188,12 @@ namespace Utilities.DotNet
 					//string install = versionKey.GetValue("Install").ToString();
 
 					if (version != null) {
-						yield return new DotNetFramework(keyName, null, version, release, sp);
+						yield return new DotNetRegistry(keyName, null, version, release, sp);
 						continue;
 					}
 					string[] subKeyNames = versionKey.GetSubKeyNames();
 					if (!subKeyNames.Any()) {
-						yield return new DotNetFramework(keyName, null, version, release, sp);
+						yield return new DotNetRegistry(keyName, null, version, release, sp);
 						continue;
 					}
 					foreach (string subKeyName in versionKey.GetSubKeyNames()) {
@@ -225,15 +201,16 @@ namespace Utilities.DotNet
 						version = (string) subKey.GetValue("Version");
 						release = (int?) subKey.GetValue("Release");
 						int? subSP = version == null ? sp : (int?) subKey.GetValue("SP");
-						yield return new DotNetFramework(keyName, subKeyName, version, release, subSP);
+						yield return new DotNetRegistry(keyName, subKeyName, version, release, subSP);
 					}
 				}
 			}
 		}
 
 		/// <summary>
-		/// https://docs.microsoft.com/en-us/dotnet/framework/migration-guide/how-to-determine-which-net-framework-updates-are-installed
+		/// Returns a list of .NET Framework updates.
 		/// </summary>
+		/// <see cref="https://docs.microsoft.com/en-us/dotnet/framework/migration-guide/how-to-determine-which-net-framework-updates-are-installed"/>
 		public static IEnumerable<string> GetUpdates()
 		{
 			string registryKey = @"SOFTWARE\Microsoft\Updates";
@@ -249,7 +226,7 @@ namespace Utilities.DotNet
 							}
 							else {
 								foreach (string kbKeyName in subKeyNames) {
-									yield return baseKeyName + "  " + kbKeyName;
+									yield return baseKeyName + " " + kbKeyName;
 								}
 							}
 						}
@@ -258,6 +235,12 @@ namespace Utilities.DotNet
 			}
 		}
 
+		/// <summary>
+		/// Attempts to get the <see cref="DotNetVersion"/> from the given version string (e.g. v4.1.0235). 
+		/// It uses basic parsing to convert the version string and is therefore not accurate.
+		/// </summary>
+		/// <param name="version">The string representation of the .NET Framework version (e.g. v4.1.0235).</param>
+		/// <returns>The <see cref="DotNetVersion"/> representation of the version string.</returns>
 		public static DotNetVersion GetVersion(string version)
 		{
 			int[] v = new int[3];
@@ -297,9 +280,9 @@ namespace Utilities.DotNet
 					case 4:
 						return DotNetVersion.NET4;
 					case 5:
-						if (v[2] == 2) {
-							return DotNetVersion.NET452;
-						}
+						//if (v[2] == 2) {
+						//	return DotNetVersion.NET452;
+						//}
 						if (v[2] == 1) {
 							return DotNetVersion.NET451;
 						}
@@ -308,9 +291,9 @@ namespace Utilities.DotNet
 						}
 						return DotNetVersion.NET452;
 					case 6:
-						if (v[2] == 2) {
-							return DotNetVersion.NET462;
-						}
+						//if (v[2] == 2) {
+						//	return DotNetVersion.NET462;
+						//}
 						if (v[2] == 1) {
 							return DotNetVersion.NET461;
 						}
@@ -319,9 +302,9 @@ namespace Utilities.DotNet
 						}
 						return DotNetVersion.NET462;
 					case 7:
-						if (v[2] == 2) {
-							return DotNetVersion.NET472;
-						}
+						//if (v[2] == 2) {
+						//	return DotNetVersion.NET472;
+						//}
 						if (v[2] == 1) {
 							return DotNetVersion.NET471;
 						}
@@ -354,11 +337,6 @@ namespace Utilities.DotNet
 				return DotNetVersion.NET11;
 			}
 			return DotNetVersion.UNKNOWN;
-		}
-
-		public int CompareTo(DotNetFramework other)
-		{
-			return other == null ? 1 : ToString().CompareTo(other.ToString());
 		}
 	}
 }

@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace Utilities.Logging
 {
+	/// <summary>
+	/// Internal <see cref="LogAction"/> for use with <see cref="Console.Out"/> and <see cref="Console.Error"/>.
+	/// </summary>
 	internal class TextWriterLogAction : LogAction
 	{
 		private readonly TextWriter Writer;
